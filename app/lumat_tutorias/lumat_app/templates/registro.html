@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow-sm border-0">
+        
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Registrar alumno</h5>
+        </div>
+
+        <div class="card-body p-4">
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+                    <!-- Usuario -->
+                    <div class="col-md-4">
+                        <label class="form-label">Usuario</label>
+                        {{ user_form.username }}
+                        <div class="text-danger small">{{ user_form.username.errors }}</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Email</label>
+                        {{ user_form.email }}
+                        <div class="text-danger small">{{ user_form.email.errors }}</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Contraseña</label>
+                        {{ user_form.password }}
+                        <div class="text-danger small">{{ user_form.password.errors }}</div>
+                    </div>
+
+                    <!-- Alumno -->
+                    <div class="col-md-4">
+                        <label class="form-label">Nombre</label>
+                        {{ alumno_form.nombre }}
+                        <div class="text-danger small">{{ alumno_form.nombre.errors }}</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Apellido paterno</label>
+                        {{ alumno_form.apellido_paterno }}
+                        <div class="text-danger small">{{ alumno_form.apellido_paterno.errors }}</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Apellido materno</label>
+                        {{ alumno_form.apellido_materno }}
+                        <div class="text-danger small">{{ alumno_form.apellido_materno.errors }}</div>
+                    </div>
+
+                </div>
+
+                <!-- BOTÓN -->
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-dark px-4">
+                        Guardar
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

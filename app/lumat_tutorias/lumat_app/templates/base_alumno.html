@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+
+        <!-- 🔹 SIDEBAR IZQUIERDO -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-3">
+
+                    <h6 class="text-muted mb-3">Menú</h6>
+
+                    <div class="d-grid gap-2">
+
+                        <a href="{% url 'lumat_app:seminario' %}"
+                           class="btn text-start {% if '/alumno/seminario/' in request.path %}btn-dark{% else %}btn-outline-dark{% endif %}">
+                            📚 Seminario
+                        </a>
+
+                        <a href="{% url 'lumat_app:perfil' %}"
+                           class="btn text-start {% if '/alumno/perfil/' in request.path %}btn-dark{% else %}btn-outline-dark{% endif %}">
+                            👤 Perfil
+                        </a>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔹 CONTENIDO DINÁMICO -->
+        <div class="col-md-9 col-lg-10">
+            {% block dashboard_content %}{% endblock %}
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

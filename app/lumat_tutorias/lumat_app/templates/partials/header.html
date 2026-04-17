@@ -1,0 +1,35 @@
+{% load static %}
+
+<nav class="navbar navbar-dark bg-dark px-4">
+    
+    <div class="container-fluid d-flex align-items-center justify-content-between">
+
+        <!-- Escudo izquierdo -->
+        <div class="d-flex align-items-center">
+            <img src="{% static 'img/escudo_izq.png' %}" alt="Escudo izquierdo" height="50">
+        </div>
+
+        <!-- Texto centrado -->
+        <div class="text-center text-white flex-grow-1">
+            <h5 class="mb-0">Sistema de Gestión Académica</h5>
+        </div>
+
+        <!-- Escudo derecho + logout -->
+        <div class="d-flex align-items-center gap-3">
+
+            <img src="{% static 'img/escudo_der.png' %}" alt="Escudo derecho" height="50">
+
+            {% if user.is_authenticated %}
+            <form method="POST" action="{% url 'lumat_app:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-light btn-sm">
+                    Cerrar sesión
+                </button>
+            </form>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</nav>

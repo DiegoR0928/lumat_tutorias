@@ -1,0 +1,36 @@
+{% extends 'base_alumno.html' %}
+
+{% block dashboard_content %}
+
+<div class="row">
+
+    <!-- 🔹 INFO PRINCIPAL -->
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h5>Información del alumno</h5>
+
+                <p><strong>Nombre:</strong> {{ user.alumno.nombre }}</p>
+                <p><strong>Matrícula:</strong> {{ user.alumno.matricula }}</p>
+                <p><strong>Correo:</strong> {{ user.alumno.correo }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔹 PANEL DERECHO EXTRA -->
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h6>Acciones rápidas</h6>
+
+                <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-outline-dark">Editar perfil</button>
+                    <button class="btn btn-outline-dark">Cambiar contraseña</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
