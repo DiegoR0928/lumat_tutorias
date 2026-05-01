@@ -4,7 +4,7 @@ from .forms import UserForm, AlumnoForm
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse
-
+from django.contrib import messages
 
 def registro(request):
     if request.method == 'POST':
@@ -22,6 +22,11 @@ def registro(request):
             alumno = alumno_form.save(commit=False)
             alumno.user = user
             alumno.save()
+
+            messages.success(
+                request,
+                "Alumno registrado con éxito"
+            )
 
             return redirect('lumat_app:registro')
     else:

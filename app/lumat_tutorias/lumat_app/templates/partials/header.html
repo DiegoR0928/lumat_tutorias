@@ -6,7 +6,7 @@
 
         <!-- Escudo izquierdo -->
         <div class="d-flex align-items-center">
-            <img src="{% static 'img/escudo_izq.png' %}" alt="Escudo izquierdo" height="50">
+            <img src="{% static 'logos/lumat.png' %}" alt="Escudo izquierdo" height="50">
         </div>
 
         <!-- Texto centrado -->
@@ -17,7 +17,7 @@
         <!-- Escudo derecho + logout -->
         <div class="d-flex align-items-center gap-3">
 
-            <img src="{% static 'img/escudo_der.png' %}" alt="Escudo derecho" height="50">
+            <img src="{% static 'logos/uaz.png' %}" alt="Escudo derecho" height="50">
 
             {% if user.is_authenticated %}
             <form method="POST" action="{% url 'lumat_app:logout' %}">
