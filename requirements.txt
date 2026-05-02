@@ -1,3 +1,7 @@
 Django
 mysqlclient
 pillow
+django-unfold
+selenium
+webdriver-manager
+flake8
