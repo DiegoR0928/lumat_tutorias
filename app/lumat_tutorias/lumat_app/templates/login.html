@@ -2,52 +2,187 @@
 
 {% block content %}
 
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 90vh;">
+<div style="
+    min-height: 90vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ede9e0;
+    padding: 2rem;
+">
 
-    <div class="card shadow-sm border-0" style="width: 100%; max-width: 420px;">
-        
-        <div class="card-header bg-dark text-white text-center">
-            <h5 class="mb-0">Iniciar sesión</h5>
+    <div style="
+        width: 100%;
+        max-width: 400px;
+        background: #f7f4ef;
+        border: 1px solid #c8b89a;
+        border-top: 3px solid #4a7c7a;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 8px 28px rgba(74,63,50,0.12);
+    ">
+
+        <!-- Encabezado -->
+        <div style="
+            background: #eee8de;
+            border-bottom: 1px solid #c8b89a;
+            padding: 20px 28px;
+            text-align: center;
+        ">
+            <p style="
+                font-family: 'Georgia', serif;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.18em;
+                color: #4a7c7a;
+                font-weight: bold;
+                margin: 0 0 4px;
+            ">Bienvenido</p>
+            <h5 style="
+                font-family: 'Georgia', serif;
+                font-size: 1.1rem;
+                color: #4a3f32;
+                font-weight: normal;
+                margin: 0;
+                letter-spacing: 0.04em;
+            ">Iniciar sesión</h5>
         </div>
 
-        <div class="card-body p-4">
+        <!-- Cuerpo -->
+        <div style="padding: 28px;">
 
             <form method="POST">
                 {% csrf_token %}
 
-                <!-- Campo oculto para redirección -->
                 {% if next %}
                     <input type="hidden" name="next" value="{{ next }}">
                 {% endif %}
 
                 <!-- Usuario -->
-                <div class="mb-3">
-                    <label class="form-label">Usuario</label>
-                    <input type="text" id="id_usuario" name="username" class="form-control" required autofocus>
+                <div style="margin-bottom: 18px;">
+                    <label for="id_usuario" style="
+                        display: block;
+                        font-family: Arial, sans-serif;
+                        font-size: 0.72rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.1em;
+                        color: #8a7560;
+                        margin-bottom: 6px;
+                    ">Usuario</label>
+                    <input
+                        type="text"
+                        id="id_usuario"
+                        name="username"
+                        required autofocus
+                        style="
+                            width: 100%;
+                            padding: 9px 12px;
+                            background: #faf8f4;
+                            border: 1px solid #c8b89a;
+                            border-radius: 6px;
+                            font-family: Arial, sans-serif;
+                            font-size: 0.9rem;
+                            color: #4a3f32;
+                            outline: none;
+                            transition: border-color 0.2s, box-shadow 0.2s;
+                        "
+                        onfocus="this.style.borderColor='#4a7c7a'; this.style.boxShadow='0 0 0 3px rgba(74,124,122,0.12)'"
+                        onblur="this.style.borderColor='#c8b89a'; this.style.boxShadow='none'"
+                    >
                 </div>
 
                 <!-- Contraseña -->
-                <div class="mb-3">
-                    <label class="form-label">Contraseña</label>
-                    <input type="password" id="id_contrasena"name="password" class="form-control" required>
+                <div style="margin-bottom: 18px;">
+                    <label for="id_contrasena" style="
+                        display: block;
+                        font-family: Arial, sans-serif;
+                        font-size: 0.72rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.1em;
+                        color: #8a7560;
+                        margin-bottom: 6px;
+                    ">Contraseña</label>
+                    <input
+                        type="password"
+                        id="id_contrasena"
+                        name="password"
+                        required
+                        style="
+                            width: 100%;
+                            padding: 9px 12px;
+                            background: #faf8f4;
+                            border: 1px solid #c8b89a;
+                            border-radius: 6px;
+                            font-family: Arial, sans-serif;
+                            font-size: 0.9rem;
+                            color: #4a3f32;
+                            outline: none;
+                            transition: border-color 0.2s, box-shadow 0.2s;
+                        "
+                        onfocus="this.style.borderColor='#4a7c7a'; this.style.boxShadow='0 0 0 3px rgba(74,124,122,0.12)'"
+                        onblur="this.style.borderColor='#c8b89a'; this.style.boxShadow='none'"
+                    >
                 </div>
 
-                <!-- Errores -->
+                <!-- Error -->
                 {% if form.errors %}
-                    <div class="alert alert-danger py-2">
-                        Credenciales inválidas. Intenta nuevamente.
-                    </div>
+                <div style="
+                    background: #faeae6;
+                    border: 1px solid #e0b8ae;
+                    border-left: 3px solid #8a3a2a;
+                    border-radius: 6px;
+                    padding: 10px 14px;
+                    margin-bottom: 18px;
+                    font-family: Arial, sans-serif;
+                    font-size: 0.82rem;
+                    color: #8a3a2a;
+                ">
+                    Credenciales inválidas. Intenta nuevamente.
+                </div>
                 {% endif %}
 
                 <!-- Botón -->
-                <div class="d-grid mt-3">
-                    <button type="submit" id="btn_login" class="btn btn-dark">
-                        Entrar
-                    </button>
-                </div>
+                <button
+                    type="submit"
+                    id="btn_login"
+                    style="
+                        width: 100%;
+                        padding: 10px;
+                        background: #4a7c7a;
+                        border: none;
+                        border-radius: 6px;
+                        font-family: 'Georgia', serif;
+                        font-size: 0.9rem;
+                        letter-spacing: 0.08em;
+                        color: #f7f4ef;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                        margin-top: 4px;
+                    "
+                    onmouseover="this.style.background='#3a6260'"
+                    onmouseout="this.style.background='#4a7c7a'"
+                >
+                    Entrar
+                </button>
 
             </form>
 
+        </div>
+
+        <!-- Pie de la tarjeta -->
+        <div style="
+            border-top: 1px solid #e3d9cb;
+            padding: 12px 28px;
+            text-align: center;
+            background: #eee8de;
+        ">
+            <span style="
+                font-family: Arial, sans-serif;
+                font-size: 0.7rem;
+                color: #a89880;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            ">Sistema de Gestión Académica · UAZ</span>
         </div>
 
     </div>

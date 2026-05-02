@@ -1,35 +1,149 @@
 {% load static %}
 
-<nav class="navbar navbar-dark bg-dark px-4">
-    
-    <div class="container-fluid d-flex align-items-center justify-content-between">
+<nav style="
+    background: #f7f4ef;
+    border-bottom: 2px solid #c8b89a;
+    padding: 0 2rem;
+    font-family: 'Georgia', serif;
+    position: relative;
+">
+    <!-- Franja decorativa inferior -->
+    <div style="
+        position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #4a7c7a 0%, #c8b89a 40%, #8a7560 100%);
+    "></div>
 
-        <!-- Escudo izquierdo -->
-        <div class="d-flex align-items-center">
-            <img src="{% static 'logos/lumat.png' %}" alt="Escudo izquierdo" height="50">
+    <div style="
+        display: flex; align-items: center;
+        justify-content: space-between;
+        height: 70px; position: relative;
+    ">
+
+        <!-- Logo izquierdo -->
+        <div>
+            <img src="{% static 'logos/lumat.png' %}" alt="LUMAT" height="44" style="object-fit: contain;">
         </div>
 
-        <!-- Texto centrado -->
-        <div class="text-center text-white flex-grow-1">
-            <h5 class="mb-0">Sistema de Gestión Académica</h5>
-        </div>
+        <!-- Título centrado -->
+        <span style="
+            font-size: 0.95rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #4a3f32;
+            font-weight: normal;
+        ">Sistema de Gestión Académica</span>
 
-        <!-- Escudo derecho + logout -->
-        <div class="d-flex align-items-center gap-3">
+        <!-- Derecha: logo UAZ + usuario -->
+        <div style="display: flex; align-items: center; gap: 14px;">
 
-            <img src="{% static 'logos/uaz.png' %}" alt="Escudo derecho" height="50">
+            <img src="{% static 'logos/uaz.png' %}" alt="UAZ" height="44" style="object-fit: contain;">
 
             {% if user.is_authenticated %}
-            <form method="POST" action="{% url 'lumat_app:logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-light btn-sm">
-                    Cerrar sesión
+            <div style="position: relative;">
+
+                <!-- Botón de usuario -->
+                <button onclick="toggleMenu()" id="userBtn" style="
+                    display: flex; align-items: center; gap: 10px;
+                    background: #eee8de;
+                    border: 1px solid #c8b89a;
+                    border-radius: 40px;
+                    padding: 6px 14px 6px 8px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-family: 'Georgia', serif;
+                "
+                onmouseover="this.style.background='#e3d9cb'; this.style.borderColor='#8a7560'"
+                onmouseout="this.style.background='#eee8de'; this.style.borderColor='#c8b89a'">
+                    <!-- Avatar -->
+                    <div style="
+                        width: 30px; height: 30px; border-radius: 50%;
+                        background: #4a7c7a; color: #f7f4ef;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 13px; font-weight: bold; flex-shrink: 0;
+                    ">{{ user.username|first|upper }}</div>
+
+                    <span style="font-size: 0.82rem; color: #4a3f32; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ user.username }}
+                    </span>
+
+                    <svg id="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                         stroke="#8a7560" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                         style="transition: transform 0.2s;">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
                 </button>
-            </form>
+
+                <!-- Panel desplegable -->
+                <div id="userPanel" style="
+                    position: absolute; right: 0; top: calc(100% + 10px);
+                    width: 210px;
+                    background: #f7f4ef;
+                    border: 1px solid #c8b89a;
+                    border-radius: 10px;
+                    box-shadow: 0 8px 28px rgba(74,63,50,0.15);
+                    overflow: hidden;
+                    display: none;
+                    z-index: 9999;
+                ">
+                    <!-- Encabezado -->
+                    <div style="padding: 14px 16px; border-bottom: 1px solid #e3d9cb; background: #eee8de;">
+                        <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: #4a7c7a; font-weight: bold; margin-bottom: 4px;">
+                            Sesión activa
+                        </div>
+                        <div style="font-size: 0.88rem; color: #4a3f32; font-family: 'Georgia', serif;">
+                            {{ user.get_full_name|default:user.username }}
+                        </div>
+                        <div style="font-size: 0.73rem; color: #8a7560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: Arial, sans-serif;">
+                            {{ user.email }}
+                        </div>
+                    </div>
+
+                    <!-- Cerrar sesión -->
+                    <div style="padding: 6px;">
+                        <form method="POST" action="{% url 'lumat_app:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" style="
+                                display: flex; align-items: center; gap: 8px;
+                                width: 100%; padding: 11px 16px;
+                                background: transparent; border: none;
+                                cursor: pointer; font-size: 0.84rem;
+                                color: #8a3a2a; font-family: 'Georgia', serif;
+                                transition: background 0.15s; text-align: left;
+                                border-radius: 6px;
+                            "
+                            onmouseover="this.style.background='#faeae6'"
+                            onmouseout="this.style.background='transparent'">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16 17 21 12 16 7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
             {% endif %}
-
         </div>
-
     </div>
-
 </nav>
+
+<script>
+function toggleMenu() {
+    const panel = document.getElementById('userPanel');
+    const chevron = document.getElementById('chevron');
+    const open = panel.style.display === 'block';
+    panel.style.display = open ? 'none' : 'block';
+    chevron.style.transform = open ? '' : 'rotate(180deg)';
+}
+document.addEventListener('click', function(e) {
+    const btn = document.getElementById('userBtn');
+    const panel = document.getElementById('userPanel');
+    if (btn && panel && !btn.contains(e.target) && !panel.contains(e.target)) {
+        panel.style.display = 'none';
+        document.getElementById('chevron').style.transform = '';
+    }
+});
+</script>
