@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.models import User, Group  
+from django.contrib.auth.models import Group
 from .forms import UserForm, AlumnoForm
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import user_passes_test
-from django.http import HttpResponse
+# from django.http import HttpResponse
 from django.contrib import messages
+
 
 def registro(request):
     if request.method == 'POST':
@@ -38,6 +39,7 @@ def registro(request):
         'alumno_form': alumno_form
     })
 
+
 class CustomLoginView(LoginView):
     template_name = 'login.html'
 
@@ -51,18 +53,23 @@ class CustomLoginView(LoginView):
 
         return '/'
 
+
 class CustomLogoutView(LogoutView):
     next_page = 'lumat_app:login'
+
 
 def es_docente(user):
     return user.groups.filter(name='Docente').exists()
 
+
 def es_alumno(user):
     return user.groups.filter(name='Alumno').exists()
+
 
 @user_passes_test(es_docente)
 def docente_dashboard(request):
     return render(request, 'docente_dashboard.html')
+
 
 @user_passes_test(es_alumno)
 def alumno_dashboard(request):

@@ -8,14 +8,18 @@ from .models import Alumno, Docente, Comite, Seminario, CalifSeminario
 # 1. FORMULARIOS PERSONALIZADOS
 # ==========================================
 
+
 class AlumnoForm(forms.ModelForm):
-    username = forms.CharField(max_length=150, required=False, label="Usuario (Para iniciar sesión)")
-    password = forms.CharField(widget=forms.PasswordInput, required=False, label="Contraseña", 
-                               help_text="Déjalo en blanco al editar si no deseas cambiarla.")
+    username = forms.CharField(
+        max_length=150, required=False, label="Usuario (Para iniciar sesión)")
+    password = forms.CharField(widget=forms.PasswordInput, required=False,
+                               label="Contraseña",
+                               help_text="Déjalo en blanco al editar si no "
+                               "deseas cambiarla.")
 
     class Meta:
         model = Alumno
-        exclude = ['user'] 
+        exclude = ['user']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -28,38 +32,47 @@ class AlumnoForm(forms.ModelForm):
         if not self.instance.pk:
             username = cleaned_data.get('username')
             if not username:
-                self.add_error('username', 'El nombre de usuario es obligatorio para registrar la cuenta.')
+                self.add_error(
+                    'username', 'El nombre de usuario es obligatorio para '
+                    'registrar la cuenta.')
             elif User.objects.filter(username=username).exists():
-                self.add_error('username', 'Este nombre de usuario ya está ocupado. Elige otro.')
-            
+                self.add_error(
+                    'username', 'Este nombre de usuario ya está ocupado. '
+                    'Elige otro.')
+
             if not cleaned_data.get('password'):
-                self.add_error('password', 'La contraseña es obligatoria para nuevos alumnos.')
+                self.add_error(
+                    'password', 'La contraseña es obligatoria para nuevos '
+                    'alumnos.')
         return cleaned_data
 
     def save(self, commit=True):
         alumno = super().save(commit=False)
-        
-        if not alumno.pk: 
+
+        if not alumno.pk:
             user = User.objects.create_user(
                 username=self.cleaned_data['username'],
                 password=self.cleaned_data['password'],
-                email=self.cleaned_data.get('correo', '') 
+                email=self.cleaned_data.get('correo', '')
             )
             alumno.user = user
-        else: 
-            if self.cleaned_data.get('password'): 
+        else:
+            if self.cleaned_data.get('password'):
                 alumno.user.set_password(self.cleaned_data['password'])
                 alumno.user.save()
-                
+
         if commit:
             alumno.save()
         return alumno
 
 
 class DocenteForm(forms.ModelForm):
-    username = forms.CharField(max_length=150, required=False, label="Usuario (Para iniciar sesión)")
-    password = forms.CharField(widget=forms.PasswordInput, required=False, label="Contraseña", 
-                               help_text="Déjalo en blanco al editar si no deseas cambiarla.")
+    username = forms.CharField(
+        max_length=150, required=False, label="Usuario (Para iniciar sesión)")
+    password = forms.CharField(widget=forms.PasswordInput, required=False,
+                               label="Contraseña",
+                               help_text="Déjalo en blanco al editar si no "
+                               "deseas cambiarla.")
 
     class Meta:
         model = Docente
@@ -76,12 +89,17 @@ class DocenteForm(forms.ModelForm):
         if not self.instance.pk:
             username = cleaned_data.get('username')
             if not username:
-                self.add_error('username', 'El nombre de usuario es obligatorio para registrar la cuenta.')
+                self.add_error(
+                    'username', 'El nombre de usuario es obligatorio para '
+                    'registrar la cuenta.')
             elif User.objects.filter(username=username).exists():
-                self.add_error('username', 'Este nombre de usuario ya está en uso.')
-            
+                self.add_error(
+                    'username', 'Este nombre de usuario ya está en uso.')
+
             if not cleaned_data.get('password'):
-                self.add_error('password', 'La contraseña es obligatoria para nuevos docentes.')
+                self.add_error(
+                    'password', 'La contraseña es obligatoria para nuevos '
+                    'docentes.')
         return cleaned_data
 
     def save(self, commit=True):
@@ -109,26 +127,32 @@ class DocenteForm(forms.ModelForm):
 @admin.register(Alumno)
 class AlumnoAdmin(ModelAdmin):
     form = AlumnoForm
-    list_display = ('matricula', 'nombre', 'apellido_paterno', 'apellido_materno', 'semestre', 'correo')
+    list_display = ('matricula', 'nombre', 'apellido_paterno',
+                    'apellido_materno', 'semestre', 'correo')
     search_fields = ('matricula', 'nombre', 'apellido_paterno', 'correo')
     list_filter = ('semestre',)
 
+
 @admin.register(Docente)
 class DocenteAdmin(ModelAdmin):
-    form = DocenteForm 
-    list_display = ('nombre', 'apellido_paterno', 'apellido_materno', 'correo')
+    form = DocenteForm
+    list_display = ('nombre', 'apellido_paterno', 'apellido_materno',
+                    'correo')
     search_fields = ('nombre', 'apellido_paterno', 'correo')
+
 
 @admin.register(Comite)
 class ComiteAdmin(ModelAdmin):
     list_display = ('tutor', 'miembro1', 'miembro2')
     search_fields = ('tutor__nombre', 'tutor__apellido_paterno')
 
+
 @admin.register(Seminario)
 class SeminarioAdmin(ModelAdmin):
     list_display = ('alumno', 'fecha', 'hora', 'calificacion')
     list_filter = ('fecha', 'comite')
     search_fields = ('alumno__nombre', 'alumno__matricula')
+
 
 @admin.register(CalifSeminario)
 class CalifSeminarioAdmin(ModelAdmin):
