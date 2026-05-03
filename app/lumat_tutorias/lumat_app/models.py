@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 class Alumno(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -29,8 +30,19 @@ class Comite(models.Model):
     miembro1 = models.ForeignKey(Docente, on_delete=models.CASCADE, related_name='miembro1')
     miembro2 = models.ForeignKey(Docente, on_delete=models.CASCADE, related_name='miembro2')
 
+    def clean(self):
+        docentes = [self.tutor_id, self.miembro1_id, self.miembro2_id]
+        if len(set(docentes)) != 3:
+            raise ValidationError("Los tres docentes del comité deben ser distintos.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.tutor.__str__()
+        if self.id:
+            return f"Comité {self.id}"
+        return "Comité Nuevo"
     
 class Seminario(models.Model):
     alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE)
