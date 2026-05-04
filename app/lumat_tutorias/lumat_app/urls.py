@@ -15,7 +15,7 @@ urlpatterns = [
     path('docente/', views.docente_dashboard, name='docente_dashboard'),
 
     path('alumno/seminario/', views.seminario, name='seminario'),
-    path('alumno/perfil/', views.perfil, name='perfil'),
+    path('alumno/perfil/', views.perfil_alumno, name='perfil_alumno'),
 ]
 
 if settings.DEBUG:

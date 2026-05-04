@@ -15,11 +15,13 @@
                     <div class="d-grid gap-2">
 
                         <a href="{% url 'lumat_app:seminario' %}"
+                        id="btn_seminario_alumno"
                            class="btn text-start {% if '/alumno/seminario/' in request.path %}btn-dark{% else %}btn-outline-dark{% endif %}">
                             📚 Seminario
                         </a>
 
-                        <a href="{% url 'lumat_app:perfil' %}"
+                        <a href="{% url 'lumat_app:perfil_alumno' %}"
+                            id="btn_perfil_alumno"
                            class="btn text-start {% if '/alumno/perfil/' in request.path %}btn-dark{% else %}btn-outline-dark{% endif %}">
                             👤 Perfil
                         </a>
