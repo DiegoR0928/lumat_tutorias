@@ -1,4 +1,5 @@
 from pathlib import Path
+from django.templatetags.static import static
 
 import os
 
@@ -119,3 +120,32 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+UNFOLD = {
+    "SITE_TITLE": "Lumat Admin",
+    
+    # Logo corregido
+    "SITE_LOGO": {
+        "light": lambda request: static("logos/lumat.png"),
+        "dark": lambda request: static("logos/lumat.png"),
+    },
+    
+    "COLORS": {
+        "primary": {
+            "50": "247 244 239",   # #f7f4ef
+            "100": "238 232 222",  # #eee8de
+            "200": "227 217 203",  # #e3d9cb
+            "300": "200 184 154",  # #c8b89a
+            "400": "138 117 96",   # #8a7560
+            "500": "74 124 122",   # #4a7c7a
+            "600": "58 97 95",
+            "700": "74 63 50",      # #4a3f32
+            "800": "45 38 31",
+            "900": "30 25 20",
+        },
+    },
+
+    "STYLES": [
+        lambda request: static("css/admin_custom.css"), # Esto sí es una URL válida 
+    ],
+}

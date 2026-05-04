@@ -1,0 +1,29 @@
+/* lumat_app/static/css/admin_custom.css */
+
+html, body {
+    --unfold-bg-body: #f7f4ef !important;
+    font-family: 'Georgia', serif !important;
+}
+
+.unfold-sidebar {
+    background-color: #f7f4ef !important;
+    border-right: 1px solid #c8b89a !important;
+}
+
+.unfold-button-primary, 
+button[type="submit"], 
+.button.default {
+    background-color: #4a7c7a !important;
+    border-color: #4a7c7a !important;
+    color: #f7f4ef !important;
+}
+
+header#header {
+    border-top: 4px solid !important;
+    border-image: linear-gradient(90deg, #4a7c7a 0%, #c8b89a 40%, #8a7560 100%) 1 !important;
+    background-color: #f7f4ef !important;
+}
+
+.unfold-sidebar a, .unfold-sidebar span {
+    color: #4a3f32 !important;
+}
