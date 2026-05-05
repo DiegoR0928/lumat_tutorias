@@ -123,13 +123,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 UNFOLD = {
     "SITE_TITLE": "Lumat Admin",
-    
+
     # Logo corregido
     "SITE_LOGO": {
         "light": lambda request: static("logos/lumat.png"),
         "dark": lambda request: static("logos/lumat.png"),
     },
-    
+
     "COLORS": {
         "primary": {
             "50": "247 244 239",   # #f7f4ef
@@ -146,6 +146,6 @@ UNFOLD = {
     },
 
     "STYLES": [
-        lambda request: static("css/admin_custom.css"), # Esto sí es una URL válida 
+        lambda request: static("css/admin_custom.css"),
     ],
 }

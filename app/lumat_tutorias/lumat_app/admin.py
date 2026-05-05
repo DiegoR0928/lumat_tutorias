@@ -1,10 +1,12 @@
 from django import forms
 from django.contrib import admin
-from django.contrib.auth.models import User, Group # <--- Importamos Group
+from django.contrib.auth.models import User, Group
 from unfold.admin import ModelAdmin
-from .models import Alumno, Docente, Comite, Seminario, CalifSeminario
+from .models import Alumno, Docente, Comite, Seminario
 
 # Función auxiliar para evitar repetir código
+
+
 def asignar_grupo(user, nombre_grupo):
     grupo, _ = Group.objects.get_or_create(name=nombre_grupo)
     user.groups.add(grupo)
@@ -13,10 +15,14 @@ def asignar_grupo(user, nombre_grupo):
 # 1. FORMULARIOS PERSONALIZADOS
 # ==========================================
 
+
 class AlumnoForm(forms.ModelForm):
-    username = forms.CharField(max_length=150, required=False, label="Usuario (Para iniciar sesión)")
-    password = forms.CharField(widget=forms.PasswordInput, required=False, label="Contraseña", 
-                               help_text="Déjalo en blanco al editar si no deseas cambiarla.")
+    username = forms.CharField(
+        max_length=150, required=False, label="Usuario (Para iniciar sesión)")
+    password = forms.CharField(widget=forms.PasswordInput, required=False,
+                               label="Contraseña",
+                               help_text="Déjalo en blanco al editar si no"
+                               " deseas cambiarla.")
 
     class Meta:
         model = Alumno
@@ -33,9 +39,11 @@ class AlumnoForm(forms.ModelForm):
         if not self.instance.pk:
             username = cleaned_data.get('username')
             if not username:
-                self.add_error('username', 'El nombre de usuario es obligatorio.')
+                self.add_error(
+                    'username', 'El nombre de usuario es obligatorio.')
             elif User.objects.filter(username=username).exists():
-                self.add_error('username', 'Este nombre de usuario ya está ocupado.')
+                self.add_error(
+                    'username', 'Este nombre de usuario ya está ocupado.')
 
             if not cleaned_data.get('password'):
                 self.add_error('password', 'La contraseña es obligatoria.')
@@ -65,9 +73,12 @@ class AlumnoForm(forms.ModelForm):
 
 
 class DocenteForm(forms.ModelForm):
-    username = forms.CharField(max_length=150, required=False, label="Usuario (Para iniciar sesión)")
-    password = forms.CharField(widget=forms.PasswordInput, required=False, label="Contraseña", 
-                               help_text="Déjalo en blanco al editar si no deseas cambiarla.")
+    username = forms.CharField(
+        max_length=150, required=False, label="Usuario (Para iniciar sesión)")
+    password = forms.CharField(widget=forms.PasswordInput, required=False,
+                               label="Contraseña",
+                               help_text="Déjalo en blanco al editar si no "
+                               "deseas cambiarla.")
 
     class Meta:
         model = Docente
@@ -84,9 +95,11 @@ class DocenteForm(forms.ModelForm):
         if not self.instance.pk:
             username = cleaned_data.get('username')
             if not username:
-                self.add_error('username', 'El nombre de usuario es obligatorio.')
+                self.add_error(
+                    'username', 'El nombre de usuario es obligatorio.')
             elif User.objects.filter(username=username).exists():
-                self.add_error('username', 'Este nombre de usuario ya está en uso.')
+                self.add_error(
+                    'username', 'Este nombre de usuario ya está en uso.')
 
             if not cleaned_data.get('password'):
                 self.add_error('password', 'La contraseña es obligatoria.')
@@ -115,6 +128,7 @@ class DocenteForm(forms.ModelForm):
 # ==========================================
 # 2. REGISTRO EN EL PANEL (UNFOLD)
 # ==========================================
+
 
 @admin.register(Alumno)
 class AlumnoAdmin(ModelAdmin):
@@ -145,5 +159,6 @@ class SeminarioAdmin(ModelAdmin):
     list_filter = ('fecha', 'comite')
     search_fields = ('alumno__nombre', 'alumno__matricula')
 
-#QUITAR GRUPOS DE ADMIN
+
+# QUITAR GRUPOS DE ADMIN
 admin.site.unregister(Group)
