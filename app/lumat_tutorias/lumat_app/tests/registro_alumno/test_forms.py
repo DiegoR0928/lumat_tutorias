@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from lumat_app.forms import UserForm, AlumnoForm  # ajusta al nombre real de tu app
+# ajusta al nombre real de tu app
+from lumat_app.forms import UserForm, AlumnoForm
 
 
 class UserFormTest(TestCase):
@@ -19,7 +20,10 @@ class UserFormTest(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_user_form_valido_sin_email(self):
-        """UserForm acepta envíos sin email porque el campo no es obligatorio."""
+        """
+        UserForm acepta envíos sin email porque
+        el campo no es obligatorio.
+        """
         form = UserForm(data={
             'username': 'nuevouser',
             'email': '',

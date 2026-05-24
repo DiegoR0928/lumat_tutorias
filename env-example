@@ -1,5 +1,5 @@
-DB_NAME=seguimiento_programa
-DB_USER=seguimientouser
+DB_NAME=lumat_tutorias_db
+DB_USER=lumatuser
 DB_USER_ADMIN=admin
 DB_PASSWORD=admin1234
 DB_ROOT_PASSWORD=admin1234
