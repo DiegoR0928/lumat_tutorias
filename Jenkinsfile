@@ -38,9 +38,9 @@ pipeline {
         stage('Preparar base de datos de pruebas') {
             steps {
                 sleep time: 20, unit: 'SECONDS'
-                sh '''
-                    docker compose exec -T db mariadb -u root -padmin1234 -e "GRANT ALL PRIVILEGES ON \`test_lumat_tutorias_db\`.* TO 'lumatuser'@'%'; FLUSH PRIVILEGES;"
-                '''
+                sh """
+                    docker compose exec -T db mariadb -u root -padmin1234 -e "GRANT ALL PRIVILEGES ON test_lumat_tutorias_db.* TO 'lumatuser'@'%'; FLUSH PRIVILEGES;"
+                """
             }
         }
 
