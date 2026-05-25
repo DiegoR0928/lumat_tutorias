@@ -43,8 +43,8 @@ pipeline {
                 //     docker compose exec -T db mariadb -u root -p\${DB_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON \\\`test_lumat_tutorias_db\\\`.* TO 'lumatuser'@'%'; FLUSH PRIVILEGES;"
                 // """
                 // sh 'docker compose exec -T db mariadb -u root -e "GRANT ALL PRIVILEGES ON \`test_lumat_tutorias_db\`.* TO \'lumatuser\'@\'%\'; FLUSH PRIVILEGES;"'
-                // sh 'docker compose exec -T db mariadb -u root -padmin1234 -e "GRANT ALL PRIVILEGES ON \`test_lumat_tutorias_db\`.* TO \'lumatuser\'@\'%\'; FLUSH PRIVILEGES;"'
-                sh "docker compose exec -T db mariadb -u root -padmin1234 -e \"GRANT ALL PRIVILEGES ON \\\`test_lumat_tutorias_db\\\`.* TO 'lumatuser'@'%'; FLUSH PRIVILEGES;\""
+                sh 'docker compose exec -T db mariadb -u root -padmin1234 -e "GRANT ALL PRIVILEGES ON \`test_lumat_tutorias_db\`.* TO \'lumatuser\'@\'%\'; FLUSH PRIVILEGES;"'
+                // sh "docker compose exec -T db mariadb -u root -padmin1234 -e \"GRANT ALL PRIVILEGES ON \\\`test_lumat_tutorias_db\\\`.* TO 'lumatuser'@'%'; FLUSH PRIVILEGES;\""
             }
         }
 
