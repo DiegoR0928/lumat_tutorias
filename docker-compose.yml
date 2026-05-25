@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: ./Dockerfile-dev
     container_name: lumat-app
     depends_on:
       - db
@@ -10,6 +10,7 @@ services:
       - 8000:8000
     volumes:
       - ./app:/app
+      - ./pruebas_aceptacion:/pruebas_aceptacion
 
     environment:
       DB_NAME: ${DB_NAME}
@@ -21,6 +22,7 @@ services:
       DB_HOST: ${DB_HOST}
       DEBUG: ${DEBUG}
       SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
 
   db:
     image: mariadb
@@ -35,6 +37,46 @@ services:
       - db:/var/lib/mysql
     ports:
       - 127.0.0.1:3310:3306
+
+  chrome:
+    image: selenium/node-chrome:4.2.0-20220527
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=100
+
+  edge:
+    image: selenium/node-edge:4.2.0-20220527
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  firefox:
+    image: selenium/node-firefox:4.2.0-20220527
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-hub:
+    image: selenium/hub:4.2.0-20220527
+    container_name: selenium-hub
+    ports:
+      # - "192.168.56.100:4442:4442"
+      # - "192.168.56.100:4443:4443"
+      # - "192.168.56.100:4444:4444"
+      - 4444:4444
 
 volumes:
   db:

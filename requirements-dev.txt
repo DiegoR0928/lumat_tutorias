@@ -1,0 +1,8 @@
+Django
+mysqlclient
+pillow
+django-unfold
+behave
+selenium
+flake8
+coverage
