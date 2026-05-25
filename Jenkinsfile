@@ -119,70 +119,26 @@ pipeline {
             }
         }
 
-//         stage('Desplegar en staging') {
-//             steps {
-//                 sshagent(['prod-ssh-key']) {
-//                     sh """
-//                         ssh -o StrictHostKeyChecking=no ${USER_PROD}@${SERVER_PROD} << 'EOF'
-//                         cd /home/admin/lumat
-
-//                         # Respaldar versión anterior
-//                         if grep -q '^IMAGE_VERSION=' .env; then
-//                             OLD_VERSION=\$(grep '^IMAGE_VERSION=' .env | cut -d '=' -f2)
-//                             sed -i '/^IMAGE_VERSION_OLD=/d' .env
-//                             echo "IMAGE_VERSION_OLD=\$OLD_VERSION" >> .env
-//                         fi
-
-//                         # Actualizar versión actual
-//                         sed -i '/^IMAGE_VERSION=/d' .env
-//                         echo "IMAGE_VERSION=${VERSION}" >> .env
-
-//                         echo "Contenido actualizado de .env:"
-//                         cat .env
-
-//                         docker compose pull app
-//                         docker compose up -d
-
-//                         # Migraciones post-despliegue
-//                         docker compose exec -T -w /app/lumat_tutorias app python manage.py migrate
-// EOF
-//                     """
-//                 }
-//             }
-//         }
-        stage('Test SSH') {
-            steps {
-                sshagent(['prod-ssh-key']) {
-                    sh "ssh -o StrictHostKeyChecking=no ${USER_PROD}@${SERVER_PROD} echo OK"
-                }
-            }
-        }
-
         stage('Revisión por QA') {
             steps {
                 input "Desplegar en producción?"
             }
         }
 
-//         stage('Despliegue producción') {
-//             steps {
-//                 sshagent(['prod-ssh-key']) {
-//                     sh """
-//                         ssh -o StrictHostKeyChecking=no ${USER_PROD}@${SERVER_PROD} << 'EOF'
-//                         cd /home/admin/lumat
-
-//                         sed -i '/^IMAGE_VERSION=/d' .env
-//                         echo "IMAGE_VERSION=${VERSION}" >> .env
-
-//                         docker compose pull app
-//                         docker compose up -d
-
-//                         docker compose exec -T -w /app/lumat_tutorias app python manage.py migrate
-// EOF
-//                     """
-//                 }
-//             }
-//         }
+        stage('Despliegue producción') {
+            steps {
+                sshagent(['prod-ssh-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${USER_PROD}@${SERVER_PROD} '
+                            cd /home/admin/lumat_tutorias &&
+                            docker compose -f docker-compose-prod.yml pull app &&
+                            docker compose -f docker-compose-prod.yml up -d &&
+                            docker compose -f docker-compose-prod.yml exec -T -w /app/lumat_tutorias app python manage.py migrate
+                        '
+                    """
+                }
+            }
+        }
     }
 
     post {
