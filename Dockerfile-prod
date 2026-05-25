@@ -40,4 +40,11 @@ ARG ALLOWED_HOSTS=localhost
 WORKDIR /app/lumat_tutorias
 RUN /env/bin/python manage.py collectstatic --no-input
 
+COPY ./lumat.conf /etc/apache2/sites-available/lumat.conf
+
+# Deshabilita el sitio default y habilita el de Django
+RUN a2dissite 000-default.conf && \
+    a2ensite lumat.conf && \
+    a2enmod wsgi
+
 CMD ["apachectl", "-D", "FOREGROUND"]
