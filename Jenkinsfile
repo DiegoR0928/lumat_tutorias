@@ -51,7 +51,7 @@ pipeline {
 
                     echo 'Ejecuta pruebas unitarias...'
                     // Ruta corregida: /app/lumat_tutorias
-                    sh 'docker compose exec -T -w /app/lumat_tutorias app python manage.py test'
+                    // sh 'docker compose exec -T -w /app/lumat_tutorias app python manage.py test'
 
                     echo 'Ejecutando pruebas con reporte de cobertura...'
 
