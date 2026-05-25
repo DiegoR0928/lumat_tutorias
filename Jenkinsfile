@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = 'lumat'
         VERSION = "v${BUILD_NUMBER}"
         USER_PROD = 'admin'
-        SERVER_PROD = 'ec2-18-222-223-70.us-east-2.compute.amazonaws.com'
+        SERVER_PROD = 'ec2-18-117-238-253.us-east-2.compute.amazonaws.com'
     }
     stages {
         stage('Inicializando...') {
@@ -150,6 +150,13 @@ pipeline {
 //                 }
 //             }
 //         }
+        stage('Test SSH') {
+            steps {
+                sshagent(['prod-ssh-key']) {
+                    sh "ssh -o StrictHostKeyChecking=no ${USER_PROD}@${SERVER_PROD} echo OK"
+                }
+            }
+        }
 
         stage('Revisión por QA') {
             steps {
