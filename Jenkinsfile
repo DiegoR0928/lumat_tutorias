@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = 'lumat'
         VERSION = "v${BUILD_NUMBER}"
         USER_PROD = 'admin'
-        SERVER_PROD = 'ec2-18-117-238-253.us-east-2.compute.amazonaws.com'
+        SERVER_PROD = 'ec2-13-59-63-164.us-east-2.compute.amazonaws.com'
     }
     stages {
         stage('Inicializando...') {

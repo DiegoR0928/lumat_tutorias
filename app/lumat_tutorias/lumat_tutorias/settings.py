@@ -153,3 +153,8 @@ UNFOLD = {
         lambda request: static("css/admin_custom.css"),
     ],
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://tu-dominio.amer-br.tech',
+    'https://www.tu-dominio.amer-br.tech',  # Por si entran con www
+]
