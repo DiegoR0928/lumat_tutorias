@@ -1,0 +1,40 @@
+services:
+  app:
+    image: registry.amer-br.tech/lumat:latest
+    container_name: lumat-app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8081:80"
+    environment:
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+    volumes:
+      - static:/app/lumat_tutorias/staticfiles
+      - media:/app/lumat_tutorias/media
+
+  db:
+    image: mariadb
+    container_name: lumat-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3310:3306"
+
+volumes:
+  db:
+  static:
+  media:
