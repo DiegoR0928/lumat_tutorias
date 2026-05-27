@@ -155,6 +155,6 @@ UNFOLD = {
 }
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://tu-dominio.amer-br.tech',
-    'https://www.tu-dominio.amer-br.tech',  # Por si entran con www
+    'https://lumat.amer-br.tech',
+    'https://www.lumat.amer-br.tech',
 ]
