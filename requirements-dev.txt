@@ -7,3 +7,4 @@ selenium
 flake8
 coverage
 weasyprint
+autopep8

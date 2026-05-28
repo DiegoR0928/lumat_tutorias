@@ -1,40 +1,157 @@
 {% extends "unfold/layouts/base_simple.html" %}
 {% load static %}
 
-{% block content %}
-<div class="p-6 max-w-2xl mx-auto bg-white rounded-lg border border-gray-200 shadow-sm mt-6">
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ title }}</h1>
-    <p class="text-gray-600 mb-6 text-sm">El sistema tomará todos los seminarios guardados en la base de datos y los distribuirá de forma aleatoria y equitativa dentro del rango de fechas que selecciones.</p>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <form action="/admin/calendar-generator/generate/" method="POST" class="space-y-6">
-        {% csrf_token %}
+{% block extrahead %}
+<script>
+    // Aplicar tema inmediatamente antes de que se renderice la página
+    (function() {
+        const theme = localStorage.getItem('theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Inicio del Periodo</label>
-                <input type="date" name="fecha_inicial" class="border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:border-[#4a7c7a] focus:ring-1 focus:ring-[#4a7c7a] w-full block" required>
-            </div>
+        if (theme === 'dark' || (!theme && systemDark)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    })();
+</script>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Finalización</label>
-                <input type="date" name="fecha_final" class="border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:border-[#4a7c7a] focus:ring-1 focus:ring-[#4a7c7a] w-full block" required>
-            </div>
-        </div>
+<style>
+    /* --- Tema Claro (Valores por defecto) --- */
+    /* 🌟 Agregamos margin-bottom para forzar la separación vertical que Tailwind eliminó */
+    .custom-card { background-color: #ffffff; border-color: #e5e7eb; margin-bottom: 2.5rem; }
+    .custom-input { background-color: #ffffff; color: #111827; border-color: #d1d5db; }
+    .custom-list-item { background-color: #f9fafb; border-color: #f3f4f6; }
+    .custom-embed-container { background-color: #f3f4f6; border-color: #e5e7eb; }
 
-        <div class="border-t border-gray-100 pt-4 flex justify-end">
-            <button type="submit" class="bg-[#4a7c7a] hover:bg-[#3a9795] text-white font-medium py-2.5 px-5 rounded transition duration-150 inline-flex items-center shadow-sm text-sm">
-                <span class="material-symbols-outlined mr-2 text-base">shuffle</span>
-                Distribuir y Generar PDF
-            </button>
-        </div>
-    </form>
+    /* --- Tema Oscuro (Se activan cuando la raíz tiene la clase .dark) --- */
+    .dark .custom-card { 
+        background-color: #18181b !important; /* zinc-900 */
+        border-color: #27272a !important;     /* zinc-800 */
+    }
+    .dark .custom-input { 
+        background-color: #27272a !important; /* zinc-800 */
+        color: #f4f4f5 !important;             /* zinc-100 */
+        border-color: #3f3f46 !important;     /* zinc-700 */
+    }
+    .dark .custom-list-item { 
+        background-color: rgba(39, 39, 42, 0.4) !important; /* zinc-800 con opacidad */
+        border-color: rgba(63, 63, 70, 0.6) !important;     /* zinc-700 con opacidad */
+    }
+    .dark .custom-embed-container { 
+        background-color: #09090b !important; /* zinc-950 */
+        border-color: #27272a !important;     /* zinc-800 */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-5xl mx-auto mt-6">
+    
+    <div class="custom-card p-6 rounded-lg border shadow-sm transition-colors duration-200">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-zinc-100 mb-2">{{ title }}</h1>
+        <p class="text-gray-600 dark:text-zinc-400 mb-6 text-sm">El sistema tomará todos los seminarios y los distribuirá consecutivamente.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="p-3 mb-4 text-sm text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-950/40 rounded-lg">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form action="/admin/calendar-generator/generate/" method="POST" class="space-y-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Fecha de Inicio</label>
+                    <input type="date" name="fecha_inicial" class="custom-input border rounded-md p-2.5 focus:border-[#4a7c7a] w-full block transition-colors" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Fecha de Finalización</label>
+                    <input type="date" name="fecha_final" class="custom-input border rounded-md p-2.5 focus:border-[#4a7c7a] w-full block transition-colors" required>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="bg-[#4a7c7a] hover:bg-[#3a9795] text-white font-medium py-2.5 px-5 rounded text-sm inline-flex items-center shadow-sm transition-all">
+                    <span class="material-symbols-outlined mr-2 text-base">save</span>
+                    Generar y Publicar en el Sitio
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="custom-card p-6 rounded-lg border shadow-sm transition-colors duration-200">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-zinc-100 mb-2">Calendarios Publicados</h2>
+        <p class="text-gray-500 dark:text-zinc-400 text-sm mb-4">A continuación se muestran los calendarios oficiales vigentes en el sistema.</p>
+
+        {% if calendarios %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                    {% for cal in calendarios %}
+                        <div class="custom-list-item p-4 border rounded-xl hover:border-[#4a7c7a] transition-all flex justify-between items-center">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 dark:text-zinc-200 text-sm">{{ cal.nombre }}</h4>
+                                <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Generado el {{ cal.fecha_creacion|date:"d/m/Y" }}</p>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button onclick="verPdf('{{ cal.archivo_pdf.url }}')" class="text-[#4a7c7a] hover:text-[#3a9795] text-sm font-medium inline-flex items-center">
+                                    <span class="material-symbols-outlined mr-1 text-base">visibility</span>
+                                    Ver aquí
+                                </button>
+                                <a href="{{ cal.archivo_pdf.url }}" target="_blank" class="text-gray-500 hover:text-gray-300 dark:text-zinc-400 dark:hover:text-zinc-200 text-sm font-medium inline-flex items-center">
+                                    <span class="material-symbols-outlined mr-1 text-base">open_in_new</span>
+                                    Abrir grande
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="custom-embed-container border rounded-xl h-[450px] flex items-center justify-center relative overflow-hidden">
+                    <embed id="visor-pdf" class="w-full h-full hidden" src="" type="application/pdf">
+                    
+                    <div id="visor-placeholder" class="text-center p-6 text-gray-400 dark:text-zinc-600">
+                        <span class="material-symbols-outlined text-4xl mb-2">picture_as_pdf</span>
+                        <p class="text-xs">Selecciona un calendario de la lista para visualizarlo directamente en esta pantalla.</p>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p class="text-gray-400 dark:text-zinc-500 text-sm italic py-4">No se han generado calendarios institucionales todavía.</p>
+        {% endif %}
+    </div>
 </div>
+
+<script>
+    function syncTheme() {
+        const theme = localStorage.getItem('theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (theme === 'dark' || (!theme && systemDark)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }
+    
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'theme') {
+            syncTheme();
+        }
+    });
+    
+    document.addEventListener('themeChanged', function() {
+        syncTheme();
+    });
+
+    function verPdf(url) {
+        const embed = document.getElementById('visor-pdf');
+        const placeholder = document.getElementById('visor-placeholder');
+        
+        embed.src = url;
+        embed.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+    }
+</script>
 {% endblock %}

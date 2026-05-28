@@ -187,13 +187,18 @@ UNFOLD = {
             },
 
             {
-                "title": "Fechas y Horarios",
+                "title": "Control administrativo",
                 "separator": True,
                 "items": [
                     {
                         "title": "Calendario",
                         "icon": "calendar_today",
                         "link": "/admin/calendar-generator/",
+                    },
+                    {
+                        "title": "Estadísticas",
+                        "icon": "analytics",
+                        "link": "/admin/estadisticas/",
                     },
                 ],
             },
@@ -209,3 +214,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://lumat.amer-br.tech',
     'https://www.lumat.amer-br.tech',
 ]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+X_FRAME_OPTIONS = "SAMEORIGIN"

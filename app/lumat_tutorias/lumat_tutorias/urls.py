@@ -17,9 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
+from django.conf import settings
+from django.conf.urls.static import static
 
-from lumat_app.admin import admin_calendario_formulario_view
-from lumat_app.admin import admin_calendario_generar_pdf_view
+from lumat_app.views import admin_calendario_formulario_view
+from lumat_app.views import admin_calendario_generar_pdf_view
+from lumat_app.views import admin_estadisticas_view
+
 
 urlpatterns = [
     path(
@@ -32,6 +36,12 @@ urlpatterns = [
         admin.site.admin_view(admin_calendario_generar_pdf_view),
         name='calendar_pdf'
     ),
+    path('admin/estadisticas/', admin.site.admin_view(admin_estadisticas_view),
+         name='admin_estadisticas'),
     path('admin/', admin.site.urls),
     path('', include('lumat_app.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)
