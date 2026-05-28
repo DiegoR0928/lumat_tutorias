@@ -6,3 +6,4 @@ behave
 selenium
 flake8
 coverage
+weasyprint
