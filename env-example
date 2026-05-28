@@ -7,3 +7,4 @@ DB_HOST=db
 
 DEBUG=False
 SECRET_KEY='django-insecure-^b30_3&(v9^fb!#d8g&$2l))4!m_%+z-+rfr)d7$p!2@ufh^y9'
+ALLOWED_HOSTS=lumat.amer-br.tech,13.59.63.164,app,localhost,127.0.0.1
