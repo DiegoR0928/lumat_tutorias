@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth import update_session_auth_hash
 from .forms import UserForm, AlumnoForm
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test
 # from django.http import HttpResponse
 from django.contrib import messages
 from .forms import AlumnoEditForm, PasswordChangeCustomForm
@@ -39,6 +39,22 @@ def registro(request):
     return render(request, 'registro.html', {
         'user_form': user_form,
         'alumno_form': alumno_form
+    })
+
+
+@login_required
+def seminario_detalle(request, num):
+    alumno = request.user.alumno
+    semestre = int(alumno.semestre)  # asegúrate que sea convertible a int
+
+    # Si el alumno intenta acceder a un seminario bloqueado
+    if num > semestre or num < 1 or num > 8:
+        # o una página de "acceso denegado"
+        return redirect('lumat_app:seminario')
+
+    return render(request, 'alumno_seminario.html', {
+        'alumno': alumno,
+        'num': num,
     })
 
 
