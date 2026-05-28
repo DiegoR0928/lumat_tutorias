@@ -72,11 +72,9 @@ class RegistroViewTest(TestCase):
     # Redirecciones
     # ------------------------------------------------------------------
 
-    def test_post_valido_redirige_a_registro(self):
-        """Tras un registro exitoso redirige a la misma página de registro."""
+    def test_post_valido_redirige_a_login(self):
         response = self.client.post(self.url, data=self.datos_validos())
-        self.assertRedirects(response, self.url)
-
+        self.assertRedirects(response, reverse('lumat_app:login'))
     # ------------------------------------------------------------------
     # Mensajes
     # ------------------------------------------------------------------
