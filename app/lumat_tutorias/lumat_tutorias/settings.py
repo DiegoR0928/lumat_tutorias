@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from django.templatetags.static import static
 
@@ -220,3 +221,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
+
+
+# Si el comando ejecutado es 'test', sobreescribimos la base de datos a SQLite en memoria
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }

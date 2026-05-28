@@ -11,13 +11,10 @@ import random
 from django.core.files.base import ContentFile
 
 from .models import Alumno, Docente, Seminario, CalendarioGenerado
-from django.contrib import messages
 from django.utils import timezone
 
 from .models import (
-    Alumno,
     Evidencia,
-    Seminario,
     SeminarioNumero,
     SolicitudCambioTutor
 )
@@ -83,6 +80,7 @@ def registro(request):
             user.last_name = alumno_form.cleaned_data.get(
                 'apellido_paterno', '')
             user.set_password(user_form.cleaned_data['password'])
+
             user.save()
 
             # Asignar grupo (get_or_create previene errores si el grupo
@@ -93,6 +91,7 @@ def registro(request):
             # Crear el perfil de alumno
             alumno = alumno_form.save(commit=False)
             alumno.user = user
+            alumno.correo = user.email
             alumno.save()
 
             messages.success(request, "Alumno registrado con éxito")
