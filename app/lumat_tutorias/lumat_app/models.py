@@ -83,3 +83,23 @@ class CalifSeminario(models.Model):
     def __str__(self):
         return f"Calificación de {self.docente.__str__()} para \
         {self.seminario.__str__()}"
+
+
+class CalendarioGenerado(models.Model):
+    nombre = models.CharField(
+        max_length=150, verbose_name="Nombre del Periodo")
+    fecha_inicio = models.DateField(verbose_name="Fecha Inicial")
+    fecha_fin = models.DateField(verbose_name="Fecha Final")
+    # Almacena el PDF dentro de la carpeta media/calendarios_guardados/
+    archivo_pdf = models.FileField(
+        upload_to='calendarios_guardados/', verbose_name="Archivo PDF")
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True, verbose_name="Fecha de Generación")
+
+    class Meta:
+        verbose_name = "Calendario Guardado"
+        verbose_name_plural = "Calendarios Guardados"
+        ordering = ['-fecha_creacion']  # El más reciente primero
+
+    def __str__(self):
+        return f"{self.nombre} ({self.fecha_creacion.strftime('%d/%m/%Y')})"
