@@ -209,3 +209,5 @@ CSRF_TRUSTED_ORIGINS = [
     'https://lumat.amer-br.tech',
     'https://www.lumat.amer-br.tech',
 ]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
