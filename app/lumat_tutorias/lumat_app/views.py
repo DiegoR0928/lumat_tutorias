@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import Group
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.views import LoginView, LogoutView
@@ -11,11 +11,15 @@ import random
 from django.core.files.base import ContentFile
 
 from .models import Alumno, Docente, Seminario, CalendarioGenerado
+from django.contrib import messages
+from django.utils import timezone
+
+from .models import Alumno, Evidencia, Seminario, SeminarioNumero, SolicitudCambioTutor
 from .forms import (
     UserForm,
     AlumnoForm,
     AlumnoEditForm,
-    PasswordChangeCustomForm
+    PasswordChangeCustomForm,
 )
 
 # ==========================================
@@ -97,20 +101,169 @@ def registro(request):
     })
 
 
+# ─────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────
+ 
+def _get_seminario_para_alumno(alumno, numero):
+    """
+    Devuelve el objeto Seminario vinculado al número dado para
+    este alumno, o None si todavía no existe / no está programado.
+    Aprovecha select_related para evitar N+1 en comité y docentes.
+    """
+    try:
+        sn = SeminarioNumero.objects.select_related(
+            'seminario',
+            'seminario__comite',
+            'seminario__comite__tutor',
+            'seminario__comite__miembro1',
+            'seminario__comite__miembro2',
+        ).get(alumno=alumno, numero=numero)
+        return sn.seminario  # puede ser None si el registro existe sin seminario
+    except SeminarioNumero.DoesNotExist:
+        return None
+ 
+ 
+def _proximo_seminario(alumno):
+    """
+    Devuelve el próximo Seminario programado (sin calificación aún)
+    con fecha >= hoy, o None.
+    """
+    hoy = timezone.now().date()
+    return (
+        Seminario.objects
+        .filter(alumno=alumno, calificacion__isnull=True, fecha__gte=hoy)
+        .order_by('fecha', 'hora')
+        .first()
+    )
+ 
+ 
+# ─────────────────────────────────────────────
+# Vista: listado / hub de seminarios
+# ─────────────────────────────────────────────
+ 
+@login_required
+def seminario(request):
+    """Redirige al seminario activo (el más reciente desbloqueado)."""
+    alumno = request.user.alumno
+    semestre = int(alumno.semestre)
+    return redirect('lumat_app:seminario_detalle', num=semestre)
+ 
+ 
+# ─────────────────────────────────────────────
+# Vista: detalle de un seminario
+# ─────────────────────────────────────────────
+ 
 @login_required
 def seminario_detalle(request, num):
+    alumno   = request.user.alumno
+    semestre = int(alumno.semestre)
+ 
+    # Validaciones de acceso
+    if not (1 <= num <= 8):
+        messages.error(request, "Número de seminario inválido.")
+        return redirect('lumat_app:seminario_detalle', num=semestre)
+ 
+    if num > semestre:
+        messages.warning(request, f"El seminario {num} estará disponible en semestres posteriores.")
+        return redirect('lumat_app:seminario_detalle', num=semestre)
+ 
+    # Datos del seminario seleccionado
+    seminario_obj = _get_seminario_para_alumno(alumno, num)
+    comite        = seminario_obj.comite if seminario_obj else None
+    evidencias    = (
+        Evidencia.objects.filter(seminario=seminario_obj).order_by('subido_en')
+        if seminario_obj else []
+    )
+ 
+    # Solicitud de cambio de tutor pendiente (para deshabilitar el botón si ya hay una)
+    solicitud_pendiente = SolicitudCambioTutor.objects.filter(
+        alumno=alumno, estado='pendiente'
+    ).exists()
+ 
+    context = {
+        'alumno':              alumno,
+        'num':                 num,
+        'seminario':           seminario_obj,
+        'comite':              comite,
+        'evidencias':          evidencias,
+        'proximo_seminario':   _proximo_seminario(alumno),
+        'solicitud_pendiente': solicitud_pendiente,
+    }
+    return render(request, 'alumno_seminario.html', context)
+ 
+ 
+# ─────────────────────────────────────────────
+# Vista: subir evidencia
+# ─────────────────────────────────────────────
+ 
+@login_required
+def subir_evidencia(request, seminario_id):
+    alumno       = request.user.alumno
+    seminario_obj = get_object_or_404(Seminario, id=seminario_id, alumno=alumno)
+ 
+    if request.method != 'POST':
+        return redirect('lumat_app:seminario_detalle',
+                        num=seminario_obj.numero_obj.numero)
+ 
+    archivo = request.FILES.get('archivo')
+ 
+    if not archivo:
+        messages.error(request, "No se seleccionó ningún archivo.")
+        return redirect('lumat_app:seminario_detalle',
+                        num=seminario_obj.numero_obj.numero)
+ 
+    # Validación de tamaño (máx. 10 MB)
+    MAX_SIZE = 10 * 1024 * 1024
+    if archivo.size > MAX_SIZE:
+        messages.error(request, "El archivo no puede superar 10 MB.")
+        return redirect('lumat_app:seminario_detalle',
+                        num=seminario_obj.numero_obj.numero)
+ 
+    # Validación de tipo MIME básica
+    TIPOS_PERMITIDOS = (
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf',
+    )
+    if archivo.content_type not in TIPOS_PERMITIDOS:
+        messages.error(request, "Solo se permiten imágenes (JPG, PNG, GIF, WEBP) y PDFs.")
+        return redirect('lumat_app:seminario_detalle',
+                        num=seminario_obj.numero_obj.numero)
+ 
+    Evidencia.objects.create(
+        seminario=seminario_obj,
+        archivo=archivo,
+        nombre=archivo.name,
+    )
+ 
+    messages.success(request, "Evidencia subida correctamente.")
+    return redirect('lumat_app:seminario_detalle',
+                    num=seminario_obj.numero_obj.numero)
+ 
+ 
+# ─────────────────────────────────────────────
+# Vista: solicitar cambio de tutor
+# ─────────────────────────────────────────────
+ 
+@login_required
+def cambio_tutor(request):
     alumno = request.user.alumno
-    semestre = int(alumno.semestre)  # asegúrate que sea convertible a int
-
-    # Si el alumno intenta acceder a un seminario bloqueado
-    if num > semestre or num < 1 or num > 8:
-        # o una página de "acceso denegado"
-        return redirect('lumat_app:seminario')
-
-    return render(request, 'alumno_seminario.html', {
-        'alumno': alumno,
-        'num': num,
-    })
+ 
+    # Si ya tiene una solicitud pendiente, no permite crear otra
+    if SolicitudCambioTutor.objects.filter(alumno=alumno, estado='pendiente').exists():
+        messages.warning(request, "Ya tienes una solicitud de cambio de tutor en proceso.")
+        return redirect('lumat_app:seminario_detalle', num=int(alumno.semestre))
+ 
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo', '').strip()
+        if not motivo:
+            messages.error(request, "Debes indicar el motivo de la solicitud.")
+        else:
+            SolicitudCambioTutor.objects.create(alumno=alumno, motivo=motivo)
+            messages.success(request, "Solicitud enviada. La coordinación la revisará pronto.")
+            return redirect('lumat_app:seminario_detalle', num=int(alumno.semestre))
+ 
+    return render(request, 'cambio_tutor.html', {'alumno': alumno})
 
 
 @user_passes_test(es_docente)

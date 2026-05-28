@@ -103,3 +103,104 @@ class CalendarioGenerado(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.fecha_creacion.strftime('%d/%m/%Y')})"
+# Agregar estos modelos a tu models.py existente
+# (los modelos anteriores: Alumno, Docente, Comite, Seminario, CalifSeminario quedan igual)
+
+import os
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+
+
+# ─────────────────────────────────────────────
+# SeminarioNumero
+# Vincula un Seminario con su número (1-8) para
+# un alumno. Un alumno solo puede tener un
+# seminario por número.
+# ─────────────────────────────────────────────
+class SeminarioNumero(models.Model):
+    alumno    = models.ForeignKey('Alumno',    on_delete=models.CASCADE, related_name='seminarios_numerados')
+    seminario = models.OneToOneField('Seminario', on_delete=models.CASCADE, related_name='numero_obj', null=True, blank=True)
+    numero    = models.PositiveSmallIntegerField()  # 1 – 8
+
+    class Meta:
+        unique_together = ('alumno', 'numero')
+        ordering = ['numero']
+
+    def __str__(self):
+        return f"Seminario {self.numero} — {self.alumno}"
+
+
+# ─────────────────────────────────────────────
+# Evidencia
+# Archivos que el alumno sube para un Seminario.
+# ─────────────────────────────────────────────
+def evidencia_upload_path(instance, filename):
+    """Guarda en: evidencias/<alumno_id>/<seminario_id>/<filename>"""
+    return os.path.join(
+        'evidencias',
+        str(instance.seminario.alumno_id),
+        str(instance.seminario_id),
+        filename,
+    )
+
+
+class Evidencia(models.Model):
+    TIPO_CHOICES = [
+        ('imagen', 'Imagen'),
+        ('pdf',    'PDF'),
+        ('otro',   'Otro'),
+    ]
+
+    seminario  = models.ForeignKey('Seminario', on_delete=models.CASCADE, related_name='evidencias')
+    archivo    = models.FileField(upload_to=evidencia_upload_path)
+    tipo       = models.CharField(max_length=10, choices=TIPO_CHOICES, default='otro')
+    nombre     = models.CharField(max_length=200, blank=True)
+    subido_en  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['subido_en']
+
+    def save(self, *args, **kwargs):
+        # Determina el tipo automáticamente por extensión
+        if self.archivo:
+            ext = os.path.splitext(self.archivo.name)[1].lower()
+            if ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp'):
+                self.tipo = 'imagen'
+            elif ext == '.pdf':
+                self.tipo = 'pdf'
+            else:
+                self.tipo = 'otro'
+
+            # Usa el nombre del archivo como nombre legible si no se proporcionó
+            if not self.nombre:
+                self.nombre = os.path.basename(self.archivo.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Evidencia [{self.tipo}] — Seminario {self.seminario_id}"
+
+
+# ─────────────────────────────────────────────
+# SolicitudCambioTutor
+# Registro de solicitudes de cambio de tutor.
+# ─────────────────────────────────────────────
+class SolicitudCambioTutor(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aprobada',  'Aprobada'),
+        ('rechazada', 'Rechazada'),
+    ]
+
+    alumno      = models.ForeignKey('Alumno', on_delete=models.CASCADE, related_name='solicitudes_tutor')
+    motivo      = models.TextField()
+    estado      = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pendiente')
+    creada_en   = models.DateTimeField(auto_now_add=True)
+    resuelta_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-creada_en']
+
+    def __str__(self):
+        return f"Solicitud cambio tutor — {self.alumno} ({self.estado})"
