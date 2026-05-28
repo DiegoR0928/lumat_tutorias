@@ -10,7 +10,7 @@ RUN apt-get install -y \
     libmariadb-dev \
     libapache2-mod-wsgi-py3 \
     pkg-config \
-    gcc
+    gcc 
 
 ENV TZ=America/Mexico_City
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -23,7 +23,18 @@ RUN python3 -m venv /env
 ENV PATH="/env/bin:$PATH"
 
 RUN /env/bin/pip install --upgrade pip
+
+RUN apt-get update && apt-get install -y \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz-subset0 \
+    libjpeg-dev \
+    libopenjp2-7-dev \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN /env/bin/pip install -r /app/requirements-dev.txt
+
 
 # El código llega por volumen en docker-compose, no se copia aquí
 CMD ["apachectl", "-D", "FOREGROUND"]

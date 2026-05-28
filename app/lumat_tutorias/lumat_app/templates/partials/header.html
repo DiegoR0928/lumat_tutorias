@@ -51,9 +51,8 @@
                     cursor: pointer;
                     transition: all 0.2s;
                     font-family: 'Georgia', serif;
-                "
-                onmouseover="this.style.background='#e3d9cb'; this.style.borderColor='#8a7560'"
-                onmouseout="this.style.background='#eee8de'; this.style.borderColor='#c8b89a'">
+                " onmouseover="this.style.background='#e3d9cb'; this.style.borderColor='#8a7560'"
+                    onmouseout="this.style.background='#eee8de'; this.style.borderColor='#c8b89a'">
                     <!-- Avatar -->
                     <div style="
                         width: 30px; height: 30px; border-radius: 50%;
@@ -62,62 +61,86 @@
                         font-size: 13px; font-weight: bold; flex-shrink: 0;
                     ">{{ user.username|first|upper }}</div>
 
-                    <span style="font-size: 0.82rem; color: #4a3f32; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <span
+                        style="font-size: 0.82rem; color: #4a3f32; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         {{ user.username }}
                     </span>
 
-                    <svg id="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                         stroke="#8a7560" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                         style="transition: transform 0.2s;">
-                        <polyline points="6 9 12 15 18 9"/>
+                    <svg id="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8a7560"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        style="transition: transform 0.2s;">
+                        <polyline points="6 9 12 15 18 9" />
                     </svg>
                 </button>
 
                 <!-- Panel desplegable -->
                 <div id="userPanel" style="
-                    position: absolute; right: 0; top: calc(100% + 10px);
-                    width: 210px;
-                    background: #f7f4ef;
-                    border: 1px solid #c8b89a;
-                    border-radius: 10px;
-                    box-shadow: 0 8px 28px rgba(74,63,50,0.15);
-                    overflow: hidden;
-                    display: none;
-                    z-index: 9999;
-                ">
+    position: absolute; right: 0; top: calc(100% + 10px);
+    width: 210px;
+    background: #f7f4ef;
+    border: 1px solid #c8b89a;
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(74,63,50,0.15);
+    overflow: hidden;
+    display: none;
+    z-index: 9999;
+">
                     <!-- Encabezado -->
                     <div style="padding: 14px 16px; border-bottom: 1px solid #e3d9cb; background: #eee8de;">
-                        <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: #4a7c7a; font-weight: bold; margin-bottom: 4px;">
+                        <div
+                            style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: #4a7c7a; font-weight: bold; margin-bottom: 4px;">
                             Sesión activa
                         </div>
                         <div style="font-size: 0.88rem; color: #4a3f32; font-family: 'Georgia', serif;">
                             {{ user.get_full_name|default:user.username }}
                         </div>
-                        <div style="font-size: 0.73rem; color: #8a7560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: Arial, sans-serif;">
+                        <div
+                            style="font-size: 0.73rem; color: #8a7560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: Arial, sans-serif;">
                             {{ user.email }}
                         </div>
                     </div>
 
+                    <!-- ✅ NUEVO: Enlace a perfil -->
+                    <div style="padding: 6px 6px 0 6px;">
+                        <a href="{% url 'lumat_app:perfil_alumno' %}" style="
+                            display: flex; align-items: center; gap: 8px;
+                            width: 100%; padding: 11px 16px;
+                            font-size: 0.84rem;
+                            color: #4a3f32; font-family: 'Georgia', serif;
+                            text-decoration: none;
+                            border-radius: 6px;
+                            transition: background 0.15s;
+                        " onmouseover="this.style.background='#e3d9cb'" onmouseout="this.style.background='transparent'">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            Mi perfil
+                        </a>
+                    </div>
+
+                    <!-- Separador -->
+                    <div style="margin: 0 16px; border-top: 1px solid #e3d9cb;"></div>
+
                     <!-- Cerrar sesión -->
-                    <div style="padding: 6px;">
+                    <div style="padding: 0 6px 6px 6px;">
                         <form method="POST" action="{% url 'lumat_app:logout' %}">
                             {% csrf_token %}
                             <button type="submit" style="
-                                display: flex; align-items: center; gap: 8px;
-                                width: 100%; padding: 11px 16px;
-                                background: transparent; border: none;
-                                cursor: pointer; font-size: 0.84rem;
-                                color: #8a3a2a; font-family: 'Georgia', serif;
-                                transition: background 0.15s; text-align: left;
-                                border-radius: 6px;
-                            "
-                            onmouseover="this.style.background='#faeae6'"
-                            onmouseout="this.style.background='transparent'">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                                    <polyline points="16 17 21 12 16 7"/>
-                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                display: flex; align-items: center; gap: 8px;
+                width: 100%; padding: 11px 16px;
+                background: transparent; border: none;
+                cursor: pointer; font-size: 0.84rem;
+                color: #8a3a2a; font-family: 'Georgia', serif;
+                transition: background 0.15s; text-align: left;
+                border-radius: 6px;
+            " onmouseover="this.style.background='#faeae6'" onmouseout="this.style.background='transparent'">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                    <polyline points="16 17 21 12 16 7" />
+                                    <line x1="21" y1="12" x2="9" y2="12" />
                                 </svg>
                                 Cerrar sesión
                             </button>
@@ -131,19 +154,19 @@
 </nav>
 
 <script>
-function toggleMenu() {
-    const panel = document.getElementById('userPanel');
-    const chevron = document.getElementById('chevron');
-    const open = panel.style.display === 'block';
-    panel.style.display = open ? 'none' : 'block';
-    chevron.style.transform = open ? '' : 'rotate(180deg)';
-}
-document.addEventListener('click', function(e) {
-    const btn = document.getElementById('userBtn');
-    const panel = document.getElementById('userPanel');
-    if (btn && panel && !btn.contains(e.target) && !panel.contains(e.target)) {
-        panel.style.display = 'none';
-        document.getElementById('chevron').style.transform = '';
+    function toggleMenu() {
+        const panel = document.getElementById('userPanel');
+        const chevron = document.getElementById('chevron');
+        const open = panel.style.display === 'block';
+        panel.style.display = open ? 'none' : 'block';
+        chevron.style.transform = open ? '' : 'rotate(180deg)';
     }
-});
+    document.addEventListener('click', function (e) {
+        const btn = document.getElementById('userBtn');
+        const panel = document.getElementById('userPanel');
+        if (btn && panel && !btn.contains(e.target) && !panel.contains(e.target)) {
+            panel.style.display = 'none';
+            document.getElementById('chevron').style.transform = '';
+        }
+    });
 </script>

@@ -1,0 +1,40 @@
+{% extends "unfold/layouts/base_simple.html" %}
+{% load static %}
+
+{% block content %}
+<div class="p-6 max-w-2xl mx-auto bg-white rounded-lg border border-gray-200 shadow-sm mt-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ title }}</h1>
+    <p class="text-gray-600 mb-6 text-sm">El sistema tomará todos los seminarios guardados en la base de datos y los distribuirá de forma aleatoria y equitativa dentro del rango de fechas que selecciones.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form action="/admin/calendar-generator/generate/" method="POST" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Inicio del Periodo</label>
+                <input type="date" name="fecha_inicial" class="border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:border-[#4a7c7a] focus:ring-1 focus:ring-[#4a7c7a] w-full block" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Finalización</label>
+                <input type="date" name="fecha_final" class="border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:border-[#4a7c7a] focus:ring-1 focus:ring-[#4a7c7a] w-full block" required>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-100 pt-4 flex justify-end">
+            <button type="submit" class="bg-[#4a7c7a] hover:bg-[#3a9795] text-white font-medium py-2.5 px-5 rounded transition duration-150 inline-flex items-center shadow-sm text-sm">
+                <span class="material-symbols-outlined mr-2 text-base">shuffle</span>
+                Distribuir y Generar PDF
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

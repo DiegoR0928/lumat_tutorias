@@ -7,8 +7,8 @@ Característica: Registro de alumno
 
   Escenario: Registro exitoso de un alumno con datos válidos
     Dado que estoy en la página de registro de alumno
-    Cuando ingreso "juan123" en el campo "usuario"
-    Y ingreso "juan@escuela.mx" en el campo "email"
+    Cuando ingreso "juan12345" en el campo "usuario"
+    Y ingreso "juan12345@escuela.mx" en el campo "email"
     Y ingreso "Segura#2025" en el campo "contraseña"
     Y ingreso "Juan" en el campo "nombre"
     Y ingreso "Pérez" en el campo "apellido paterno"
@@ -19,7 +19,7 @@ Característica: Registro de alumno
 
   Escenario: Registro fallido por nombre de usuario ya existente
     Dado que estoy en la página de registro de alumno
-    Y el usuario "existente99" ya existe en el sistema
+    Y el usuario "juan12345" ya existe en el sistema
     Cuando ingreso "existente99" en el campo "usuario"
     Y ingreso "otro@escuela.mx" en el campo "email"
     Y ingreso "Segura#2025" en el campo "contraseña"

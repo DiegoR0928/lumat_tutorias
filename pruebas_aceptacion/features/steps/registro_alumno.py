@@ -26,8 +26,12 @@ def step_impl(context, username):
 
     driver.get('http://localhost:8000/registro/')
 
+<<<<<<< HEAD
     wait.until(EC.presence_of_element_located(
         (By.NAME, 'username'))).send_keys(username)
+=======
+    wait.until(EC.presence_of_element_located((By.NAME, 'username'))).send_keys(username)
+>>>>>>> origin/main
     driver.find_element(By.NAME, 'email').send_keys('previo@escuela.mx')
     driver.find_element(By.NAME, 'password').send_keys('Temporal#123')
     driver.find_element(By.NAME, 'nombre').send_keys('Previo')
@@ -38,8 +42,12 @@ def step_impl(context, username):
     # Esperamos el mensaje de éxito para confirmar que se creó correctamente
     try:
         wait.until(
+<<<<<<< HEAD
             EC.visibility_of_element_located(
                 (By.CLASS_NAME, 'alert-success-custom'))
+=======
+            EC.visibility_of_element_located((By.CLASS_NAME, 'alert-success-custom'))
+>>>>>>> origin/main
         )
     except Exception:
         raise AssertionError(
@@ -112,8 +120,12 @@ def step_impl(context):
 def step_impl(context):
     wait = WebDriverWait(context.driver, 10)
     mensaje = wait.until(
+<<<<<<< HEAD
         EC.visibility_of_element_located(
             (By.CLASS_NAME, 'alert-success-custom'))
+=======
+        EC.visibility_of_element_located((By.CLASS_NAME, 'alert-success-custom'))
+>>>>>>> origin/main
     )
     assert 'Alumno registrado con éxito' in mensaje.text, (
         f"Mensaje esperado no encontrado. Texto visible: '{mensaje.text}'"
@@ -135,8 +147,12 @@ def step_impl(context):
     # Damos un momento al DOM para estabilizarse
     import time
     time.sleep(1)
+<<<<<<< HEAD
     elementos = context.driver.find_elements(
         By.CLASS_NAME, 'alert-success-custom')
+=======
+    elementos = context.driver.find_elements(By.CLASS_NAME, 'alert-success-custom')
+>>>>>>> origin/main
     assert len(elementos) == 0, (
         "Se encontró el mensaje de éxito cuando no debería aparecer."
     )
@@ -154,4 +170,8 @@ def step_impl(context):
 
     assert len(textos) > 0, (
         "No se encontró ningún mensaje de error visible en el formulario."
+<<<<<<< HEAD
     )
+=======
+    )
+>>>>>>> origin/main

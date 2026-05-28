@@ -149,6 +149,57 @@ UNFOLD = {
         },
     },
 
+    "SIDEBAR": {
+        "show_search": True,            # Habilita un buscador rápido en el menú
+        "show_all_applications": False, 
+        
+        "navigation": [
+            {
+                "title": "Control Escolar",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Usuarios",
+                        "icon": "group",
+                        "link": "/admin/auth/user/",
+                    },
+                    {
+                        "title": "Alumnos",
+                        "icon": "school",
+                        "link": "/admin/lumat_app/alumno/",
+                    },
+                    {
+                        "title": "Docentes",
+                        "icon": "engineering",
+                        "link": "/admin/lumat_app/docente/",
+                    },
+                    {
+                        "title": "Comités",
+                        "icon": "groups",
+                        "link": "/admin/lumat_app/comite/",
+                    },
+                    {
+                        "title": "Seminarios",
+                        "icon": "supervised_user_circle",
+                        "link": "/admin/lumat_app/seminario/",
+                    },
+                ],
+            },
+            
+            {
+                "title": "Fechas y Horarios",
+                "separator": True, 
+                "items": [
+                    {
+                        "title": "Calendario",
+                        "icon": "calendar_today", 
+                        "link": "/admin/calendar-generator/",
+                    },
+                ],
+            },
+        ],
+    },
+
     "STYLES": [
         lambda request: static("css/admin_custom.css"),
     ],

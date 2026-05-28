@@ -3,3 +3,4 @@ mysqlclient
 pillow
 django-unfold
 flake8
+weasyprint

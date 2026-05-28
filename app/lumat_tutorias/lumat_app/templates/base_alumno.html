@@ -10,23 +10,46 @@
             <div class="card shadow-sm border-0">
                 <div class="card-body p-3">
 
-                    <h6 class="text-muted mb-3">Menú</h6>
+                    <h6 class="text-muted mb-3" style="font-family: Georgia, serif; letter-spacing: 0.05em;">
+                        Seminarios
+                    </h6>
 
-                    <div class="d-grid gap-2">
+                    {% with semestre=request.user.alumno.semestre|add:"0" %}
+                    <div class="d-grid gap-1">
 
-                        <a href="{% url 'lumat_app:seminario' %}"
-                        id="btn_seminario_alumno"
-                           class="btn text-start {% if '/alumno/seminario/' in request.path %}btn-dark{% else %}btn-outline-dark{% endif %}">
-                            📚 Seminario
-                        </a>
+                        {% for i in "12345678" %}
+                        {% with num=forloop.counter %}
 
-                        <a href="{% url 'lumat_app:perfil_alumno' %}"
-                            id="btn_perfil_alumno"
-                           class="btn text-start {% if '/alumno/perfil/' in request.path %}btn-dark{% else %}btn-outline-dark{% endif %}">
-                            👤 Perfil
-                        </a>
+                        {% if num <= semestre %} <!-- Desbloqueado -->
+                            <a href="{% url 'lumat_app:seminario_detalle' num %}"
+                                class="btn text-start btn-sm {% if num|stringformat:'s' in request.path %}btn-dark{% else %}btn-outline-dark{% endif %}"
+                                style="font-size: 0.82rem;">
+                                📖 Seminario {{ num }}
+                            </a>
+                            {% else %}
+                            <!-- Bloqueado -->
+                            <button class="btn btn-sm btn-outline-secondary text-start opacity-50" disabled
+                                style="font-size: 0.82rem; cursor: not-allowed;"
+                                title="Disponible en semestre {{ num }}">
+                                🔒 Seminario {{ num }}
+                            </button>
+                            {% endif %}
+
+                            {% endwith %}
+                            {% endfor %}
 
                     </div>
+                    {% endwith %}
+
+                    <hr style="border-color: #c8b89a; margin: 12px 0;">
+
+                    <!-- <div class="d-grid">
+                        <a href="{% url 'lumat_app:perfil_alumno' %}"
+                            class="btn btn-sm text-start {% if '/alumno/perfil/' in request.path %}btn-dark{% else %}btn-outline-dark{% endif %}"
+                            style="font-size: 0.82rem;">
+                            👤 Perfil
+                        </a>
+                    </div> -->
 
                 </div>
             </div>
