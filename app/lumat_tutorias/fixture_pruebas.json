@@ -1,0 +1,400 @@
+[
+  {
+    "model": "auth.group",
+    "fields": {
+      "name": "Alumno",
+      "permissions": []
+    }
+  },
+  {
+    "model": "auth.group",
+    "fields": {
+      "name": "Docente",
+      "permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "username": "amerinaga",
+      "email": "amerinaga@lumat.mx",
+      "password": "pbkdf2_sha256$720000$test$hashedpassword=",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "first_name": "Alejandro",
+      "last_name": "Merinaga",
+      "groups": [
+        [
+          "Alumno"
+        ]
+      ],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "username": "lgarcia",
+      "email": "lgarcia@lumat.mx",
+      "password": "pbkdf2_sha256$720000$test$hashedpassword=",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "first_name": "Laura",
+      "last_name": "García",
+      "groups": [
+        [
+          "Alumno"
+        ]
+      ],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 4,
+    "fields": {
+      "username": "doc_ramirez",
+      "email": "ramirez@lumat.mx",
+      "password": "pbkdf2_sha256$720000$test$hashedpassword=",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "first_name": "Carlos",
+      "last_name": "Ramírez",
+      "groups": [
+        [
+          "Docente"
+        ]
+      ],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 5,
+    "fields": {
+      "username": "doc_mendoza",
+      "email": "mendoza@lumat.mx",
+      "password": "pbkdf2_sha256$720000$test$hashedpassword=",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "first_name": "Patricia",
+      "last_name": "Mendoza",
+      "groups": [
+        [
+          "Docente"
+        ]
+      ],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 6,
+    "fields": {
+      "username": "doc_torres",
+      "email": "torres@lumat.mx",
+      "password": "pbkdf2_sha256$720000$test$hashedpassword=",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "first_name": "Héctor",
+      "last_name": "Torres",
+      "groups": [
+        [
+          "Docente"
+        ]
+      ],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "lumat_app.alumno",
+    "pk": 1,
+    "fields": {
+      "user": 2,
+      "matricula": "20230001",
+      "nombre": "Alejandro",
+      "apellido_paterno": "Merinaga",
+      "apellido_materno": "Rosas",
+      "semestre": "4",
+      "correo": "amerinaga@lumat.mx"
+    }
+  },
+  {
+    "model": "lumat_app.alumno",
+    "pk": 2,
+    "fields": {
+      "user": 3,
+      "matricula": "20230002",
+      "nombre": "Laura",
+      "apellido_paterno": "García",
+      "apellido_materno": "Núñez",
+      "semestre": "2",
+      "correo": "lgarcia@lumat.mx"
+    }
+  },
+  {
+    "model": "lumat_app.docente",
+    "pk": 1,
+    "fields": {
+      "user": 4,
+      "nombre": "Carlos",
+      "apellido_paterno": "Ramírez",
+      "apellido_materno": "Ibáñez",
+      "correo": "ramirez@lumat.mx",
+      "firma": ""
+    }
+  },
+  {
+    "model": "lumat_app.docente",
+    "pk": 2,
+    "fields": {
+      "user": 5,
+      "nombre": "Patricia",
+      "apellido_paterno": "Mendoza",
+      "apellido_materno": "Cruz",
+      "correo": "mendoza@lumat.mx",
+      "firma": ""
+    }
+  },
+  {
+    "model": "lumat_app.docente",
+    "pk": 3,
+    "fields": {
+      "user": 6,
+      "nombre": "Héctor",
+      "apellido_paterno": "Torres",
+      "apellido_materno": "Vega",
+      "correo": "torres@lumat.mx",
+      "firma": ""
+    }
+  },
+  {
+    "model": "lumat_app.comite",
+    "pk": 1,
+    "fields": {
+      "tutor": 1,
+      "miembro1": 2,
+      "miembro2": 3
+    }
+  },
+  {
+    "model": "lumat_app.seminario",
+    "pk": 1,
+    "fields": {
+      "alumno": 1,
+      "comite": 1,
+      "fecha": "2023-10-15",
+      "hora": "10:00:00",
+      "calificacion": "9.20",
+      "actaComite": "actas/acta_comite_sem1.pdf",
+      "actaAlumno": "actas_alumno/acta_alumno_sem1.pdf"
+    }
+  },
+  {
+    "model": "lumat_app.seminario",
+    "pk": 2,
+    "fields": {
+      "alumno": 1,
+      "comite": 1,
+      "fecha": "2024-03-20",
+      "hora": "11:00:00",
+      "calificacion": "8.50",
+      "actaComite": "actas/acta_comite_sem2.pdf",
+      "actaAlumno": "actas_alumno/acta_alumno_sem2.pdf"
+    }
+  },
+  {
+    "model": "lumat_app.seminario",
+    "pk": 3,
+    "fields": {
+      "alumno": 1,
+      "comite": 1,
+      "fecha": "2024-09-10",
+      "hora": "09:30:00",
+      "calificacion": "9.80",
+      "actaComite": "actas/acta_comite_sem3.pdf",
+      "actaAlumno": "actas_alumno/acta_alumno_sem3.pdf"
+    }
+  },
+  {
+    "model": "lumat_app.seminario",
+    "pk": 4,
+    "fields": {
+      "alumno": 1,
+      "comite": 1,
+      "fecha": "2026-06-18",
+      "hora": "10:00:00",
+      "calificacion": null,
+      "actaComite": "",
+      "actaAlumno": ""
+    }
+  },
+  {
+    "model": "lumat_app.seminario",
+    "pk": 5,
+    "fields": {
+      "alumno": 2,
+      "comite": 1,
+      "fecha": "2023-11-05",
+      "hora": "12:00:00",
+      "calificacion": "7.90",
+      "actaComite": "actas/acta_comite_sem1_lg.pdf",
+      "actaAlumno": "actas_alumno/acta_alumno_sem1_lg.pdf"
+    }
+  },
+  {
+    "model": "lumat_app.seminario",
+    "pk": 6,
+    "fields": {
+      "alumno": 2,
+      "comite": 1,
+      "fecha": "2026-07-10",
+      "hora": "11:30:00",
+      "calificacion": null,
+      "actaComite": "",
+      "actaAlumno": ""
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 1,
+    "fields": {
+      "seminario": 1,
+      "docente": 1,
+      "calificacion": "9.00"
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 2,
+    "fields": {
+      "seminario": 1,
+      "docente": 2,
+      "calificacion": "9.50"
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 3,
+    "fields": {
+      "seminario": 1,
+      "docente": 3,
+      "calificacion": "9.10"
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 4,
+    "fields": {
+      "seminario": 2,
+      "docente": 1,
+      "calificacion": "8.00"
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 5,
+    "fields": {
+      "seminario": 2,
+      "docente": 2,
+      "calificacion": "9.00"
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 6,
+    "fields": {
+      "seminario": 2,
+      "docente": 3,
+      "calificacion": "8.50"
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 7,
+    "fields": {
+      "seminario": 3,
+      "docente": 1,
+      "calificacion": "10.00"
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 8,
+    "fields": {
+      "seminario": 3,
+      "docente": 2,
+      "calificacion": "9.50"
+    }
+  },
+  {
+    "model": "lumat_app.califseminario",
+    "pk": 9,
+    "fields": {
+      "seminario": 3,
+      "docente": 3,
+      "calificacion": "9.90"
+    }
+  },
+  {
+    "model": "lumat_app.seminarionumero",
+    "pk": 1,
+    "fields": {
+      "alumno": 1,
+      "seminario": 1,
+      "numero": 1
+    }
+  },
+  {
+    "model": "lumat_app.seminarionumero",
+    "pk": 2,
+    "fields": {
+      "alumno": 1,
+      "seminario": 2,
+      "numero": 2
+    }
+  },
+  {
+    "model": "lumat_app.seminarionumero",
+    "pk": 3,
+    "fields": {
+      "alumno": 1,
+      "seminario": 3,
+      "numero": 3
+    }
+  },
+  {
+    "model": "lumat_app.seminarionumero",
+    "pk": 4,
+    "fields": {
+      "alumno": 1,
+      "seminario": 4,
+      "numero": 4
+    }
+  },
+  {
+    "model": "lumat_app.seminarionumero",
+    "pk": 5,
+    "fields": {
+      "alumno": 2,
+      "seminario": 5,
+      "numero": 1
+    }
+  },
+  {
+    "model": "lumat_app.seminarionumero",
+    "pk": 6,
+    "fields": {
+      "alumno": 2,
+      "seminario": 6,
+      "numero": 2
+    }
+  }
+]

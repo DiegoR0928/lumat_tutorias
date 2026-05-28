@@ -14,7 +14,13 @@ from .models import Alumno, Docente, Seminario, CalendarioGenerado
 from django.contrib import messages
 from django.utils import timezone
 
-from .models import Alumno, Evidencia, Seminario, SeminarioNumero, SolicitudCambioTutor
+from .models import (
+    Alumno,
+    Evidencia,
+    Seminario,
+    SeminarioNumero,
+    SolicitudCambioTutor
+)
 from .forms import (
     UserForm,
     AlumnoForm,
@@ -104,7 +110,7 @@ def registro(request):
 # ─────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────
- 
+
 def _get_seminario_para_alumno(alumno, numero):
     """
     Devuelve el objeto Seminario vinculado al número dado para
@@ -119,11 +125,12 @@ def _get_seminario_para_alumno(alumno, numero):
             'seminario__comite__miembro1',
             'seminario__comite__miembro2',
         ).get(alumno=alumno, numero=numero)
-        return sn.seminario  # puede ser None si el registro existe sin seminario
+        # puede ser None si el registro existe sin seminario
+        return sn.seminario
     except SeminarioNumero.DoesNotExist:
         return None
- 
- 
+
+
 def _proximo_seminario(alumno):
     """
     Devuelve el próximo Seminario programado (sin calificación aún)
@@ -136,134 +143,158 @@ def _proximo_seminario(alumno):
         .order_by('fecha', 'hora')
         .first()
     )
- 
- 
+
+
 # ─────────────────────────────────────────────
 # Vista: listado / hub de seminarios
 # ─────────────────────────────────────────────
- 
+
 @login_required
 def seminario(request):
     """Redirige al seminario activo (el más reciente desbloqueado)."""
     alumno = request.user.alumno
     semestre = int(alumno.semestre)
     return redirect('lumat_app:seminario_detalle', num=semestre)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # Vista: detalle de un seminario
 # ─────────────────────────────────────────────
- 
+
 @login_required
 def seminario_detalle(request, num):
-    alumno   = request.user.alumno
+    alumno = request.user.alumno
     semestre = int(alumno.semestre)
- 
+
     # Validaciones de acceso
     if not (1 <= num <= 8):
         messages.error(request, "Número de seminario inválido.")
         return redirect('lumat_app:seminario_detalle', num=semestre)
- 
+
     if num > semestre:
-        messages.warning(request, f"El seminario {num} estará disponible en semestres posteriores.")
+        messages.warning(
+            request,
+            f"El seminario {num} estará disponible en semestres posteriores."
+        )
         return redirect('lumat_app:seminario_detalle', num=semestre)
- 
+
     # Datos del seminario seleccionado
     seminario_obj = _get_seminario_para_alumno(alumno, num)
-    comite        = seminario_obj.comite if seminario_obj else None
-    evidencias    = (
-        Evidencia.objects.filter(seminario=seminario_obj).order_by('subido_en')
+    comite = seminario_obj.comite if seminario_obj else None
+    evidencias = (
+        Evidencia.objects.filter(
+            seminario=seminario_obj
+        ).order_by("subido_en")
         if seminario_obj else []
     )
- 
-    # Solicitud de cambio de tutor pendiente (para deshabilitar el botón si ya hay una)
+
+    # Solicitud de cambio de tutor pendiente (para deshabilitar
+    # el botón si ya hay una)
     solicitud_pendiente = SolicitudCambioTutor.objects.filter(
         alumno=alumno, estado='pendiente'
     ).exists()
- 
+
     context = {
-        'alumno':              alumno,
-        'num':                 num,
-        'seminario':           seminario_obj,
-        'comite':              comite,
-        'evidencias':          evidencias,
-        'proximo_seminario':   _proximo_seminario(alumno),
+        'alumno': alumno,
+        'num': num,
+        'seminario': seminario_obj,
+        'comite': comite,
+        'evidencias': evidencias,
+        'proximo_seminario': _proximo_seminario(alumno),
         'solicitud_pendiente': solicitud_pendiente,
     }
     return render(request, 'alumno_seminario.html', context)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # Vista: subir evidencia
 # ─────────────────────────────────────────────
- 
+
 @login_required
 def subir_evidencia(request, seminario_id):
-    alumno       = request.user.alumno
-    seminario_obj = get_object_or_404(Seminario, id=seminario_id, alumno=alumno)
- 
+    alumno = request.user.alumno
+    seminario_obj = get_object_or_404(
+        Seminario, id=seminario_id, alumno=alumno)
+
     if request.method != 'POST':
         return redirect('lumat_app:seminario_detalle',
                         num=seminario_obj.numero_obj.numero)
- 
+
     archivo = request.FILES.get('archivo')
- 
+
     if not archivo:
         messages.error(request, "No se seleccionó ningún archivo.")
         return redirect('lumat_app:seminario_detalle',
                         num=seminario_obj.numero_obj.numero)
- 
+
     # Validación de tamaño (máx. 10 MB)
     MAX_SIZE = 10 * 1024 * 1024
     if archivo.size > MAX_SIZE:
         messages.error(request, "El archivo no puede superar 10 MB.")
         return redirect('lumat_app:seminario_detalle',
                         num=seminario_obj.numero_obj.numero)
- 
+
     # Validación de tipo MIME básica
     TIPOS_PERMITIDOS = (
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'application/pdf',
     )
     if archivo.content_type not in TIPOS_PERMITIDOS:
-        messages.error(request, "Solo se permiten imágenes (JPG, PNG, GIF, WEBP) y PDFs.")
+        messages.error(
+            request,
+            "Solo se permiten imágenes (JPG, PNG, GIF, WEBP) y PDFs."
+        )
         return redirect('lumat_app:seminario_detalle',
                         num=seminario_obj.numero_obj.numero)
- 
+
     Evidencia.objects.create(
         seminario=seminario_obj,
         archivo=archivo,
         nombre=archivo.name,
     )
- 
+
     messages.success(request, "Evidencia subida correctamente.")
     return redirect('lumat_app:seminario_detalle',
                     num=seminario_obj.numero_obj.numero)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # Vista: solicitar cambio de tutor
 # ─────────────────────────────────────────────
- 
+
 @login_required
 def cambio_tutor(request):
     alumno = request.user.alumno
- 
+
     # Si ya tiene una solicitud pendiente, no permite crear otra
-    if SolicitudCambioTutor.objects.filter(alumno=alumno, estado='pendiente').exists():
-        messages.warning(request, "Ya tienes una solicitud de cambio de tutor en proceso.")
-        return redirect('lumat_app:seminario_detalle', num=int(alumno.semestre))
- 
-    if request.method == 'POST':
-        motivo = request.POST.get('motivo', '').strip()
+    if SolicitudCambioTutor.objects.filter(
+        alumno=alumno, estado="pendiente"
+    ).exists():
+        messages.warning(
+            request,
+            "Ya tienes una solicitud de cambio de tutor en proceso.",
+        )
+        return redirect(
+            "lumat_app:seminario_detalle", num=int(alumno.semestre)
+        )
+
+    if request.method == "POST":
+        motivo = request.POST.get("motivo", "").strip()
         if not motivo:
-            messages.error(request, "Debes indicar el motivo de la solicitud.")
+            messages.error(
+                request, "Debes indicar el motivo de la solicitud."
+            )
         else:
             SolicitudCambioTutor.objects.create(alumno=alumno, motivo=motivo)
-            messages.success(request, "Solicitud enviada. La coordinación la revisará pronto.")
-            return redirect('lumat_app:seminario_detalle', num=int(alumno.semestre))
- 
-    return render(request, 'cambio_tutor.html', {'alumno': alumno})
+            messages.success(
+                request,
+                "Solicitud enviada. La coordinación la revisará pronto.",
+            )
+            return redirect(
+                "lumat_app:seminario_detalle", num=int(alumno.semestre)
+            )
+
+    return render(request, "cambio_tutor.html", {"alumno": alumno})
 
 
 @user_passes_test(es_docente)
@@ -407,7 +438,9 @@ def admin_calendario_generar_pdf_view(request):
 
         if (fecha_fin - fecha_inicio).days < 0:
             messages.error(
-                request, "La fecha inicial no puede ser posterior a la fecha final.")
+                request,
+                "La fecha inicial no puede ser posterior a la fecha final."
+            )
             return redirect('calendar_form')
 
         # 1. Obtener todos los seminarios de la base de datos
@@ -415,7 +448,9 @@ def admin_calendario_generar_pdf_view(request):
 
         if not seminarios_db:
             messages.error(
-                request, "No hay seminarios registrados en la base de datos.")
+                request,
+                "No hay seminarios registrados en la base de datos."
+            )
             return redirect('calendar_form')
 
         # 2. 📊 CONTAR DÍAS HÁBILES REALES EN EL RANGO SELECCIONADO
@@ -430,11 +465,12 @@ def admin_calendario_generar_pdf_view(request):
         if len(seminarios_db) > dias_habiles_disponibles:
             messages.error(
                 request,
-                f"El rango seleccionado solo contiene {dias_habiles_disponibles} días hábiles, "
-                f"pero necesitas acomodar {len(seminarios_db)} \
-                seminarios. Amplía el rango de fechas."
+                f"El rango seleccionado solo contiene "
+                f"{dias_habiles_disponibles} días hábiles, pero necesitas "
+                f"acomodar {len(seminarios_db)} seminarios. "
+                f"Amplía el rango de fechas.",
             )
-            return redirect('calendar_form')
+            return redirect("calendar_form")
 
         # 3. 🔀 Mezclar aleatoriamente a las personas
         random.shuffle(seminarios_db)
@@ -443,8 +479,9 @@ def admin_calendario_generar_pdf_view(request):
         agenda_sorteada = []
         fecha_actual = fecha_inicio
 
-        for seminario in seminarios_db:  # Quité el sorted() que no era necesario
-            # Si la fecha actual es Sábado (5) o Domingo (6), avanzamos hasta el Lunes
+        for seminario in seminarios_db:
+            # Si la fecha actual es Sábado (5) o Domingo (6),
+            # avanzamos hasta el Lunes
             while fecha_actual.weekday() >= 5:
                 fecha_actual += timedelta(days=1)
 
@@ -470,14 +507,19 @@ def admin_calendario_generar_pdf_view(request):
         pdf_file = HTML(string=html_string).write_pdf()
 
         # 6. Guardar localmente en el servidor (MEDIA)
-        nombre_periodo = f"Seminarios {fecha_inicio.strftime('%B')} - {fecha_fin.strftime('%B %Y')}"
+        mes_inicio = fecha_inicio.strftime("%B")
+        mes_fin = fecha_fin.strftime("%B %Y")
+        nombre_periodo = f"Seminarios {mes_inicio} - {mes_fin}"
+
         nuevo_calendario = CalendarioGenerado(
             nombre=nombre_periodo,
             fecha_inicio=fecha_inicio,
-            fecha_fin=fecha_fin
+            fecha_fin=fecha_fin,
         )
 
-        nombre_archivo = f"calendario_{fecha_inicio_str}_al_{fecha_fin_str}.pdf"
+        nombre_archivo = (
+            f"calendario_{fecha_inicio_str}_al_{fecha_fin_str}.pdf"
+        )
         nuevo_calendario.archivo_pdf.save(
             nombre_archivo, ContentFile(pdf_file))
         nuevo_calendario.save()
@@ -492,7 +534,10 @@ def admin_calendario_generar_pdf_view(request):
 
 
 def admin_estadisticas_view(request):
-    """Calcula métricas del sistema y renderiza el Dashboard de estadísticas."""
+    """
+    Calcula métricas del sistema y renderiza el
+    Dashboard de estadísticas.
+    """
     from django.contrib import admin
 
     total_alumnos = Alumno.objects.count()
