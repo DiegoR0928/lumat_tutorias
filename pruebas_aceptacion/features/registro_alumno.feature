@@ -5,6 +5,7 @@ Característica: Registro de alumno
   Quiero registrar nuevos alumnos mediante el formulario
   Para que puedan acceder al sistema con sus credenciales
 
+  @limpiar_usuarios @limpiar_alumnos
   Escenario: Registro exitoso de un alumno con datos válidos
     Dado que estoy en la página de registro de alumno
     Cuando ingreso "juan12345" en el campo "usuario"
@@ -14,12 +15,12 @@ Característica: Registro de alumno
     Y ingreso "Pérez" en el campo "apellido paterno"
     Y ingreso "García" en el campo "apellido materno"
     Y hago clic en el botón "Guardar"
-    Entonces debo ver el mensaje "Alumno registrado con éxito"
-    Y el formulario debe mostrarse vacío nuevamente
+    Entonces debo ser redirigido al login
 
+  @limpiar_usuarios @limpiar_alumnos
   Escenario: Registro fallido por nombre de usuario ya existente
     Dado que estoy en la página de registro de alumno
-    Y el usuario "juan12345" ya existe en el sistema
+    Y el usuario "existente99" ya existe en el sistema
     Cuando ingreso "existente99" en el campo "usuario"
     Y ingreso "otro@escuela.mx" en el campo "email"
     Y ingreso "Segura#2025" en el campo "contraseña"

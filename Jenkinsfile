@@ -97,6 +97,7 @@ pipeline {
 
                 // pruebas_aceptacion está montado en /pruebas_aceptacion (sin cambio)
                 // sh 'docker compose exec -T -w /pruebas_aceptacion app behave features/iniciar_sesion.feature'
+                sh 'docker compose exec -T -w /pruebas_aceptacion app behave features/registro_alumno.feature'
             }
         }
 

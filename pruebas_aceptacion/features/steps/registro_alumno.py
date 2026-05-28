@@ -1,5 +1,4 @@
 from behave import given, when, then
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -11,45 +10,35 @@ from selenium.webdriver.support import expected_conditions as EC
 
 @given(u'que estoy en la página de registro de alumno')
 def step_impl(context):
-    context.driver = webdriver.Chrome()
-    context.driver.get('http://localhost:8000/registro/')
+    context.driver.get('http://app:8000/registro/')
 
 
 @given(u'el usuario "{username}" ya existe en el sistema')
 def step_impl(context, username):
     """
-    Crea el usuario llenando el formulario con un username distinto al del
-    escenario real, para evitar conflictos entre escenarios.
+    Crea el usuario directamente en BD, sin usar el navegador.
+    Más rápido y no depende del comportamiento del formulario.
     """
-    driver = context.driver
-    wait = WebDriverWait(driver, 10)
+    from django.contrib.auth.models import User
+    from lumat_app.models import Alumno
 
-    driver.get('http://localhost:8000/registro/')
+    user = User.objects.create_user(
+        username=username,
+        password='Temporal#123',
+        email='previo@escuela.mx'
+    )
+    Alumno.objects.create(
+        user=user,
+        nombre='Previo',
+        apellido_paterno='Previo',
+        apellido_materno='Previo',
+    )
 
-    wait.until(EC.presence_of_element_located(
-        (By.NAME, 'username'))).send_keys(username)
-    driver.find_element(By.NAME, 'email').send_keys('previo@escuela.mx')
-    driver.find_element(By.NAME, 'password').send_keys('Temporal#123')
-    driver.find_element(By.NAME, 'nombre').send_keys('Previo')
-    driver.find_element(By.NAME, 'apellido_paterno').send_keys('Previo')
-    driver.find_element(By.NAME, 'apellido_materno').send_keys('Previo')
-    driver.find_element(By.CSS_SELECTOR, '.btn-guardar').click()
-
-    # Esperamos el mensaje de éxito para confirmar que se creó correctamente
-    try:
-        wait.until(
-            EC.visibility_of_element_located(
-                (By.CLASS_NAME, 'alert-success-custom'))
-        )
-    except Exception:
-        raise AssertionError(
-            f"No se pudo crear el usuario previo '{username}'. "
-            "Verifica que el servidor esté corriendo y el username no exista ya."
-        )
-
-    # Regresamos a la página de registro limpia para el escenario real
-    driver.get('http://localhost:8000/registro/')
-    wait.until(EC.presence_of_element_located((By.NAME, 'username')))
+    # Dejamos el navegador en la página de registro lista para el escenario
+    context.driver.get('http://app:8000/registro/')
+    WebDriverWait(context.driver, 10).until(
+        EC.presence_of_element_located((By.NAME, 'username'))
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -108,16 +97,11 @@ def step_impl(context):
 # Thens
 # ---------------------------------------------------------------------------
 
-@then(u'debo ver el mensaje "Alumno registrado con éxito"')
+@then(u'debo ser redirigido al login')
 def step_impl(context):
     wait = WebDriverWait(context.driver, 10)
-    mensaje = wait.until(
-        EC.visibility_of_element_located(
-            (By.CLASS_NAME, 'alert-success-custom'))
-    )
-    assert 'Alumno registrado con éxito' in mensaje.text, (
-        f"Mensaje esperado no encontrado. Texto visible: '{mensaje.text}'"
-    )
+    wait.until(lambda d: 'login' in d.current_url)
+    assert 'login' in context.driver.current_url
 
 
 @then(u'el formulario debe mostrarse vacío nuevamente')
@@ -132,7 +116,6 @@ def step_impl(context):
 
 @then(u'no debo ver el mensaje "Alumno registrado con éxito"')
 def step_impl(context):
-    # Damos un momento al DOM para estabilizarse
     import time
     time.sleep(1)
     elementos = context.driver.find_elements(
