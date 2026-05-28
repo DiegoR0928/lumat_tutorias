@@ -92,6 +92,22 @@ def registro(request):
     })
 
 
+@login_required
+def seminario_detalle(request, num):
+    alumno = request.user.alumno
+    semestre = int(alumno.semestre)  # asegúrate que sea convertible a int
+
+    # Si el alumno intenta acceder a un seminario bloqueado
+    if num > semestre or num < 1 or num > 8:
+        # o una página de "acceso denegado"
+        return redirect('lumat_app:seminario')
+
+    return render(request, 'alumno_seminario.html', {
+        'alumno': alumno,
+        'num': num,
+    })
+
+
 @user_passes_test(es_docente)
 def docente_dashboard(request):
     return render(request, 'docente_dashboard.html')
