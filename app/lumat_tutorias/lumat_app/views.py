@@ -1,222 +1,424 @@
+from django import forms
+from django.contrib import admin
+from django.contrib.auth.models import User, Group
+from unfold.admin import ModelAdmin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from .models import Alumno, Docente, Comite, Seminario
 from django.shortcuts import render, redirect
-from django.contrib.auth.models import Group
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth.decorators import user_passes_test, login_required
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+from weasyprint import HTML
 from django.contrib import messages
+from datetime import datetime, timedelta
+import random
 
-from .models import Alumno
-from .forms import (
-    UserForm, 
-    AlumnoForm, 
-    AlumnoEditForm, 
-    PasswordChangeCustomForm
-)
+# Función auxiliar para evitar repetir código
 
-# ==========================================
-# 1. AUTENTICACIÓN Y ACCESO
-# ==========================================
 
-class CustomLoginView(LoginView):
-    """Maneja el inicio de sesión y redirige según el rol del usuario."""
-    template_name = 'login.html'
-
-    def get_success_url(self):
-        user = self.request.user
-
-        # Prioridad para superusuarios o staff para ir al admin de Unfold
-        if user.is_superuser or user.is_staff:
-            return '/admin/'
-        
-        # Redirección por grupos
-        if user.groups.filter(name='Docente').exists():
-            return '/docente/'
-        elif user.groups.filter(name='Alumno').exists():
-            return '/alumno/'
-
-        return '/'
-
-class CustomLogoutView(LogoutView):
-    """Cierra la sesión y redirige al login."""
-    next_page = 'lumat_app:login'
-
-def es_docente(user):
-    return user.groups.filter(name='Docente').exists()
-
-def es_alumno(user):
-    return user.groups.filter(name='Alumno').exists()
+def asignar_grupo(user, nombre_grupo):
+    grupo, _ = Group.objects.get_or_create(name=nombre_grupo)
+    user.groups.add(grupo)
 
 # ==========================================
-# 2. VISTAS DE REGISTRO Y DASHBOARDS
+# 1. FORMULARIOS PERSONALIZADOS
 # ==========================================
 
-def registro(request):
-    """Registra un nuevo usuario y lo vincula a un perfil de Alumno."""
-    if request.method == 'POST':
-        user_form = UserForm(request.POST)
-        alumno_form = AlumnoForm(request.POST)
 
-        if user_form.is_valid() and alumno_form.is_valid():
-            # Crear el usuario
-            user = user_form.save(commit=False)
-            user.first_name = alumno_form.cleaned_data.get('nombre', '')
-            user.last_name = alumno_form.cleaned_data.get('apellido_paterno', '')
-            user.set_password(user_form.cleaned_data['password'])
-            user.save()
+# 1. Desregistramos el admin por defecto de Django para poder meter el nuestro
+try:
+    admin.site.unregister(User)
+except admin.sites.NotRegistered:
+    pass
 
-            # Asignar grupo (get_or_create previene errores si el grupo no existe)
-            grupo, _ = Group.objects.get_or_create(name='Alumno')
-            user.groups.add(grupo)
-
-            # Crear el perfil de alumno
-            alumno = alumno_form.save(commit=False)
-            alumno.user = user
-            alumno.save()
-
-            messages.success(request, "Alumno registrado con éxito")
-            return redirect('lumat_app:login') # Redirigir al login tras éxito
-    else:
-        user_form = UserForm()
-        alumno_form = AlumnoForm()
-
-    return render(request, 'registro.html', {
-        'user_form': user_form,
-        'alumno_form': alumno_form
-    })
+# 2. Creamos el nuevo administrador personalizado con Unfold
 
 
-@login_required
-def seminario_detalle(request, num):
-    alumno = request.user.alumno
-    semestre = int(alumno.semestre)  # asegúrate que sea convertible a int
+@admin.register(User)
+class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
+    # Agregamos 'obtener_rol' al list_display para que aparezca como columna
+    list_display = (
+        "username", "email", "first_name",
+        "last_name", "obtener_rol", "is_staff",
+    )
 
-    # Si el alumno intenta acceder a un seminario bloqueado
-    if num > semestre or num < 1 or num > 8:
-        # o una página de "acceso denegado"
-        return redirect('lumat_app:seminario')
+    # Permitimos que se pueda filtrar la lista de usuarios por su rol/grupo
+    list_filter = ("groups", "is_staff", "is_superuser", "is_active")
 
-    return render(request, 'alumno_seminario.html', {
-        'alumno': alumno,
-        'num': num,
-    })
+    def obtener_rol(self, obj):
+        """
+        Calcula dinámicamente el rol del usuario para mostrarlo en la tabla.
+        """
+        if obj.is_superuser:
+            return "Administrador"
 
+        # Verificamos por medio de los grupos de Django
+        if obj.groups.filter(name='Docente').exists():
+            return "Docente"
+        elif obj.groups.filter(name='Alumno').exists():
+            return "Alumno"
 
-class CustomLoginView(LoginView):
-    template_name = 'login.html'
+        return "Sin Rol / Personal"
 
-    def get_success_url(self):
-        user = self.request.user
-
-        if user.groups.filter(name='Docente').exists():
-            return '/docente/'
-        elif user.groups.filter(name='Alumno').exists():
-            return '/alumno/'
-
-        return '/'
-
-
-class CustomLogoutView(LogoutView):
-    next_page = 'lumat_app:login'
+    # Le ponemos un título bonito a la cabecera de la columna en el panel
+    obtener_rol.short_description = "Tipo de Usuario"
 
 
-def es_docente(user):
-    return user.groups.filter(name='Docente').exists()
+class AlumnoForm(forms.ModelForm):
+    username = forms.CharField(
+        max_length=150, required=False,
+        label="Usuario (Para iniciar sesión)"
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput, required=False,
+        label="Contraseña",
+        help_text="Déjalo en blanco al editar si no deseas cambiarla."
+    )
 
+    class Meta:
+        model = Alumno
+        exclude = ['user']
 
-def es_alumno(user):
-    return user.groups.filter(name='Alumno').exists()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-
-@user_passes_test(es_docente)
-def docente_dashboard(request):
-    return render(request, 'docente_dashboard.html')
-
-@user_passes_test(es_alumno)
-def alumno_dashboard(request):
-    return render(request, 'alumno_dashboard.html')
-
-def seminario(request):
-    return render(request, 'alumno_seminario.html', {
-        'fecha_seminario': '15 de mayo de 2026'
-    })
-
-# ==========================================
-# 3. GESTIÓN DEL PERFIL (MODO ROBUSTO)
-# ==========================================
-
-@login_required
-def perfil_alumno(request):
-    """
-    Vista principal del perfil del alumno. 
-    Maneja la visualización y las acciones de edición.
-    """
-    try:
-        # Intenta obtener la relación OneToOne. 
-        # Si el usuario es admin o docente, esto fallará de forma segura.
-        alumno = request.user.alumno
-    except (Alumno.DoesNotExist, AttributeError):
-        messages.error(request, "Este usuario no cuenta con un perfil de alumno asociado.")
-        return redirect('lumat_app:login')
-
-    editando = request.GET.get('modo')  # 'perfil' | 'password' | None
-
-    if request.method == 'GET':
-        return _render_perfil(
-            request, alumno,
-            editando=editando,
-            alumno_form=AlumnoEditForm(instance=alumno),
-            password_form=PasswordChangeCustomForm(user=request.user),
+        clases_input = (
+            "border border-gray-300 rounded-md p-2 bg-white text-gray-900 "
+            "focus:border-[#4a7c7a] focus:ring-1 focus:ring-[#4a7c7a] "
+            "w-full block"
         )
 
-    # Manejo de acciones POST
-    accion = request.POST.get('accion')
+        self.fields['username'].widget.attrs.update(
+            {'class': clases_input, 'placeholder': 'Ej. dalba'})
+        self.fields['password'].widget.attrs.update(
+            {'class': clases_input, 'placeholder': '••••••••'})
 
-    if accion == 'perfil':
-        return _guardar_perfil(request, alumno)
+        if self.instance and self.instance.pk:
+            if self.instance.user:
+                self.fields['username'].initial = (
+                    self.instance.user.username
+                )
+            self.fields['username'].widget.attrs['readonly'] = True
+            self.fields['username'].widget.attrs['class'] = (
+                clases_input + " bg-gray-100 cursor-not-allowed"
+            )
 
-    if accion == 'password':
-        return _cambiar_password(request, alumno)
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.instance.pk:
+            username = cleaned_data.get('username')
+            if not username:
+                self.add_error(
+                    'username', 'El nombre de usuario es obligatorio.')
+            elif User.objects.filter(username=username).exists():
+                self.add_error(
+                    'username', 'Este nombre de usuario ya está ocupado.')
 
-    return redirect('lumat_app:perfil_alumno')
+            if not cleaned_data.get('password'):
+                self.add_error('password', 'La contraseña es obligatoria.')
+        return cleaned_data
 
-# Funciones auxiliares para mantener limpia la vista principal
-def _render_perfil(request, alumno, editando, alumno_form, password_form):
-    return render(request, 'alumno_perfil.html', {
-        'alumno': alumno,
-        'alumno_form': alumno_form,
-        'password_form': password_form,
-        'editando': editando,
-    })
+    def save(self, commit=True):
+        alumno = super().save(commit=False)
 
-def _guardar_perfil(request, alumno):
-    alumno_form = AlumnoEditForm(request.POST, instance=alumno)
-    password_form = PasswordChangeCustomForm(user=request.user)
+        if not alumno.pk:
+            # Creación del usuario
+            user = User.objects.create_user(
+                username=self.cleaned_data['username'],
+                password=self.cleaned_data['password'],
+                email=self.cleaned_data.get('correo', '')
+            )
+            # ASIGNACIÓN AUTOMÁTICA AL GRUPO ALUMNO
+            asignar_grupo(user, "Alumno")
+            alumno.user = user
+        else:
+            if self.cleaned_data.get('password'):
+                alumno.user.set_password(self.cleaned_data['password'])
+                alumno.user.save()
 
-    if alumno_form.is_valid():
-        alumno_form.save()
-        messages.success(request, 'Perfil actualizado exitosamente')
-        return redirect('lumat_app:perfil_alumno')
+        if commit:
+            alumno.save()
+        return alumno
 
-    messages.error(request, 'Datos inválidos, por favor verifica la información')
-    return _render_perfil(
-        request, alumno, editando='perfil',
-        alumno_form=alumno_form,
-        password_form=password_form,
+
+class DocenteForm(forms.ModelForm):
+    username = forms.CharField(
+        max_length=150, required=False,
+        label="Usuario (Para iniciar sesión)"
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput, required=False,
+        label="Contraseña",
+        help_text="Déjalo en blanco al editar si no deseas cambiarla."
     )
 
-def _cambiar_password(request, alumno):
-    alumno_form = AlumnoEditForm(instance=alumno)
-    password_form = PasswordChangeCustomForm(user=request.user, data=request.POST)
+    class Meta:
+        model = Docente
+        exclude = ['user']
 
-    if password_form.is_valid():
-        password_form.save()
-        # Mantiene la sesión iniciada tras cambiar la contraseña
-        update_session_auth_hash(request, password_form.user)
-        messages.success(request, 'Contraseña actualizada exitosamente')
-        return redirect('lumat_app:perfil_alumno')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    return _render_perfil(
-        request, alumno, editando='password',
-        alumno_form=alumno_form,
-        password_form=password_form,
-    )
+        clases_input = (
+            "border border-gray-300 rounded-md p-2 bg-white text-gray-900 "
+            "focus:border-[#4a7c7a] focus:ring-1 focus:ring-[#4a7c7a] "
+            "w-full block"
+        )
+
+        self.fields['username'].widget.attrs.update(
+            {'class': clases_input, 'placeholder': 'Ej. dalba'})
+        self.fields['password'].widget.attrs.update(
+            {'class': clases_input, 'placeholder': '••••••••'})
+
+        if self.instance and self.instance.pk:
+            if self.instance.user:
+                self.fields['username'].initial = (
+                    self.instance.user.username
+                )
+            self.fields['username'].widget.attrs['readonly'] = True
+            self.fields['username'].widget.attrs['class'] = (
+                clases_input + " bg-gray-100 cursor-not-allowed"
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.instance.pk:
+            username = cleaned_data.get('username')
+            if not username:
+                self.add_error(
+                    'username', 'El nombre de usuario es obligatorio.')
+            elif User.objects.filter(username=username).exists():
+                self.add_error(
+                    'username', 'Este nombre de usuario ya está en uso.')
+
+            if not cleaned_data.get('password'):
+                self.add_error('password', 'La contraseña es obligatoria.')
+        return cleaned_data
+
+    def save(self, commit=True):
+        docente = super().save(commit=False)
+        if not docente.pk:
+            # Creación del usuario
+            user = User.objects.create_user(
+                username=self.cleaned_data['username'],
+                password=self.cleaned_data['password'],
+                email=self.cleaned_data.get('correo', '')
+            )
+            # ASIGNACIÓN AUTOMÁTICA AL GRUPO DOCENTE
+            asignar_grupo(user, "Docente")
+            docente.user = user
+        else:
+            if self.cleaned_data.get('password'):
+                docente.user.set_password(self.cleaned_data['password'])
+                docente.user.save()
+        if commit:
+            docente.save()
+        return docente
+
+# ==========================================
+# 2. REGISTRO EN EL PANEL (UNFOLD)
+# ==========================================
+
+
+@admin.register(Alumno)
+class AlumnoAdmin(ModelAdmin):
+    form = AlumnoForm
+    list_display = ('matricula', 'nombre', 'apellido_paterno',
+                    'apellido_materno', 'semestre', 'correo')
+    search_fields = ('matricula', 'nombre', 'apellido_paterno', 'correo')
+    list_filter = ('semestre',)
+
+    def save_model(self, request, obj, form, change):
+        """
+        Detecta cuando el Administrador guarda o edita un Alumno
+        y fuerza la sincronización de nombres en la tabla auth_user.
+        """
+        super().save_model(request, obj, form, change)
+
+        # 2. Si el alumno tiene un usuario de Django asociado, actualizamos
+        if obj.user:
+            user = obj.user
+
+            # Sacamos los datos de los campos correspondientes de Alumno
+            # Asegúrate de que coincidan con los nombres de tus campos
+            user.first_name = obj.nombre if hasattr(obj, 'nombre') else ""
+            user.last_name = (
+                obj.apellido_paterno
+                if hasattr(obj, 'apellido_paterno') else ""
+            )
+
+            # Forzamos el guardado directamente en la base de datos
+            user.save(update_fields=['first_name', 'last_name'])
+
+    def delete_model(self, request, obj):
+        """Al borrar un Alumno, elimina primero su cuenta en auth_user."""
+        user = obj.user
+        # Primero borramos el alumno
+        super().delete_model(request, obj)
+        # Si tenía un usuario asignado, lo eliminamos de auth_user
+        if user:
+            user.delete()
+
+    def delete_queryset(self, request, queryset):
+        """Maneja el borrado en lote desde la lista del panel de admin."""
+        # Almacenamos los usuarios vinculados antes de romper la relación
+        usuarios_a_borrar = [obj.user for obj in queryset if obj.user]
+
+        # Ejecutamos el borrado en lote de los Alumnos
+        super().delete_queryset(request, queryset)
+
+        # Ahora eliminamos todos los usuarios correspondientes en auth_user
+        for user in usuarios_a_borrar:
+            user.delete()
+
+
+@admin.register(Docente)
+class DocenteAdmin(ModelAdmin):
+    # Ajusta estas columnas según los campos reales de tu modelo Docente
+    list_display = ("nombre", "apellido_paterno", "user", "correo")
+
+    # === 1. Sincronización al guardar/editar desde el Admin ===
+    def save_model(self, request, obj, form, change):
+        """Sincroniza el nombre del Docente con auth_user al crear/editar."""
+        super().save_model(request, obj, form, change)
+
+        if obj.user:
+            user = obj.user
+            # Sacamos los datos de los campos de tu modelo Docente
+            user.first_name = obj.nombre if hasattr(obj, 'nombre') else ""
+            user.last_name = (
+                obj.apellido_paterno
+                if hasattr(obj, 'apellido_paterno') else ""
+            )
+            user.save(update_fields=['first_name', 'last_name'])
+
+    # === 2. Borrado individual ===
+    def delete_model(self, request, obj):
+        """Al borrar un Docente, elimina también su cuenta asociada."""
+        user = obj.user
+        super().delete_model(request, obj)
+        if user:
+            user.delete()
+
+    # === 3. Borrado en lote (Selección múltiple) ===
+    def delete_queryset(self, request, queryset):
+        """Maneja el borrado de múltiples docentes y limpia auth_user."""
+        # Guardamos los usuarios antes de que el queryset sea eliminado
+        usuarios_a_borrar = [obj.user for obj in queryset if obj.user]
+
+        # Eliminamos los registros de la tabla Docente
+        super().delete_queryset(request, queryset)
+
+        # Eliminamos de forma segura las cuentas de usuario huérfanas
+        for user in usuarios_a_borrar:
+            user.delete()
+
+
+@admin.register(Comite)
+class ComiteAdmin(ModelAdmin):
+    list_display = ('id', 'tutor', 'miembro1', 'miembro2')
+    search_fields = ('tutor__nombre', 'tutor__apellido_paterno')
+
+
+@admin.register(Seminario)
+class SeminarioAdmin(ModelAdmin):
+    list_display = ('alumno', 'fecha', 'hora', 'calificacion')
+    list_filter = ('fecha', 'comite')
+    search_fields = ('alumno__nombre', 'alumno__matricula')
+
+
+# QUITAR GRUPOS DE ADMIN
+admin.site.unregister(Group)
+
+
+def admin_calendario_formulario_view(request):
+    """Renderiza el nuevo formulario simplificado de fechas."""
+    from django.contrib import admin as contrib_admin
+    context = {
+        **contrib_admin.site.each_context(request),
+        "title": "Generador Automático de Calendario de Seminarios",
+    }
+    return render(request, "admin/calendario_form.html", context)
+
+
+def admin_calendario_generar_pdf_view(request):
+    """
+    Asigna fechas consecutivas empezando desde la fecha inicial,
+    pero mezclando aleatoriamente a las personas.
+    """
+    if request.method == "POST":
+        fecha_inicio_str = request.POST.get("fecha_inicial")
+        fecha_fin_str = request.POST.get("fecha_final")
+
+        if not fecha_inicio_str or not fecha_fin_str:
+            messages.error(request, "Ambas fechas son obligatorias.")
+            return redirect('calendar_form')
+
+        fecha_inicio = datetime.strptime(
+            fecha_inicio_str, "%Y-%m-%d"
+        ).date()
+        fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+
+        rango_dias = (fecha_fin - fecha_inicio).days
+        if rango_dias < 0:
+            messages.error(
+                request,
+                "La fecha inicial no puede ser posterior a la fecha final."
+            )
+            return redirect('calendar_form')
+
+        # 1. Obtener todos los seminarios
+        seminarios_db = list(Seminario.objects.all())
+
+        if not seminarios_db:
+            messages.error(
+                request,
+                "No hay seminarios registrados en la base de datos "
+                "para organizar."
+            )
+            return redirect('calendar_form')
+
+        # ⚠️ VALIDACIÓN: Que el rango de fechas alcance para todos
+        if len(seminarios_db) > (rango_dias + 1):
+            messages.error(
+                request,
+                f"El rango seleccionado solo tiene {rango_dias + 1} días, "
+                f"pero tienes {len(seminarios_db)} seminarios por acomodar."
+                " Amplía las fechas."
+            )
+            return redirect('calendar_form')
+
+        # 2. 🔀 ALEATORIEDAD: Mezclamos la lista de seminarios directamente
+        random.shuffle(seminarios_db)
+
+        # 3. 📅 ORDEN CRONOLÓGICO: Asignamos fechas secuenciales
+        agenda_sorteada = []
+        for i, seminario in enumerate(seminarios_db):
+            # Suma días consecutivamente desde el día de inicio
+            fecha_asignada = fecha_inicio + timedelta(days=i)
+
+            agenda_sorteada.append({
+                "fecha": fecha_asignada,
+                "nombre": str(seminario)
+            })
+
+        # Al ir en orden i=0,1,2 ya quedan ordenados cronológicamente
+
+        # 4. Compilar la plantilla del PDF
+        context_pdf = {
+            "fecha_inicio": fecha_inicio,
+            "fecha_fin": fecha_fin,
+            "agenda": agenda_sorteada,
+            "total_seminarios": len(agenda_sorteada)
+        }
+
+        html_string = render_to_string(
+            "pdf/calendario_pdf_template.html", context_pdf
+        )
+        pdf_file = HTML(string=html_string).write_pdf()
+
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        filename = f"Calendario_Seminarios_{fecha_inicio_str}.pdf"
+        response['Content-Disposition'] = (
+            f'attachment; filename="{filename}"'
+        )
+        return response

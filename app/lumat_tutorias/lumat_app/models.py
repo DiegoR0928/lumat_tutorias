@@ -32,9 +32,17 @@ class Docente(models.Model):
 class Comite(models.Model):
     tutor = models.ForeignKey(Docente, on_delete=models.CASCADE)
     miembro1 = models.ForeignKey(
-        Docente, on_delete=models.CASCADE, related_name='miembro1', verbose_name="Primer miembro")
+        Docente,
+        on_delete=models.CASCADE,
+        related_name="miembro1",
+        verbose_name="Primer miembro",
+    )
     miembro2 = models.ForeignKey(
-        Docente, on_delete=models.CASCADE, related_name='miembro2', verbose_name="Segundo miembro")
+        Docente,
+        on_delete=models.CASCADE,
+        related_name="miembro2",
+        verbose_name="Segundo miembro",
+    )
 
     def clean(self):
         docentes = [self.tutor_id, self.miembro1_id, self.miembro2_id]

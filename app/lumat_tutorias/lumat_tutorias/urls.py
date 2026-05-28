@@ -18,17 +18,18 @@ from django.contrib import admin
 from django.urls import path
 from django.urls import include
 
-from lumat_app.admin import admin_calendario_formulario_view, admin_calendario_generar_pdf_view
+from lumat_app.admin import admin_calendario_formulario_view
+from lumat_app.admin import admin_calendario_generar_pdf_view
 
 urlpatterns = [
     path(
-        'admin/calendar-generator/', 
-        admin.site.admin_view(admin_calendario_formulario_view), 
+        'admin/calendar-generator/',
+        admin.site.admin_view(admin_calendario_formulario_view),
         name='calendar_form'
     ),
     path(
-        'admin/calendar-generator/generate/', 
-        admin.site.admin_view(admin_calendario_generar_pdf_view), 
+        'admin/calendar-generator/generate/',
+        admin.site.admin_view(admin_calendario_generar_pdf_view),
         name='calendar_pdf'
     ),
     path('admin/', admin.site.urls),

@@ -151,8 +151,8 @@ UNFOLD = {
 
     "SIDEBAR": {
         "show_search": True,            # Habilita un buscador rápido en el menú
-        "show_all_applications": False, 
-        
+        "show_all_applications": False,
+
         "navigation": [
             {
                 "title": "Control Escolar",
@@ -185,14 +185,14 @@ UNFOLD = {
                     },
                 ],
             },
-            
+
             {
                 "title": "Fechas y Horarios",
-                "separator": True, 
+                "separator": True,
                 "items": [
                     {
                         "title": "Calendario",
-                        "icon": "calendar_today", 
+                        "icon": "calendar_today",
                         "link": "/admin/calendar-generator/",
                     },
                 ],

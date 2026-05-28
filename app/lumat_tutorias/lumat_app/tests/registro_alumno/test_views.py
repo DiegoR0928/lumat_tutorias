@@ -38,14 +38,10 @@ class RegistroViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_post_invalido_retorna_200(self):
-<<<<<<< HEAD
         """
         POST con datos inválidos vuelve a renderizar
         el formulario (HTTP 200).
         """
-=======
-        """POST con datos inválidos vuelve a renderizar el formulario (HTTP 200)."""
->>>>>>> origin/main
         response = self.client.post(self.url, data={})
         self.assertEqual(response.status_code, 200)
 
@@ -125,19 +121,12 @@ class RegistroViewTest(TestCase):
         self.client.post(self.url, data=self.datos_validos('juanito'))
         user = User.objects.get(username='juanito')
         self.assertNotEqual(user.password, 'Segura#2025')
-<<<<<<< HEAD
         # startswith acepta una tupla de opciones. ¡Esto evita usar los 'or'!
         self.assertTrue(
             user.password.startswith((
                 'pbkdf2', 'argon2', 'bcrypt'
             ))
         )
-=======
-        self.assertTrue(user.password.startswith('pbkdf2') or
-                        user.password.startswith('argon2') or
-                        user.password.startswith('bcrypt'))
-
->>>>>>> origin/main
     # ------------------------------------------------------------------
     # Casos negativos
     # ------------------------------------------------------------------
