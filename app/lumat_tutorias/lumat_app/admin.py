@@ -202,7 +202,7 @@ class DocenteForm(forms.ModelForm):
 class AlumnoAdmin(ModelAdmin):
     form = AlumnoForm
     list_display = ('matricula', 'nombre', 'apellido_paterno',
-                    'apellido_materno', 'semestre', 'correo')
+                    'apellido_materno', 'user', 'semestre', 'correo')
     search_fields = ('matricula', 'nombre', 'apellido_paterno', 'correo')
     list_filter = ('semestre',)
 
