@@ -26,7 +26,9 @@ class TestCalendarioGeneradoModel(TestCase):
         self.assertEqual(str(self.cal_1), expected_str)
 
     def test_ordenamiento_por_defecto_mas_reciente_primero(self):
-        """Verifica que el meta-ordering traiga el último generado al inicio."""
+        """
+        Verifica que el meta-ordering traiga el último generado al inicio.
+        """
         cal_2 = CalendarioGenerado.objects.create(
             nombre="Periodo B",
             fecha_inicio=date(2026, 7, 1),

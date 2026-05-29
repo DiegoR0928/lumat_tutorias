@@ -28,7 +28,7 @@ class TestEstadisticasAdminView(TestCase):
         """Un superusuario debería poder cargar el panel de estadísticas."""
         self.client.login(username='admin', password='testpass123')
         response = self.client.get(self.url_estadisticas)
-        
+
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/estadisticas.html')
 
@@ -36,7 +36,7 @@ class TestEstadisticasAdminView(TestCase):
         """Un usuario común es rebotado al login del admin por seguridad."""
         self.client.login(username='alumno_regular', password='testpass123')
         response = self.client.get(self.url_estadisticas)
-        
+
         expected_url = f'/admin/login/?next={self.url_estadisticas}'
         self.assertRedirects(response, expected_url)
 
@@ -56,7 +56,7 @@ class TestEstadisticasAdminView(TestCase):
         u_d1 = User.objects.create_user(username='d1', password='123')
         u_d2 = User.objects.create_user(username='d2', password='123')
         u_d3 = User.objects.create_user(username='d3', password='123')
-        
+
         doc1 = Docente.objects.create(user=u_d1)
         doc2 = Docente.objects.create(user=u_d2)
         doc3 = Docente.objects.create(user=u_d3)
@@ -71,7 +71,7 @@ class TestEstadisticasAdminView(TestCase):
         # 3. Crear los usuarios y registros para 2 alumnos base
         u_a1 = User.objects.create_user(username='a1', password='123')
         u_a2 = User.objects.create_user(username='a2', password='123')
-        
+
         alumno1 = Alumno.objects.create(matricula="20260001", user=u_a1)
         alumno2 = Alumno.objects.create(matricula="20260002", user=u_a2)
 
@@ -103,6 +103,6 @@ class TestEstadisticasAdminView(TestCase):
         self.assertEqual(response.context['total_alumnos'], 2)
         self.assertEqual(response.context['total_docentes'], 3)
         self.assertEqual(response.context['total_seminarios'], 3)
-        
+
         # 3 seminarios / 2 alumnos = 1.5 en promedio esperado
         self.assertEqual(response.context['promedio_seminarios'], 1.5)

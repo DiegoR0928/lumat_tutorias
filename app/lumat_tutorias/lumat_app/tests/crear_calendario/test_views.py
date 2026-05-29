@@ -3,7 +3,8 @@ from datetime import date, time
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
-from lumat_app.models import Alumno, Docente, Comite, Seminario, CalendarioGenerado
+from lumat_app.models import Alumno, Docente, Comite
+from lumat_app.models import Seminario, CalendarioGenerado
 
 
 # 🌟 Redirige los archivos MEDIA de los test a una carpeta temporal limpia
@@ -27,7 +28,7 @@ class TestCalendarioViews(TestCase):
         u_d1 = User.objects.create_user(username='d1', password='123')
         u_d2 = User.objects.create_user(username='d2', password='123')
         u_d3 = User.objects.create_user(username='d3', password='123')
-        
+
         doc1 = Docente.objects.create(user=u_d1)
         doc2 = Docente.objects.create(user=u_d2)
         doc3 = Docente.objects.create(user=u_d3)
@@ -42,7 +43,7 @@ class TestCalendarioViews(TestCase):
         # 3. Crear los usuarios y registros para 2 alumnos base
         u_a1 = User.objects.create_user(username='a1', password='123')
         u_a2 = User.objects.create_user(username='a2', password='123')
-        
+
         alumno1 = Alumno.objects.create(matricula="20260001", user=u_a1)
         alumno2 = Alumno.objects.create(matricula="20260002", user=u_a2)
 
@@ -85,7 +86,9 @@ class TestCalendarioViews(TestCase):
     # --- Pruebas del Algoritmo de Generación (POST) ---
 
     def test_generacion_exitosa_crea_objeto_y_redirige(self):
-        """Crea el PDF, guarda el registro en BD y limpia los fines de semana."""
+        """
+        Crea el PDF, guarda el registro en BD y limpia los fines de semana.
+        """
         self.client.login(username='admin', password='testpass123')
 
         # Rango amplio de 1 mes (Días hábiles de sobra para los 2 seminarios)
@@ -142,10 +145,10 @@ class TestCalendarioViews(TestCase):
 
         # Obtenemos el registro generado de la base de datos
         cal = CalendarioGenerado.objects.first()
-        
+
         # 1. Validar que el objeto tiene un archivo asociado
         self.assertIsNotNone(cal.archivo_pdf)
-        
+
         # 2. Validar que el archivo físico existe en el storage del servidor
         archivo_existe = cal.archivo_pdf.storage.exists(cal.archivo_pdf.name)
         self.assertTrue(archivo_existe)
