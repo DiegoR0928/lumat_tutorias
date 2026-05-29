@@ -73,7 +73,7 @@ class Seminario(models.Model):
         upload_to='actas_alumno/', null=True, blank=True)
 
     def __str__(self):
-        return f"Seminario de {self.alumno.__str__()} - {self.fecha}"
+        return f"Seminario de {self.alumno.__str__()}"
 
 
 class CalifSeminario(models.Model):

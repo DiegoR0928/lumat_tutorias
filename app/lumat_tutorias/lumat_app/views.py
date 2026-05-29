@@ -408,15 +408,48 @@ def admin_calendario_formulario_view(request):
     """Renderiza el nuevo formulario simplificado de fechas."""
     from django.contrib import admin
 
-    # Traemos todos los calendarios que se han guardados en el servidor
     calendarios_guardados = CalendarioGenerado.objects.all()
 
     context = {
         **admin.site.each_context(request),
         "title": "Generador Automático de Calendario de Seminarios",
-        "calendarios": calendarios_guardados,  # 🌟 Lo pasamos al template
+        "calendarios": calendarios_guardados,
     }
     return render(request, "admin/calendario_form.html", context)
+
+
+def _calcular_dias_habiles(fecha_inicio, fecha_fin):
+    """Calcula el número de días laborables (Lunes a Viernes) en el rango."""
+    dias_habiles = 0
+    fecha_aux = fecha_inicio
+    while fecha_aux <= fecha_fin:
+        if fecha_aux.weekday() < 5:  # 0=Lunes, 1=Martes... 4=Viernes
+            dias_habiles += 1
+        fecha_aux += timedelta(days=1)
+    return dias_habiles
+
+
+def _validar_rango_calendario(fecha_inicio, fecha_fin, total_seminarios):
+    """Valida las reglas de negocio temporales y la capacidad del rango."""
+    hoy = datetime.now().date()
+
+    if fecha_inicio < hoy:
+        return "No se pueden generar calendarios en fechas anteriores a hoy."
+
+    if fecha_inicio == fecha_fin:
+        return "No se pueden generar calendarios de hoy a hoy mismo (mismo día)."
+
+    if fecha_fin < fecha_inicio:
+        return "La fecha inicial no puede ser posterior a la fecha final."
+
+    dias_habiles = _calcular_dias_habiles(fecha_inicio, fecha_fin)
+    if total_seminarios > dias_habiles:
+        return (
+            f"El rango seleccionado solo contiene {dias_habiles} días hábiles, "
+            f"pero necesitas acomodar {total_seminarios} seminarios. "
+            f"Amplía el rango de fechas."
+        )
+    return None
 
 
 def admin_calendario_generar_pdf_view(request):
@@ -435,65 +468,37 @@ def admin_calendario_generar_pdf_view(request):
         fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
         fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
 
-        if (fecha_fin - fecha_inicio).days < 0:
-            messages.error(
-                request,
-                "La fecha inicial no puede ser posterior a la fecha final."
-            )
-            return redirect('calendar_form')
-
-        # 1. Obtener todos los seminarios de la base de datos
         seminarios_db = list(Seminario.objects.all())
 
         if not seminarios_db:
             messages.error(
-                request,
-                "No hay seminarios registrados en la base de datos."
+                request, "No hay seminarios registrados en la base de datos."
             )
             return redirect('calendar_form')
 
-        # 2. 📊 CONTAR DÍAS HÁBILES REALES EN EL RANGO SELECCIONADO
-        dias_habiles_disponibles = 0
-        fecha_aux = fecha_inicio
-        while fecha_aux <= fecha_fin:
-            if fecha_aux.weekday() < 5:  # 0=Lunes, 1=Martes... 4=Viernes
-                dias_habiles_disponibles += 1
-            fecha_aux += timedelta(days=1)
+        error_msg = _validar_rango_calendario(
+            fecha_inicio, fecha_fin, len(seminarios_db)
+        )
+        if error_msg:
+            messages.error(request, error_msg)
+            return redirect('calendar_form')
 
-        # Validación inteligente basada solo en días laborables
-        if len(seminarios_db) > dias_habiles_disponibles:
-            messages.error(
-                request,
-                f"El rango seleccionado solo contiene "
-                f"{dias_habiles_disponibles} días hábiles, pero necesitas "
-                f"acomodar {len(seminarios_db)} seminarios. "
-                f"Amplía el rango de fechas.",
-            )
-            return redirect("calendar_form")
-
-        # 3. 🔀 Mezclar aleatoriamente a las personas
         random.shuffle(seminarios_db)
 
-        # 4. 📅 ASIGNACIÓN CONSECUTIVA EN DÍAS HÁBILES
         agenda_sorteada = []
         fecha_actual = fecha_inicio
 
         for seminario in seminarios_db:
-            # Si la fecha actual es Sábado (5) o Domingo (6),
-            # avanzamos hasta el Lunes
             while fecha_actual.weekday() >= 5:
                 fecha_actual += timedelta(days=1)
 
-            # Guardamos la asignación en el día laborable confirmado
             agenda_sorteada.append({
                 "fecha": fecha_actual,
                 "nombre": str(seminario)
             })
-
-            # Preparamos el siguiente día calendario para el próximo ciclo
             fecha_actual += timedelta(days=1)
 
-        # 5. Compilar la plantilla del PDF
+        # Compilar la plantilla del PDF
         context_pdf = {
             "fecha_inicio": fecha_inicio,
             "fecha_fin": fecha_fin,
@@ -502,10 +507,11 @@ def admin_calendario_generar_pdf_view(request):
         }
 
         html_string = render_to_string(
-            "pdf/calendario_pdf_template.html", context_pdf)
+            "pdf/calendario_pdf_template.html", context_pdf
+        )
         pdf_file = HTML(string=html_string).write_pdf()
 
-        # 6. Guardar localmente en el servidor (MEDIA)
+        # Guardar localmente en el servidor (MEDIA)
         mes_inicio = fecha_inicio.strftime("%B")
         mes_fin = fecha_fin.strftime("%B %Y")
         nombre_periodo = f"Seminarios {mes_inicio} - {mes_fin}"
@@ -516,19 +522,17 @@ def admin_calendario_generar_pdf_view(request):
             fecha_fin=fecha_fin,
         )
 
-        nombre_archivo = (
-            f"calendario_{fecha_inicio_str}_al_{fecha_fin_str}.pdf"
-        )
-        nuevo_calendario.archivo_pdf.save(
-            nombre_archivo, ContentFile(pdf_file))
+        nombre_archivo = f"calendario_{fecha_inicio_str}_al_{fecha_fin_str}.pdf"
+        nuevo_calendario.archivo_pdf.save(nombre_archivo, ContentFile(pdf_file))
         nuevo_calendario.save()
 
-        messages.success(
-            request, f"¡Éxito! El {nombre_periodo} ha sido generado, \
-            filtrado por días hábiles y guardado localmente.")
+        mensaje_exito = (
+            f"¡Éxito! El {nombre_periodo} ha sido generado, "
+            f"filtrado por días hábiles y guardado localmente."
+        )
+        messages.success(request, mensaje_exito)
         return redirect('calendar_form')
 
-    # Si no es POST, redirigir al formulario
     return redirect('calendar_form')
 
 

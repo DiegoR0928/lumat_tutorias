@@ -18,11 +18,33 @@
 
 <style>
     /* --- Tema Claro (Valores por defecto) --- */
-    /* 🌟 Agregamos margin-bottom para forzar la separación vertical que Tailwind eliminó */
-    .custom-card { background-color: #ffffff; border-color: #e5e7eb; margin-bottom: 2.5rem; }
-    .custom-input { background-color: #ffffff; color: #111827; border-color: #d1d5db; }
-    .custom-list-item { background-color: #f9fafb; border-color: #f3f4f6; }
-    .custom-embed-container { background-color: #f3f4f6; border-color: #e5e7eb; }
+    .custom-card {
+        background-color: #ffffff;
+        border-color: #e5e7eb;
+        margin-bottom: 2.5rem;
+    }
+    .custom-input {
+        background-color: #ffffff;
+        color: #111827;
+        border-color: #d1d5db;
+    }
+    .custom-list-item {
+        background-color: #f9fafb;
+        border-color: #f3f4f6;
+    }
+    .custom-embed-container {
+        background-color: #f3f4f6;
+        border-color: #e5e7eb;
+    }
+    
+    /* 🌟 Margen superior explícito para separar el botón de los campos de fecha */
+    .custom-btn-container {
+        margin-top: 2.25rem !important;
+    }
+    
+    /* 🔴 Estilos base para Alertas y Mensajes */
+    .msg-success { color: #16a34a; background-color: #f0fdf4; }
+    .msg-error { color: #dc2626; background-color: #fef2f2; }
 
     /* --- Tema Oscuro (Se activan cuando la raíz tiene la clase .dark) --- */
     .dark .custom-card { 
@@ -35,12 +57,22 @@
         border-color: #3f3f46 !important;     /* zinc-700 */
     }
     .dark .custom-list-item { 
-        background-color: rgba(39, 39, 42, 0.4) !important; /* zinc-800 con opacidad */
-        border-color: rgba(63, 63, 70, 0.6) !important;     /* zinc-700 con opacidad */
+        background-color: rgba(39, 39, 42, 0.4) !important;
+        border-color: rgba(63, 63, 70, 0.6) !important;
     }
     .dark .custom-embed-container { 
         background-color: #09090b !important; /* zinc-950 */
         border-color: #27272a !important;     /* zinc-800 */
+    }
+    
+    /* 🔴 Mensajes adaptables al modo noche */
+    .dark .msg-success {
+        color: #4ade80 !important;
+        background-color: rgba(22, 163, 74, 0.15) !important;
+    }
+    .dark .msg-error {
+        color: #f87171 !important;
+        background-color: rgba(220, 38, 38, 0.15) !important;
     }
 </style>
 {% endblock %}
@@ -50,11 +82,15 @@
     
     <div class="custom-card p-6 rounded-lg border shadow-sm transition-colors duration-200">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-zinc-100 mb-2">{{ title }}</h1>
-        <p class="text-gray-600 dark:text-zinc-400 mb-6 text-sm">El sistema tomará todos los seminarios y los distribuirá consecutivamente.</p>
+        <p class="text-gray-600 dark:text-zinc-400 mb-6 text-sm">
+            El sistema tomará todos los seminarios y los distribuirá consecutivamente.
+        </p>
 
         {% if messages %}
             {% for message in messages %}
-                <div class="p-3 mb-4 text-sm text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-950/40 rounded-lg">
+                <div class="p-3 mb-4 text-sm rounded-lg
+                    {% if message.tags == 'error' %}msg-error{% else %}
+                    msg-success{% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -64,16 +100,34 @@
             {% csrf_token %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Fecha de Inicio</label>
-                    <input type="date" name="fecha_inicial" class="custom-input border rounded-md p-2.5 focus:border-[#4a7c7a] w-full block transition-colors" required>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">
+                        Fecha de Inicio
+                    </label>
+                    <input type="date"
+                           name="fecha_inicial"
+                           class="custom-input border rounded-md p-2.5
+                                  focus:border-[#4a7c7a] w-full block
+                                  transition-colors"
+                           required>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Fecha de Finalización</label>
-                    <input type="date" name="fecha_final" class="custom-input border rounded-md p-2.5 focus:border-[#4a7c7a] w-full block transition-colors" required>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">
+                        Fecha de Finalización
+                    </label>
+                    <input type="date"
+                           name="fecha_final"
+                           class="custom-input border rounded-md p-2.5
+                                  focus:border-[#4a7c7a] w-full block
+                                  transition-colors"
+                           required>
                 </div>
             </div>
-            <div class="flex justify-end">
-                <button type="submit" class="bg-[#4a7c7a] hover:bg-[#3a9795] text-white font-medium py-2.5 px-5 rounded text-sm inline-flex items-center shadow-sm transition-all">
+            
+            <div class="flex justify-end custom-btn-container">
+                <button type="submit"
+                        class="bg-[#4a7c7a] hover:bg-[#3a9795] text-white font-medium 
+                               py-2.5 px-5 rounded text-sm inline-flex items-center 
+                               shadow-sm transition-all">
                     <span class="material-symbols-outlined mr-2 text-base">save</span>
                     Generar y Publicar en el Sitio
                 </button>
@@ -82,25 +136,48 @@
     </div>
 
     <div class="custom-card p-6 rounded-lg border shadow-sm transition-colors duration-200">
-        <h2 class="text-xl font-bold text-gray-800 dark:text-zinc-100 mb-2">Calendarios Publicados</h2>
-        <p class="text-gray-500 dark:text-zinc-400 text-sm mb-4">A continuación se muestran los calendarios oficiales vigentes en el sistema.</p>
+        <h2 class="text-xl font-bold text-gray-800 dark:text-zinc-100 mb-2">
+            Calendarios Publicados
+        </h2>
+        <p class="text-gray-500 dark:text-zinc-400 text-sm mb-4">
+            A continuación se muestran los calendarios oficiales vigentes en el sistema.
+        </p>
 
         {% if calendarios %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                     {% for cal in calendarios %}
-                        <div class="custom-list-item p-4 border rounded-xl hover:border-[#4a7c7a] transition-all flex justify-between items-center">
+                        <div class="custom-list-item p-4 border rounded-xl 
+                                    hover:border-[#4a7c7a] transition-all 
+                                    flex justify-between items-center">
                             <div>
-                                <h4 class="font-semibold text-gray-800 dark:text-zinc-200 text-sm">{{ cal.nombre }}</h4>
-                                <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Generado el {{ cal.fecha_creacion|date:"d/m/Y" }}</p>
+                                <h4 class="font-semibold text-gray-800 dark:text-zinc-200 text-sm">
+                                    {{ cal.nombre }}
+                                </h4>
+                                <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+                                    Generado el {{ cal.fecha_creacion|date:"d/m/Y" }}
+                                </p>
                             </div>
                             <div class="flex space-x-3">
-                                <button onclick="verPdf('{{ cal.archivo_pdf.url }}')" class="text-[#4a7c7a] hover:text-[#3a9795] text-sm font-medium inline-flex items-center">
-                                    <span class="material-symbols-outlined mr-1 text-base">visibility</span>
+                                <button onclick="verPdf('{{ cal.archivo_pdf.url }}')"
+                                        class="text-[#4a7c7a] hover:text-[#3a9795]
+                                               text-sm font-medium inline-flex
+                                               items-center">
+                                    <span class="material-symbols-outlined mr-1 text-base">
+                                        visibility
+                                    </span>
                                     Ver aquí
                                 </button>
-                                <a href="{{ cal.archivo_pdf.url }}" target="_blank" class="text-gray-500 hover:text-gray-300 dark:text-zinc-400 dark:hover:text-zinc-200 text-sm font-medium inline-flex items-center">
-                                    <span class="material-symbols-outlined mr-1 text-base">open_in_new</span>
+                                <a href="{{ cal.archivo_pdf.url }}"
+                                   target="_blank"
+                                   class="text-gray-500 hover:text-gray-300
+                                          dark:text-zinc-400
+                                          dark:hover:text-zinc-200 text-sm
+                                          font-medium inline-flex
+                                          items-center">
+                                    <span class="material-symbols-outlined mr-1 text-base">
+                                        open_in_new
+                                    </span>
                                     Abrir grande
                                 </a>
                             </div>
@@ -108,17 +185,22 @@
                     {% endfor %}
                 </div>
 
-                <div class="custom-embed-container border rounded-xl h-[450px] flex items-center justify-center relative overflow-hidden">
+                <div class="custom-embed-container border rounded-xl h-[450px] 
+                            flex items-center justify-center relative overflow-hidden">
                     <embed id="visor-pdf" class="w-full h-full hidden" src="" type="application/pdf">
                     
                     <div id="visor-placeholder" class="text-center p-6 text-gray-400 dark:text-zinc-600">
                         <span class="material-symbols-outlined text-4xl mb-2">picture_as_pdf</span>
-                        <p class="text-xs">Selecciona un calendario de la lista para visualizarlo directamente en esta pantalla.</p>
+                        <p class="text-xs">
+                            Selecciona un calendario de la lista para visualizarlo directamente.
+                        </p>
                     </div>
                 </div>
             </div>
         {% else %}
-            <p class="text-gray-400 dark:text-zinc-500 text-sm italic py-4">No se han generado calendarios institucionales todavía.</p>
+            <p class="text-gray-400 dark:text-zinc-500 text-sm italic py-4">
+                No se han generado calendarios institucionales todavía.
+            </p>
         {% endif %}
     </div>
 </div>
