@@ -5,6 +5,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
 from django.template.loader import render_to_string
+from django.urls import reverse
 from weasyprint import HTML
 from datetime import datetime, timedelta
 import random
@@ -43,9 +44,13 @@ class CustomLoginView(LoginView):
 
         # Redirección por grupos
         if user.groups.filter(name='Docente').exists():
-            return '/docente/'
+            return reverse('lumat_app:docente_dashboard')
         elif user.groups.filter(name='Alumno').exists():
-            return '/alumno/'
+            semestre = int(user.alumno.semestre)
+            return reverse(
+                'lumat_app:seminario_detalle',
+                kwargs={'num': semestre}
+            )
 
         return '/'
 
@@ -301,11 +306,6 @@ def docente_dashboard(request):
     return render(request, 'docente_dashboard.html')
 
 
-@user_passes_test(es_alumno)
-def alumno_dashboard(request):
-    return render(request, 'alumno_dashboard.html')
-
-
 def seminario(request):
     return render(request, 'alumno_seminario.html', {
         'fecha_seminario': '15 de mayo de 2026'
@@ -437,7 +437,8 @@ def _validar_rango_calendario(fecha_inicio, fecha_fin, total_seminarios):
         return "No se pueden generar calendarios en fechas anteriores a hoy."
 
     if fecha_inicio == fecha_fin:
-        return "No se pueden generar calendarios de hoy a hoy mismo (mismo día)."
+        return ("No se pueden generar calendarios de hoy a hoy mismo"
+                " (mismo día).")
 
     if fecha_fin < fecha_inicio:
         return "La fecha inicial no puede ser posterior a la fecha final."
@@ -445,9 +446,9 @@ def _validar_rango_calendario(fecha_inicio, fecha_fin, total_seminarios):
     dias_habiles = _calcular_dias_habiles(fecha_inicio, fecha_fin)
     if total_seminarios > dias_habiles:
         return (
-            f"El rango seleccionado solo contiene {dias_habiles} días hábiles, "
-            f"pero necesitas acomodar {total_seminarios} seminarios. "
-            f"Amplía el rango de fechas."
+            f"El rango seleccionado solo contiene {dias_habiles} días "
+            f"hábiles, pero necesitas acomodar {total_seminarios} "
+            f"seminarios. Amplía el rango de fechas."
         )
     return None
 
@@ -522,8 +523,11 @@ def admin_calendario_generar_pdf_view(request):
             fecha_fin=fecha_fin,
         )
 
-        nombre_archivo = f"calendario_{fecha_inicio_str}_al_{fecha_fin_str}.pdf"
-        nuevo_calendario.archivo_pdf.save(nombre_archivo, ContentFile(pdf_file))
+        nombre_archivo = (
+            f"calendario_{fecha_inicio_str}_al_{fecha_fin_str}.pdf"
+        )
+        nuevo_calendario.archivo_pdf.save(
+            nombre_archivo, ContentFile(pdf_file))
         nuevo_calendario.save()
 
         mensaje_exito = (

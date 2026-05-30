@@ -1,0 +1,24 @@
+{% if messages %}
+<div class="toast-container" id="django-messages" aria-live="polite">
+  {% for message in messages %}
+  <div class="toast toast--{{ message.tags }}">
+    {% if message.tags == 'success' %}
+      <i class="ti ti-circle-check toast__icon" aria-hidden="true"></i>
+    {% elif message.tags == 'error' %}
+      <i class="ti ti-alert-circle toast__icon" aria-hidden="true"></i>
+    {% elif message.tags == 'warning' %}
+      <i class="ti ti-alert-triangle toast__icon" aria-hidden="true"></i>
+    {% else %}
+      <i class="ti ti-info-circle toast__icon" aria-hidden="true"></i>
+    {% endif %}
+    <span>{{ message }}</span>
+  </div>
+  {% endfor %}
+</div>
+<script>
+  setTimeout(function () {
+    var el = document.getElementById('django-messages');
+    if (el) el.remove();
+  }, 10000);
+</script>
+{% endif %}

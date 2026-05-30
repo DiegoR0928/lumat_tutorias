@@ -4,14 +4,13 @@
 {% block extra_css %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-  href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
-  rel="stylesheet">
-
-<link rel="stylesheet" href="{% static 'css/alumno_inicio.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/seminario.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
+
+{% include 'partials/messages.html' %}
 
 {% with semestre_int=alumno.semestre|add:"0" %}
 
@@ -34,20 +33,27 @@
       <nav class="sem-nav-list" aria-label="Navegación de seminarios">
         {% for i in "12345678" %}
         {% with n=forloop.counter %}
-        {% if n <= semestre_int %} {# Muestra los semestres ya cursados o el actual #} <a
-          href="{% url 'lumat_app:seminario_detalle' n %}" class="sem-nav-item done {% if n == num %}active{% endif %}">
-          <span class="sem-status-dot" aria-hidden="true"></span>
-          Seminario {{ n }}
-          </a>
+          {% if n <= semestre_int %}
+            <a href="{% url 'lumat_app:seminario_detalle' n %}"
+               class="sem-nav-item done {% if n == num %}active{% endif %}">
+              <span class="sem-status-dot" aria-hidden="true"></span>
+              Seminario {{ n }}
+            </a>
+          {% elif n == semestre_int %}
+            <a href="{% url 'lumat_app:seminario_detalle' n %}"
+               class="sem-nav-item pending {% if n == num %}active{% endif %}">
+              <span class="sem-status-dot" aria-hidden="true"></span>
+              Seminario {{ n }}
+            </a>
           {% else %}
-          {# Todo lo que sea mayor al semestre actual se bloquea por igual #}
-          <button class="sem-nav-item locked" disabled title="Disponible en semestre {{ n }}">
-            <i class="ti ti-lock" style="font-size:12px;" aria-hidden="true"></i>
-            Seminario {{ n }}
-          </button>
+            <button class="sem-nav-item locked" disabled
+                    title="Disponible en semestre {{ n }}">
+              <i class="ti ti-lock" style="font-size:12px;" aria-hidden="true"></i>
+              Seminario {{ n }}
+            </button>
           {% endif %}
-          {% endwith %}
-          {% endfor %}
+        {% endwith %}
+        {% endfor %}
       </nav>
 
       {# ── Acciones rápidas ── #}
@@ -91,22 +97,22 @@
     <h1 class="sem-title">Seminario {{ num }}</h1>
 
     {% if seminario %}
-    {% if seminario.calificacion %}
-    <span class="sem-badge realizado">
-      <i class="ti ti-circle-check" aria-hidden="true"></i>
-      Realizado
-    </span>
+      {% if seminario.calificacion %}
+        <span class="sem-badge realizado">
+          <i class="ti ti-circle-check" aria-hidden="true"></i>
+          Realizado
+        </span>
+      {% else %}
+        <span class="sem-badge programado">
+          <i class="ti ti-clock" aria-hidden="true"></i>
+          Programado
+        </span>
+      {% endif %}
     {% else %}
-    <span class="sem-badge programado">
-      <i class="ti ti-clock" aria-hidden="true"></i>
-      Programado
-    </span>
-    {% endif %}
-    {% else %}
-    <span class="sem-badge sin-programar">
-      <i class="ti ti-hourglass" aria-hidden="true"></i>
-      Sin programar
-    </span>
+      <span class="sem-badge sin-programar">
+        <i class="ti ti-hourglass" aria-hidden="true"></i>
+        Sin programar
+      </span>
     {% endif %}
   </header>
 
@@ -131,8 +137,11 @@
           </a>
         </div>
       </div>
-      <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0" class="sem-pdf-frame"
-        title="Acta del seminario {{ num }}" loading="lazy">
+      <iframe
+        src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0"
+        class="sem-pdf-frame"
+        title="Acta del seminario {{ num }}"
+        loading="lazy">
       </iframe>
     </div>
 
@@ -183,9 +192,9 @@
           <span class="det-label">Fecha</span>
           <span class="det-value">
             {% if seminario %}
-            {{ seminario.fecha|date:"d/m/Y" }}
+              {{ seminario.fecha|date:"d/m/Y" }}
             {% else %}
-            —
+              —
             {% endif %}
           </span>
         </div>
@@ -193,9 +202,9 @@
           <span class="det-label">Calificación</span>
           <span class="det-value {% if seminario and seminario.calificacion %}calif{% endif %}">
             {% if seminario and seminario.calificacion %}
-            {{ seminario.calificacion }}
+              {{ seminario.calificacion }}
             {% else %}
-            —
+              —
             {% endif %}
           </span>
         </div>
@@ -203,11 +212,11 @@
           <span class="det-label">Estado</span>
           <span>
             {% if seminario and seminario.calificacion %}
-            <span class="estado-pill aprobado">Aprobado</span>
+              <span class="estado-pill aprobado">Aprobado</span>
             {% elif seminario %}
-            <span class="estado-pill pendiente">Pendiente</span>
+              <span class="estado-pill pendiente">Pendiente</span>
             {% else %}
-            <span class="estado-pill sin-calificar">Sin programar</span>
+              <span class="estado-pill sin-calificar">Sin programar</span>
             {% endif %}
           </span>
         </div>
@@ -222,80 +231,175 @@
       </div>
       <div class="panel-card-body">
         {% if comite %}
-        {% with tutor=comite.tutor m1=comite.miembro1 m2=comite.miembro2 %}
-        <div class="comite-member">
-          <div class="comite-avatar">{{ tutor.nombre|slice:":1" }}{{ tutor.apellido_paterno|slice:":1" }}</div>
-          <div class="comite-info">
-            <p class="comite-nombre">{{ tutor.nombre }} {{ tutor.apellido_paterno }}</p>
-            <p class="comite-rol">Tutor</p>
+          {% with tutor=comite.tutor m1=comite.miembro1 m2=comite.miembro2 %}
+          <div class="comite-member">
+            <div class="comite-avatar">{{ tutor.nombre|slice:":1" }}{{ tutor.apellido_paterno|slice:":1" }}</div>
+            <div class="comite-info">
+              <p class="comite-nombre">{{ tutor.nombre }} {{ tutor.apellido_paterno }}</p>
+              <p class="comite-rol">Tutor</p>
+            </div>
           </div>
-        </div>
-        <div class="comite-member">
-          <div class="comite-avatar">{{ m1.nombre|slice:":1" }}{{ m1.apellido_paterno|slice:":1" }}</div>
-          <div class="comite-info">
-            <p class="comite-nombre">{{ m1.nombre }} {{ m1.apellido_paterno }}</p>
-            <p class="comite-rol">Miembro 1</p>
+          <div class="comite-member">
+            <div class="comite-avatar">{{ m1.nombre|slice:":1" }}{{ m1.apellido_paterno|slice:":1" }}</div>
+            <div class="comite-info">
+              <p class="comite-nombre">{{ m1.nombre }} {{ m1.apellido_paterno }}</p>
+              <p class="comite-rol">Miembro 1</p>
+            </div>
           </div>
-        </div>
-        <div class="comite-member">
-          <div class="comite-avatar">{{ m2.nombre|slice:":1" }}{{ m2.apellido_paterno|slice:":1" }}</div>
-          <div class="comite-info">
-            <p class="comite-nombre">{{ m2.nombre }} {{ m2.apellido_paterno }}</p>
-            <p class="comite-rol">Miembro 2</p>
+          <div class="comite-member">
+            <div class="comite-avatar">{{ m2.nombre|slice:":1" }}{{ m2.apellido_paterno|slice:":1" }}</div>
+            <div class="comite-info">
+              <p class="comite-nombre">{{ m2.nombre }} {{ m2.apellido_paterno }}</p>
+              <p class="comite-rol">Miembro 2</p>
+            </div>
           </div>
-        </div>
-        {% endwith %}
+          {% endwith %}
         {% else %}
-        <p style="font-size:13px; color:var(--lumat-muted); text-align:center; padding:12px 0;">
-          Sin comité asignado
-        </p>
+          <p style="font-size:13px; color:var(--lumat-muted); text-align:center; padding:12px 0;">
+            Sin comité asignado
+          </p>
         {% endif %}
       </div>
     </div>
 
-    {# — Evidencias — #}
+    {# — Evidencias (CU-03) — #}
     <div class="panel-card">
       <div class="panel-card-header">
-        <i class="ti ti-photo" aria-hidden="true"></i>
-        Evidencias
+        <i class="ti ti-paperclip" aria-hidden="true"></i>
+        Actividades cargadas
       </div>
       <div class="panel-card-body">
 
-        <div class="evidencias-grid">
-          {% if evidencias %}
-          {% for ev in evidencias %}
-          <div class="evidencia-thumb" title="{{ ev.nombre|default:'Evidencia' }}">
-            {% if ev.tipo == 'imagen' %}
-            <img src="{{ ev.archivo.url }}" alt="Evidencia {{ forloop.counter }}" loading="lazy">
-            {% else %}
-            <i class="ti ti-file" aria-hidden="true"></i>
-            {% endif %}
+        {# Lista de evidencias existentes #}
+        {% if evidencias %}
+          <div class="ev-list" id="ev-list">
+            {% for ev in evidencias %}
+            <div class="ev-item">
+              <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
+              <span class="ev-item-name" title="{{ ev.nombre }}">{{ ev.nombre }}</span>
+              <span class="ev-item-date">{{ ev.subido_en|date:"d/m/y" }}</span>
+            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
-          {% endif %}
-
-          {# Botón añadir #}
-          <label class="evidencia-thumb upload-btn" for="evidencia-input" title="Subir evidencia">
-            <i class="ti ti-plus" aria-hidden="true"></i>
-          </label>
-        </div>
-
-        {# Formulario de subida #}
-        {% if seminario %}
-        <form method="post" action="{% url 'lumat_app:subir_evidencia' seminario.id %}" enctype="multipart/form-data"
-          class="evidencias-upload-form">
-          {% csrf_token %}
-          <input type="file" id="evidencia-input" name="archivo" accept="image/*,application/pdf"
-            onchange="this.form.submit()">
-          <label for="evidencia-input" class="upload-trigger">
-            <i class="ti ti-upload" style="font-size:14px;" aria-hidden="true"></i>
-            Subir evidencia
-          </label>
-        </form>
         {% else %}
-        <p style="font-size:12px; color:var(--lumat-muted); text-align:center; margin-top:4px;">
-          Disponible cuando el seminario esté programado
-        </p>
+          <p class="ev-empty">Sin actividades cargadas aún.</p>
+        {% endif %}
+
+        {# Formulario CU-03 #}
+        {% if seminario %}
+        <hr class="ev-form-divider">
+        <label class="ev-form-label">Cargar actividad</label>
+
+        <form method="post"
+              action="{% url 'lumat_app:subir_evidencia' seminario.id %}"
+              enctype="multipart/form-data"
+              id="ev-form"
+              novalidate>
+          {% csrf_token %}
+
+          {# Paso 3 del flujo: nombre descriptivo #}
+          <input type="text"
+                 id="ev-nombre"
+                 name="nombre"
+                 class="ev-input"
+                 placeholder="Nombre de la actividad"
+                 maxlength="200"
+                 autocomplete="off">
+          <p class="ev-error-msg" id="err-nombre">Ingresa un nombre para la actividad.</p>
+
+          {# Paso 4 del flujo: selección de archivo PDF #}
+          <input type="file"
+                 id="ev-archivo"
+                 name="archivo"
+                 class="ev-file-input"
+                 accept="application/pdf">
+          <label for="ev-archivo" class="ev-file-label" id="ev-file-label">
+            <i class="ti ti-upload" aria-hidden="true"></i>
+            <span id="ev-file-text">Seleccionar PDF…</span>
+          </label>
+          <p class="ev-error-msg" id="err-archivo">Solo se permiten archivos PDF (máx. 10 MB).</p>
+
+          {# Paso 5: enviar #}
+          <button type="submit" class="ev-submit-btn" id="ev-submit" disabled>
+            <i class="ti ti-circle-check" aria-hidden="true"></i>
+            Cargar actividad
+          </button>
+        </form>
+
+        <script>
+        (function () {
+          const nombre  = document.getElementById('ev-nombre');
+          const archivo = document.getElementById('ev-archivo');
+          const fileLabel = document.getElementById('ev-file-label');
+          const fileText  = document.getElementById('ev-file-text');
+          const submit    = document.getElementById('ev-submit');
+          const errNombre  = document.getElementById('err-nombre');
+          const errArchivo = document.getElementById('err-archivo');
+
+          function validate() {
+            const hasName = nombre.value.trim().length > 0;
+            const file = archivo.files[0];
+            const validFile = file && file.type === 'application/pdf' && file.size <= 10 * 1024 * 1024;
+            submit.disabled = !(hasName && validFile);
+          }
+
+          nombre.addEventListener('input', validate);
+
+          archivo.addEventListener('change', function () {
+            const file = archivo.files[0];
+            errArchivo.classList.remove('visible');
+            fileLabel.classList.remove('has-file');
+
+            if (!file) { fileText.textContent = 'Seleccionar PDF…'; validate(); return; }
+
+            // FA-01: validar tipo y tamaño
+            if (file.type !== 'application/pdf') {
+              errArchivo.textContent = 'El archivo debe ser un PDF.';
+              errArchivo.classList.add('visible');
+              fileLabel.classList.remove('has-file');
+              fileText.textContent = 'Seleccionar PDF…';
+              archivo.value = '';
+            } else if (file.size > 10 * 1024 * 1024) {
+              errArchivo.textContent = 'El archivo supera el límite de 10 MB.';
+              errArchivo.classList.add('visible');
+              fileLabel.classList.remove('has-file');
+              fileText.textContent = 'Seleccionar PDF…';
+              archivo.value = '';
+            } else {
+              fileText.textContent = file.name;
+              fileLabel.classList.add('has-file');
+            }
+            validate();
+          });
+
+          document.getElementById('ev-form').addEventListener('submit', function (e) {
+            let ok = true;
+            if (!nombre.value.trim()) {
+              errNombre.classList.add('visible');
+              nombre.classList.add('error');
+              ok = false;
+            }
+            if (!archivo.files[0]) {
+              errArchivo.textContent = 'Selecciona un archivo PDF.';
+              errArchivo.classList.add('visible');
+              ok = false;
+            }
+            if (!ok) e.preventDefault();
+          });
+
+          nombre.addEventListener('input', function () {
+            errNombre.classList.remove('visible');
+            nombre.classList.remove('error');
+            validate();
+          });
+        })();
+        </script>
+
+        {% else %}
+          <hr class="ev-form-divider">
+          <p style="font-size:12px; color:var(--lumat-muted); text-align:center; padding: 4px 0 2px;">
+            Disponible cuando el seminario esté programado.
+          </p>
         {% endif %}
 
       </div>

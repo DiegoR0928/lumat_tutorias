@@ -11,7 +11,7 @@ urlpatterns = [
     path('registro/', views.registro, name='registro'),
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', CustomLogoutView.as_view(), name='logout'),
-    path('alumno/', views.alumno_dashboard, name='alumno_dashboard'),
+    #     path('alumno/', views.alumno_dashboard, name='alumno_dashboard'),
     path('docente/', views.docente_dashboard, name='docente_dashboard'),
 
     path('alumno/seminario/', views.seminario, name='seminario'),

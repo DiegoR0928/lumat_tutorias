@@ -314,6 +314,5 @@ class SeminarioAdmin(ModelAdmin):
     search_fields = ('alumno__nombre', 'alumno__matricula')
 
 
-
 # QUITAR GRUPOS DE ADMIN
 admin.site.unregister(Group)
