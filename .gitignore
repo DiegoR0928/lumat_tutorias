@@ -214,3 +214,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Ignorar todos los archivos subidos por los usuarios (Carpeta media)
+app/lumat_tutorias/media/
+
+# Ignorar la caché de Python (para evitar que se sigan colando los archivos .pyc)
+**/__pycache__/
+*.pyc
