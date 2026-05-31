@@ -2,6 +2,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib import auth
 from django.contrib.auth.models import User, Group
+# Asegúrate de importar tu modelo Alumno aquí
+from lumat_app.models import Alumno 
 
 
 class TestLoginForm(TestCase):
@@ -9,13 +11,11 @@ class TestLoginForm(TestCase):
     def setUp(self):
         self.client = Client()
 
-        # Usuario sin grupo
         self.user_sin_grupo = User.objects.create_user(
             username='sin_grupo',
             password='testpass123'
         )
 
-        # Usuario docente
         self.grupo_docente = Group.objects.create(name='Docente')
         self.user_docente = User.objects.create_user(
             username='docente1',
@@ -23,13 +23,17 @@ class TestLoginForm(TestCase):
         )
         self.user_docente.groups.add(self.grupo_docente)
 
-        # Usuario alumno
         self.grupo_alumno = Group.objects.create(name='Alumno')
         self.user_alumno = User.objects.create_user(
             username='alumno1',
             password='testpass123'
         )
         self.user_alumno.groups.add(self.grupo_alumno)
+        
+        self.alumno_perfil = Alumno.objects.create(
+            user=self.user_alumno,
+            semestre=5 
+        )
 
     # --- Autenticación ---
 
@@ -92,6 +96,31 @@ class TestLoginForm(TestCase):
         })
         user = auth.get_user(self.client)
         self.assertTrue(user.groups.filter(name='Alumno').exists())
+
+    # --- Redirecciones por Rol (Nuevos tests basados en tu CustomLoginView) ---
+
+    def test_login_docente_redirige_a_dashboard_docente(self):
+        response = self.client.post(reverse('lumat_app:login'), {
+            'username': 'docente1',
+            'password': 'testpass123'
+        })
+        self.assertRedirects(response, reverse('lumat_app:docente_dashboard'))
+
+    def test_login_alumno_redirige_a_seminario_detalle_con_su_semestre(self):
+        response = self.client.post(reverse('lumat_app:login'), {
+            'username': 'alumno1',
+            'password': 'testpass123'
+        })
+        # El alumno tiene asignado semestre=5 en el setUp
+        url_esperada = reverse('lumat_app:seminario_detalle', kwargs={'num': 5})
+        self.assertRedirects(response, url_esperada)
+
+    def test_login_sin_grupo_redirige_a_raiz(self):
+        response = self.client.post(reverse('lumat_app:login'), {
+            'username': 'sin_grupo',
+            'password': 'testpass123'
+        })
+        self.assertRedirects(response, '/', target_status_code=404)
 
     # --- Casos negativos ---
 

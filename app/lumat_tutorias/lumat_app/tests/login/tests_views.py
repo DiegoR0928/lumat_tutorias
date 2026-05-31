@@ -2,6 +2,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User, Group
 
+from lumat_app.models import Alumno
+
 
 class TestLoginView(TestCase):
 
@@ -23,6 +25,10 @@ class TestLoginView(TestCase):
             password='testpass123'
         )
         self.user_alumno.groups.add(self.grupo_alumno)
+        self.alumno_perfil = Alumno.objects.create(
+            user=self.user_alumno,
+            semestre=5  
+        )
 
     # --- Vista GET ---
 
@@ -45,14 +51,17 @@ class TestLoginView(TestCase):
             'username': 'docente1',
             'password': 'testpass123'
         })
-        self.assertRedirects(response, '/docente/')
+        url_esperada = reverse('lumat_app:docente_dashboard')
+        self.assertRedirects(response, url_esperada)
 
     def test_login_alumno_redirige_a_alumno(self):
         response = self.client.post(reverse('lumat_app:login'), {
             'username': 'alumno1',
             'password': 'testpass123'
         })
-        self.assertRedirects(response, '/alumno/')
+        # Corregido: Usa la URL dinámica con el semestre ('num': 5) definido en el setUp
+        url_esperada = reverse('lumat_app:seminario_detalle', kwargs={'num': 5})
+        self.assertRedirects(response, url_esperada)
 
     # --- Código HTTP ---
 

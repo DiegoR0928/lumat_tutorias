@@ -16,7 +16,6 @@ from django.utils import timezone
 
 from .models import (
     Evidencia,
-    SeminarioNumero,
     SolicitudCambioTutor
 )
 from .forms import (
@@ -117,22 +116,25 @@ def registro(request):
 
 def _get_seminario_para_alumno(alumno, numero):
     """
-    Devuelve el objeto Seminario vinculado al número dado para
-    este alumno, o None si todavía no existe / no está programado.
-    Aprovecha select_related para evitar N+1 en comité y docentes.
+    Devuelve el último intento (periodo más alto)
+    del seminario indicado para el alumno.
     """
-    try:
-        sn = SeminarioNumero.objects.select_related(
-            'seminario',
-            'seminario__comite',
-            'seminario__comite__tutor',
-            'seminario__comite__miembro1',
-            'seminario__comite__miembro2',
-        ).get(alumno=alumno, numero=numero)
-        # puede ser None si el registro existe sin seminario
-        return sn.seminario
-    except SeminarioNumero.DoesNotExist:
-        return None
+
+    return (
+        Seminario.objects
+        .select_related(
+            'comite',
+            'comite__tutor',
+            'comite__miembro1',
+            'comite__miembro2',
+        )
+        .filter(
+            alumno=alumno,
+            numero=numero
+        )
+        .order_by('-periodo')
+        .first()
+    )
 
 
 def _proximo_seminario(alumno):
@@ -173,41 +175,54 @@ def seminario_detalle(request, num):
     # Validaciones de acceso
     if not (1 <= num <= 8):
         messages.error(request, "Número de seminario inválido.")
-        return redirect('lumat_app:seminario_detalle', num=semestre)
+        return redirect(
+            'lumat_app:seminario_detalle',
+            num=semestre
+        )
 
     if num > semestre:
         messages.warning(
             request,
             f"El seminario {num} estará disponible en semestres posteriores."
         )
-        return redirect('lumat_app:seminario_detalle', num=semestre)
+        return redirect(
+            'lumat_app:seminario_detalle',
+            num=semestre
+        )
 
-    # Datos del seminario seleccionado
+    # Obtiene el último periodo de este seminario
     seminario_obj = _get_seminario_para_alumno(alumno, num)
+
     comite = seminario_obj.comite if seminario_obj else None
+
     evidencias = (
         Evidencia.objects.filter(
             seminario=seminario_obj
-        ).order_by("subido_en")
-        if seminario_obj else []
+        ).order_by('subido_en')
+        if seminario_obj else Evidencia.objects.none()
     )
 
-    # Solicitud de cambio de tutor pendiente (para deshabilitar
-    # el botón si ya hay una)
     solicitud_pendiente = SolicitudCambioTutor.objects.filter(
-        alumno=alumno, estado='pendiente'
+        alumno=alumno,
+        estado='pendiente'
     ).exists()
 
     context = {
         'alumno': alumno,
-        'num': num,
+        'num': num,  # número del seminario (1-8)
         'seminario': seminario_obj,
         'comite': comite,
         'evidencias': evidencias,
         'proximo_seminario': _proximo_seminario(alumno),
         'solicitud_pendiente': solicitud_pendiente,
+        'periodo': seminario_obj.periodo if seminario_obj else None,
     }
-    return render(request, 'alumno_seminario.html', context)
+
+    return render(
+        request,
+        'alumno_seminario.html',
+        context
+    )
 
 
 # ─────────────────────────────────────────────
@@ -222,34 +237,34 @@ def subir_evidencia(request, seminario_id):
 
     if request.method != 'POST':
         return redirect('lumat_app:seminario_detalle',
-                        num=seminario_obj.numero_obj.numero)
+                        num=seminario_obj.numero)
 
     archivo = request.FILES.get('archivo')
 
     if not archivo:
         messages.error(request, "No se seleccionó ningún archivo.")
         return redirect('lumat_app:seminario_detalle',
-                        num=seminario_obj.numero_obj.numero)
+                        num=seminario_obj.numero)
 
     # Validación de tamaño (máx. 10 MB)
     MAX_SIZE = 10 * 1024 * 1024
     if archivo.size > MAX_SIZE:
         messages.error(request, "El archivo no puede superar 10 MB.")
         return redirect('lumat_app:seminario_detalle',
-                        num=seminario_obj.numero_obj.numero)
+                        num=seminario_obj.numero)
 
     # Validación de tipo MIME básica
     TIPOS_PERMITIDOS = (
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        # 'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'application/pdf',
     )
     if archivo.content_type not in TIPOS_PERMITIDOS:
         messages.error(
             request,
-            "Solo se permiten imágenes (JPG, PNG, GIF, WEBP) y PDFs."
+            "Solo se permiten imágenes y PDFs."
         )
         return redirect('lumat_app:seminario_detalle',
-                        num=seminario_obj.numero_obj.numero)
+                        num=seminario_obj.numero)
 
     Evidencia.objects.create(
         seminario=seminario_obj,
@@ -259,7 +274,7 @@ def subir_evidencia(request, seminario_id):
 
     messages.success(request, "Evidencia subida correctamente.")
     return redirect('lumat_app:seminario_detalle',
-                    num=seminario_obj.numero_obj.numero)
+                    num=seminario_obj.numero)
 
 
 # ─────────────────────────────────────────────

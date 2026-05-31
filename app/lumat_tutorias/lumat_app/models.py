@@ -71,9 +71,29 @@ class Seminario(models.Model):
     actaComite = models.FileField(upload_to='actas/', null=True, blank=True)
     actaAlumno = models.FileField(
         upload_to='actas_alumno/', null=True, blank=True)
+    
+    # Número del seminario (1-8)
+    numero = models.PositiveSmallIntegerField()
+
+    # Intento del seminario
+    periodo = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        ordering = ['numero', 'periodo']
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=['alumno', 'numero', 'periodo'],
+                name='unique_seminario_periodo'
+            )
+        ]
 
     def __str__(self):
-        return f"Seminario de {self.alumno.__str__()}"
+        return (
+            f"Seminario {self.numero} "
+            f"(Periodo {self.periodo}) - "
+            f"{self.alumno}"
+        )
 
 
 class CalifSeminario(models.Model):
@@ -114,28 +134,28 @@ class CalendarioGenerado(models.Model):
 # Vincula un Seminario con su número (1-8) para
 # un alumno. Un alumno solo puede tener un
 # seminario por número.
-# ─────────────────────────────────────────────
-class SeminarioNumero(models.Model):
-    alumno = models.ForeignKey(
-        'Alumno',
-        on_delete=models.CASCADE,
-        related_name='seminarios_numerados'
-    )
-    seminario = models.OneToOneField(
-        'Seminario',
-        on_delete=models.CASCADE,
-        related_name='numero_obj',
-        null=True,
-        blank=True
-    )
-    numero = models.PositiveSmallIntegerField()  # 1 – 8
+# # ─────────────────────────────────────────────
+# class SeminarioNumero(models.Model):
+#     alumno = models.ForeignKey(
+#         'Alumno',
+#         on_delete=models.CASCADE,
+#         related_name='seminarios_numerados'
+#     )
+#     seminario = models.OneToOneField(
+#         'Seminario',
+#         on_delete=models.CASCADE,
+#         related_name='numero_obj',
+#         null=True,
+#         blank=True
+#     )
+#     numero = models.PositiveSmallIntegerField()  # 1 – 8
 
-    class Meta:
-        unique_together = ('alumno', 'numero')
-        ordering = ['numero']
+#     class Meta:
+#         unique_together = ('alumno', 'numero')
+#         ordering = ['numero']
 
-    def __str__(self):
-        return f"Seminario {self.numero} — {self.alumno}"
+#     def __str__(self):
+#         return f"Seminario {self.numero} — {self.alumno}"
 
 
 # ─────────────────────────────────────────────
