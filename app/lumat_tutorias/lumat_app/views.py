@@ -283,22 +283,30 @@ def subir_evidencia(request, seminario_id):
 # ─────────────────────────────────────────────
 
 @login_required
+@user_passes_test(es_alumno)
 def cambio_tutor(request):
     alumno = request.user.alumno
-
-    # Si ya tiene una solicitud pendiente, no permite crear otra
-    if SolicitudCambioTutor.objects.filter(
+    
+    # 1. Buscamos si existe una solicitud pendiente
+    solicitud_pendiente = SolicitudCambioTutor.objects.filter(
         alumno=alumno, estado="pendiente"
-    ).exists():
+    ).first()  # Usamos .first() para obtener el objeto real o None
+
+    # 2. Si hay una solicitud pendiente, avisamos al usuario
+    if solicitud_pendiente:
         messages.warning(
             request,
-            "Ya tienes una solicitud de cambio de tutor en proceso.",
-        )
-        return redirect(
-            "lumat_app:seminario_detalle", num=int(alumno.semestre)
+            "Ya tienes una solicitud de cambio de tutor en proceso. "
+            "No puedes enviar una nueva hasta que esta se resuelva.",
         )
 
     if request.method == "POST":
+        # Segurito: Si intentan saltarse el bloqueo del HTML enviando un POST manual,
+        # los frenamos aquí si ya existe una solicitud pendiente.
+        if solicitud_pendiente:
+            messages.error(request, "No puedes enviar otra solicitud.")
+            return redirect("lumat_app:seminario_detalle", num=int(alumno.semestre))
+
         motivo = request.POST.get("motivo", "").strip()
         if not motivo:
             messages.error(
@@ -314,7 +322,15 @@ def cambio_tutor(request):
                 "lumat_app:seminario_detalle", num=int(alumno.semestre)
             )
 
-    return render(request, "cambio_tutor.html", {"alumno": alumno})
+    # 3. Pasamos 'solicitud_pendiente' al contexto del template
+    return render(
+        request, 
+        "alumno_cambio_tutor.html", 
+        {
+            "alumno": alumno,
+            "solicitud_pendiente": solicitud_pendiente
+        }
+    )
 
 
 @user_passes_test(es_docente)

@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/cambio_tutor.css' %}">
+{% endblock extra_css %}
+
+
+{% block content %}
+
+{% if messages %}
+<div class="toast-container" id="django-messages" aria-live="polite">
+  {% for message in messages %}
+  <div class="toast toast--{{ message.tags }}">
+    {% if message.tags == 'success' %}<i class="ti ti-circle-check toast__icon" aria-hidden="true"></i>
+    {% elif message.tags == 'error' %}<i class="ti ti-alert-circle toast__icon" aria-hidden="true"></i>
+    {% elif message.tags == 'warning' %}<i class="ti ti-alert-triangle toast__icon" aria-hidden="true"></i>
+    {% else %}<i class="ti ti-info-circle toast__icon" aria-hidden="true"></i>{% endif %}
+    <span>{{ message }}</span>
+  </div>
+  {% endfor %}
+</div>
+<script>
+  setTimeout(function () {
+    var el = document.getElementById('django-messages');
+    if (el) el.remove();
+  }, 10000);
+</script>
+{% endif %}
+
+<div class="ct-page">
+  <div class="ct-card">
+
+    {# ── Header ── #}
+    <div class="ct-card-header">
+      <nav class="ct-breadcrumb" aria-label="Ruta de navegación">
+        <a href="{% url 'lumat_app:seminario_detalle' num=alumno.semestre|add:'0' %}">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i>
+          Volver al seminario
+        </a>
+      </nav>
+      <h1 class="ct-title">Solicitar cambio de tutor</h1>
+      <p class="ct-subtitle">
+        Tu solicitud será revisada por la coordinación del programa.
+      </p>
+    </div>
+
+    {# ── Aviso Dinámico ── #}
+    {% if solicitud_pendiente %}
+      <div class="ct-aviso ct-aviso--info" role="alert">
+        <i class="ti ti-info-circle" aria-hidden="true"></i>
+        <p>
+          Actualmente tienes una <strong>solicitud en estado pendiente</strong>. No es posible emitir un nuevo requerimiento hasta que la coordinación dictamine el caso actual.
+        </p>
+      </div>
+    {% else %}
+      <div class="ct-aviso" role="alert">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        <p>
+          Solo puedes tener <strong>una solicitud activa</strong> a la vez.
+          Una vez enviada, no podrás modificarla hasta que sea resuelta.
+        </p>
+      </div>
+    {% endif %}
+
+    {# ── Formulario ── #}
+    <div class="ct-form-body">
+      <form method="post" id="ct-form" novalidate>
+        {% csrf_token %}
+
+        <label class="ct-label" for="ct-motivo">Motivo de la solicitud</label>
+        <textarea
+          id="ct-motivo"
+          name="motivo"
+          class="ct-textarea"
+          placeholder="Describe brevemente el motivo por el que solicitas el cambio de tutor…"
+          maxlength="500"
+          rows="6"
+          {% if solicitud_pendiente %}disabled{% endif %}
+          aria-describedby="ct-char-info ct-error-motivo">{% if solicitud_pendiente %}{{ solicitud_pendiente.motivo }}{% endif %}</textarea>
+        
+        {% if not solicitud_pendiente %}
+          <p class="ct-char-count" id="ct-char-info">0 / 500</p>
+          <p class="ct-error-msg" id="ct-error-motivo">
+            <i class="ti ti-alert-circle" aria-hidden="true"></i>
+            Debes indicar el motivo de la solicitud.
+          </p>
+        {% endif %}
+
+        <div class="ct-actions">
+          {% if solicitud_pendiente %}
+            <button type="button" class="ct-btn ct-btn--primary" id="ct-submit" disabled>
+              <i class="ti ti-lock" aria-hidden="true"></i>
+              Solicitud en trámite
+            </button>
+          {% else %}
+            <button type="submit" class="ct-btn ct-btn--primary" id="ct-submit" disabled>
+              <i class="ti ti-send" aria-hidden="true"></i>
+              Enviar solicitud
+            </button>
+          {% endif %}
+          
+          <a href="{% url 'lumat_app:seminario_detalle' num=alumno.semestre|add:'0' %}"
+             class="ct-btn ct-btn--secondary">
+            {% if solicitud_pendiente %}Volver{% else %}Cancelar{% endif %}
+          </a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+{# ── Script de validación (Solo se activa si el formulario está disponible) ── #}
+{% if not solicitud_pendiente %}
+<script>
+(function () {
+  var textarea = document.getElementById('ct-motivo');
+  var counter  = document.getElementById('ct-char-info');
+  var submitBtn = document.getElementById('ct-submit');
+  var errorMsg  = document.getElementById('ct-error-motivo');
+  var MAX = 500;
+
+  function actualizar() {
+    var len = textarea.value.trim().length;
+    var total = textarea.value.length;
+
+    // Contador de caracteres
+    counter.textContent = total + ' / ' + MAX;
+    counter.className = 'ct-char-count';
+    if (total >= MAX)       counter.classList.add('limit');
+    else if (total >= 400)  counter.classList.add('warn');
+
+    // Habilitar botón solo si hay contenido
+    submitBtn.disabled = len === 0;
+
+    // Limpiar error al escribir
+    if (len > 0) {
+      errorMsg.classList.remove('visible');
+      textarea.classList.remove('error');
+    }
+  }
+
+  textarea.addEventListener('input', actualizar);
+
+  document.getElementById('ct-form').addEventListener('submit', function (e) {
+    if (textarea.value.trim().length === 0) {
+      e.preventDefault();
+      errorMsg.classList.add('visible');
+      textarea.classList.add('error');
+      textarea.focus();
+    }
+  });
+})();
+</script>
+{% endif %}
+
+{% endblock %}

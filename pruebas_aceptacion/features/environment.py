@@ -45,7 +45,7 @@ def after_scenario(context, scenario):
 
 def _limpiar_datos(tags):
     from django.contrib.auth.models import User
-    from lumat_app.models import Alumno, Docente, Evidencia
+    from lumat_app.models import Alumno, Docente, Evidencia, SolicitudCambioTutor
 
     if 'limpiar_usuarios' in tags:
         User.objects.filter(is_superuser=False).delete()
@@ -56,5 +56,8 @@ def _limpiar_datos(tags):
     if 'limpiar_docentes' in tags:
         Docente.objects.all().delete()
 
-    if 'limpiar_evidencias' in tags:                         # <- agregar esto
+    if 'limpiar_evidencias' in tags:
         Evidencia.objects.all().delete()
+
+    if 'limpiar_solicitudes' in tags:
+        SolicitudCambioTutor.objects.all().delete()
