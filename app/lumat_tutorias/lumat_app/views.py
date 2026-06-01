@@ -155,12 +155,12 @@ def _proximo_seminario(alumno):
 # Vista: listado / hub de seminarios
 # ─────────────────────────────────────────────
 
-@login_required
-def seminario(request):
-    """Redirige al seminario activo (el más reciente desbloqueado)."""
-    alumno = request.user.alumno
-    semestre = int(alumno.semestre)
-    return redirect('lumat_app:seminario_detalle', num=semestre)
+# @login_required
+# def seminario(request):
+#     """Redirige al seminario activo (el más reciente desbloqueado)."""
+#     alumno = request.user.alumno
+#     semestre = int(alumno.semestre)
+#     return redirect('lumat_app:seminario_detalle', num=semestre)
 
 
 # ─────────────────────────────────────────────
@@ -168,17 +168,18 @@ def seminario(request):
 # ─────────────────────────────────────────────
 
 @login_required
+@user_passes_test(es_alumno)
 def seminario_detalle(request, num):
     alumno = request.user.alumno
     semestre = int(alumno.semestre)
 
-    # Validaciones de acceso
-    if not (1 <= num <= 8):
-        messages.error(request, "Número de seminario inválido.")
-        return redirect(
-            'lumat_app:seminario_detalle',
-            num=semestre
-        )
+    # # Validaciones de acceso
+    # if not (1 <= num <= 8):
+    #     messages.error(request, "Número de seminario inválido.")
+    #     return redirect(
+    #         'lumat_app:seminario_detalle',
+    #         num=semestre
+    #     )
 
     if num > semestre:
         messages.warning(
