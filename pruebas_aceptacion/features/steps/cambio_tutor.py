@@ -37,14 +37,16 @@ def step_crear_solicitud(context):
 @given('el alumno navega a la página de cambio de tutor')
 def step_navegar_cuando(context):
     context.driver.get(f"{BASE_URL}/alumno/tutor/cambio/")
-    esperar(context).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    esperar(context).until(
+        EC.presence_of_element_located((By.TAG_NAME, "body")))
 
 
 @when('el alumno escribe "{texto}" en el campo motivo')
 def step_escribir_motivo(context, texto):
     campo = context.driver.find_element(By.ID, "ct-motivo")
     context.driver.execute_script("arguments[0].scrollIntoView(true);", campo)
-    context.driver.execute_script("arguments[0].removeAttribute('disabled');", campo)
+    context.driver.execute_script(
+        "arguments[0].removeAttribute('disabled');", campo)
     campo.clear()
     campo.send_keys(texto)
     # Disparar el evento input manualmente para activar el JS del contador
@@ -64,7 +66,8 @@ def step_clic_enviar(context):
 def step_clic_sin_motivo(context):
     boton = context.driver.find_element(By.ID, "ct-submit")
     context.driver.execute_script("arguments[0].scrollIntoView(true);", boton)
-    context.driver.execute_script("arguments[0].removeAttribute('disabled')", boton)
+    context.driver.execute_script(
+        "arguments[0].removeAttribute('disabled')", boton)
     context.driver.execute_script("arguments[0].click()", boton)
 
 
@@ -89,7 +92,8 @@ def step_error_visible(context, texto):
     # Verificamos que el elemento tenga la clase 'visible' y contenga el texto
     esperar(context, 5).until(
         lambda d: "visible" in (
-            d.find_element(By.ID, "ct-error-motivo").get_attribute("class") or ""
+            d.find_element(
+                By.ID, "ct-error-motivo").get_attribute("class") or ""
         )
     )
 

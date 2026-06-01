@@ -286,7 +286,7 @@ def subir_evidencia(request, seminario_id):
 @user_passes_test(es_alumno)
 def cambio_tutor(request):
     alumno = request.user.alumno
-    
+
     # 1. Buscamos si existe una solicitud pendiente
     solicitud_pendiente = SolicitudCambioTutor.objects.filter(
         alumno=alumno, estado="pendiente"
@@ -301,11 +301,14 @@ def cambio_tutor(request):
         )
 
     if request.method == "POST":
-        # Segurito: Si intentan saltarse el bloqueo del HTML enviando un POST manual,
-        # los frenamos aquí si ya existe una solicitud pendiente.
+        # Segurito: Si intentan saltarse el bloqueo del HTML enviando un
+        # POST manual, los frenamos aquí si ya existe una solicitud pendiente.
         if solicitud_pendiente:
             messages.error(request, "No puedes enviar otra solicitud.")
-            return redirect("lumat_app:seminario_detalle", num=int(alumno.semestre))
+            return redirect(
+                "lumat_app:seminario_detalle",
+                num=int(alumno.semestre)
+            )
 
         motivo = request.POST.get("motivo", "").strip()
         if not motivo:
@@ -324,8 +327,8 @@ def cambio_tutor(request):
 
     # 3. Pasamos 'solicitud_pendiente' al contexto del template
     return render(
-        request, 
-        "alumno_cambio_tutor.html", 
+        request,
+        "alumno_cambio_tutor.html",
         {
             "alumno": alumno,
             "solicitud_pendiente": solicitud_pendiente
@@ -338,10 +341,10 @@ def docente_dashboard(request):
     return render(request, 'docente_dashboard.html')
 
 
-def seminario(request):
-    return render(request, 'alumno_seminario.html', {
-        'fecha_seminario': '15 de mayo de 2026'
-    })
+# def seminario(request):
+#     return render(request, 'alumno_seminario.html', {
+#         'fecha_seminario': '15 de mayo de 2026'
+#     })
 
 # ==========================================
 # 3. GESTIÓN DEL PERFIL (MODO ROBUSTO)
