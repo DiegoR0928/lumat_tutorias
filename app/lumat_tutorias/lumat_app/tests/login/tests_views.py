@@ -27,7 +27,7 @@ class TestLoginView(TestCase):
         self.user_alumno.groups.add(self.grupo_alumno)
         self.alumno_perfil = Alumno.objects.create(
             user=self.user_alumno,
-            semestre=5  
+            semestre=5
         )
 
     # --- Vista GET ---
@@ -59,8 +59,10 @@ class TestLoginView(TestCase):
             'username': 'alumno1',
             'password': 'testpass123'
         })
-        # Corregido: Usa la URL dinámica con el semestre ('num': 5) definido en el setUp
-        url_esperada = reverse('lumat_app:seminario_detalle', kwargs={'num': 5})
+        # Corregido: Usa la URL dinámica con el semestre ('num': 5)
+        # definido en el setUp
+        url_esperada = reverse(
+            'lumat_app:seminario_detalle', kwargs={'num': 5})
         self.assertRedirects(response, url_esperada)
 
     # --- Código HTTP ---

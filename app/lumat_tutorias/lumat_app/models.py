@@ -71,7 +71,7 @@ class Seminario(models.Model):
     actaComite = models.FileField(upload_to='actas/', null=True, blank=True)
     actaAlumno = models.FileField(
         upload_to='actas_alumno/', null=True, blank=True)
-    
+
     # Número del seminario (1-8)
     numero = models.PositiveSmallIntegerField()
 

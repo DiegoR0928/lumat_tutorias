@@ -31,7 +31,8 @@ def crear_archivo_temporal(nombre):
 @given('que el alumno "{username}" con contraseña "{password}" ha iniciado sesión')
 def step_login(context, username, password):
     context.driver.get(f"{BASE_URL}/login/")
-    esperar(context).until(EC.presence_of_element_located((By.NAME, "username")))
+    esperar(context).until(
+        EC.presence_of_element_located((By.NAME, "username")))
     context.driver.find_element(By.NAME, "username").send_keys(username)
     context.driver.find_element(By.NAME, "password").send_keys(password)
     context.driver.find_element(By.CSS_SELECTOR, "[type='submit']").click()
@@ -41,7 +42,8 @@ def step_login(context, username, password):
 @given('el alumno navega al seminario {num:d}')
 def step_navegar_seminario(context, num):
     context.driver.get(f"{BASE_URL}/alumno/seminario/{num}/")
-    esperar(context).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    esperar(context).until(
+        EC.presence_of_element_located((By.TAG_NAME, "body")))
 
 
 # ── Acciones ─────────────────────────────────────────────────
@@ -57,14 +59,16 @@ def step_escribir_nombre(context, texto):
 def step_adjuntar_archivo(context, nombre_archivo):
     filepath = crear_archivo_temporal(nombre_archivo)
     file_input = context.driver.find_element(By.ID, "ev-archivo")
-    context.driver.execute_script("arguments[0].style.display='block';", file_input)
+    context.driver.execute_script(
+        "arguments[0].style.display='block';", file_input)
     file_input.send_keys(filepath)
 
 
 @when('el alumno hace clic en el botón "Cargar actividad"')
 def step_clic_boton(context):
     boton = context.driver.find_element(By.ID, "ev-submit")
-    context.driver.execute_script("arguments[0].removeAttribute('disabled')", boton)
+    context.driver.execute_script(
+        "arguments[0].removeAttribute('disabled')", boton)
     # Usar JS click para evitar ElementClickInterceptedException
     context.driver.execute_script("arguments[0].click()", boton)
 
@@ -88,5 +92,6 @@ def step_boton_deshabilitado(context, elemento_id):
 @then('el botón con id "{elemento_id}" está habilitado')
 def step_boton_habilitado(context, elemento_id):
     esperar(context).until(
-        lambda d: d.find_element(By.ID, elemento_id).get_attribute("disabled") is None
+        lambda d: d.find_element(
+            By.ID, elemento_id).get_attribute("disabled") is None
     )

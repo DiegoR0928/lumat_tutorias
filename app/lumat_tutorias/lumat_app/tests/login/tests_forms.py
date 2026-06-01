@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.contrib import auth
 from django.contrib.auth.models import User, Group
 # Asegúrate de importar tu modelo Alumno aquí
-from lumat_app.models import Alumno 
+from lumat_app.models import Alumno
 
 
 class TestLoginForm(TestCase):
@@ -29,10 +29,10 @@ class TestLoginForm(TestCase):
             password='testpass123'
         )
         self.user_alumno.groups.add(self.grupo_alumno)
-        
+
         self.alumno_perfil = Alumno.objects.create(
             user=self.user_alumno,
-            semestre=5 
+            semestre=5
         )
 
     # --- Autenticación ---
@@ -97,7 +97,7 @@ class TestLoginForm(TestCase):
         user = auth.get_user(self.client)
         self.assertTrue(user.groups.filter(name='Alumno').exists())
 
-    # --- Redirecciones por Rol (Nuevos tests basados en tu CustomLoginView) ---
+    # Redirecciones por Rol (Nuevos tests basados en tu CustomLoginView)
 
     def test_login_docente_redirige_a_dashboard_docente(self):
         response = self.client.post(reverse('lumat_app:login'), {
@@ -112,7 +112,8 @@ class TestLoginForm(TestCase):
             'password': 'testpass123'
         })
         # El alumno tiene asignado semestre=5 en el setUp
-        url_esperada = reverse('lumat_app:seminario_detalle', kwargs={'num': 5})
+        url_esperada = reverse(
+            'lumat_app:seminario_detalle', kwargs={'num': 5})
         self.assertRedirects(response, url_esperada)
 
     def test_login_sin_grupo_redirige_a_raiz(self):

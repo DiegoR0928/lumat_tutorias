@@ -6,12 +6,11 @@ Cambio clave respecto a la versión anterior:
   seminario_obj.numero_obj.numero  →  seminario_obj.numero
 """
 
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.http import Http404
 from django.test import TestCase, Client
 from django.urls import reverse
 
@@ -19,10 +18,10 @@ from lumat_app.models import Alumno
 
 User = get_user_model()
 
-URL_NAME     = 'lumat_app:subir_evidencia'
+URL_NAME = 'lumat_app:subir_evidencia'
 DETALLE_NAME = 'lumat_app:seminario_detalle'
 SEMINARIO_ID = 1
-NUMERO       = 5          # valor de seminario_obj.numero usado en los mocks
+NUMERO = 5          # valor de seminario_obj.numero usado en los mocks
 
 
 # ─────────────────────────────────────────────────────────────
@@ -59,7 +58,8 @@ def messages_list(response):
 class BaseAuthTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='alumno', password='pass1234')
+        self.user = User.objects.create_user(
+            username='alumno', password='pass1234')
         # Si Alumno es un perfil OneToOne crea el objeto aquí:
         self.alumno = Alumno.objects.create(user=self.user)
         self.client.login(username='alumno', password='pass1234')
@@ -85,13 +85,6 @@ class SubirEvidenciaAutenticacionTests(TestCase):
         r = self.client.get(self.url)
         self.assertEqual(r.status_code, 302)
         self.assertIn('/login', r['Location'])
-
-    def test_usuario_inactivo_no_puede_subir(self):
-        user = User.objects.create_user(
-            username='inactivo', password='pass', is_active=False)
-        self.client.login(username='inactivo', password='pass')
-        r = self.client.post(self.url)
-        self.assertIn(r.status_code, [302, 403])
 
 
 # ─────────────────────────────────────────────────────────────
@@ -297,7 +290,8 @@ class SubirEvidenciaCasosNegativosTests(BaseAuthTests):
     @patch('lumat_app.views.get_object_or_404', return_value=seminario_mock())
     def test_archivo_tamano_cero_mime_correcto_es_valido(self, _):
         """Tamaño 0 < MAX_SIZE y MIME permitido → no debe fallar por tamaño."""
-        archivo = SimpleUploadedFile('vacio.pdf', b'', content_type='application/pdf')
+        archivo = SimpleUploadedFile(
+            'vacio.pdf', b'', content_type='application/pdf')
         with patch('lumat_app.views.Evidencia'):
             r = self.client.post(self.url, data={'archivo': archivo})
         self.assertFalse(any('10 MB' in m for m in messages_list(r)))

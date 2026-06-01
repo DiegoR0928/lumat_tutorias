@@ -82,7 +82,8 @@ class EvidenciaFormDatosValidosTests(TestCase):
 
     def test_pdf_vacio_es_valido_segun_reglas_actuales(self):
         """0 bytes < MAX_SIZE y MIME correcto → válido."""
-        archivo = SimpleUploadedFile('v.pdf', b'', content_type='application/pdf')
+        archivo = SimpleUploadedFile(
+            'v.pdf', b'', content_type='application/pdf')
         self.assertTrue(_EvidenciaValidator(archivo).is_valid())
 
 

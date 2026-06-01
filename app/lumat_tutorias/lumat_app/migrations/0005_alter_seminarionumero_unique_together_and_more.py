@@ -39,7 +39,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='seminario',
-            constraint=models.UniqueConstraint(fields=('alumno', 'numero', 'periodo'), name='unique_seminario_periodo'),
+            constraint=models.UniqueConstraint(
+                fields=('alumno', 'numero', 'periodo'), name='unique_seminario_periodo'),
         ),
         migrations.DeleteModel(
             name='SeminarioNumero',

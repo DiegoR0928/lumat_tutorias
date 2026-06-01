@@ -89,17 +89,20 @@ class EvidenciaUploadPathTests(TestCase):
         self.assertIn('42', self._path(seminario_id=42))
 
     def test_termina_con_filename(self):
-        self.assertTrue(self._path(filename='reporte.pdf').endswith('reporte.pdf'))
+        self.assertTrue(self._path(
+            filename='reporte.pdf').endswith('reporte.pdf'))
 
     def test_estructura_completa(self):
         ruta = self._path(alumno_id=3, seminario_id=10, filename='foto.jpg')
-        self.assertEqual(ruta, os.path.join('evidencias', '3', '10', 'foto.jpg'))
+        self.assertEqual(ruta, os.path.join(
+            'evidencias', '3', '10', 'foto.jpg'))
 
     def test_alumno_id_distinto_genera_ruta_distinta(self):
         self.assertNotEqual(self._path(alumno_id=1), self._path(alumno_id=2))
 
     def test_seminario_id_distinto_genera_ruta_distinta(self):
-        self.assertNotEqual(self._path(seminario_id=10), self._path(seminario_id=11))
+        self.assertNotEqual(self._path(seminario_id=10),
+                            self._path(seminario_id=11))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -156,7 +159,8 @@ class EvidenciaTipoChoicesTests(TestCase):
 class EvidenciaRelacionesTests(TestCase):
 
     def test_seminario_es_fk(self):
-        self.assertIsInstance(Evidencia._meta.get_field('seminario'), ForeignKey)
+        self.assertIsInstance(
+            Evidencia._meta.get_field('seminario'), ForeignKey)
 
     def test_related_name_evidencias(self):
         campo = Evidencia._meta.get_field('seminario')
@@ -187,15 +191,32 @@ class EvidenciaSaveTipoTests(TestCase):
         run_save_logic(ev)
         return ev.tipo
 
-    def test_jpg_imagen(self):       self.assertEqual(self._tipo('a.jpg'),   'imagen')
-    def test_jpeg_imagen(self):      self.assertEqual(self._tipo('a.jpeg'),  'imagen')
-    def test_png_imagen(self):       self.assertEqual(self._tipo('a.png'),   'imagen')
-    def test_gif_imagen(self):       self.assertEqual(self._tipo('a.gif'),   'imagen')
-    def test_webp_imagen(self):      self.assertEqual(self._tipo('a.webp'),  'imagen')
-    def test_pdf_pdf(self):          self.assertEqual(self._tipo('a.pdf'),   'pdf')
-    def test_xlsx_otro(self):        self.assertEqual(self._tipo('a.xlsx'),  'otro')
-    def test_txt_otro(self):         self.assertEqual(self._tipo('a.txt'),   'otro')
-    def test_sin_extension_otro(self): self.assertEqual(self._tipo('archivo'), 'otro')
+    def test_jpg_imagen(self):
+        self.assertEqual(self._tipo('a.jpg'), 'imagen')
+
+    def test_jpeg_imagen(self):
+        self.assertEqual(self._tipo('a.jpeg'), 'imagen')
+
+    def test_png_imagen(self):
+        self.assertEqual(self._tipo('a.png'), 'imagen')
+
+    def test_gif_imagen(self):
+        self.assertEqual(self._tipo('a.gif'), 'imagen')
+
+    def test_webp_imagen(self):
+        self.assertEqual(self._tipo('a.webp'), 'imagen')
+
+    def test_pdf_pdf(self):
+        self.assertEqual(self._tipo('a.pdf'), 'pdf')
+
+    def test_xlsx_otro(self):
+        self.assertEqual(self._tipo('a.xlsx'), 'otro')
+
+    def test_txt_otro(self):
+        self.assertEqual(self._tipo('a.txt'), 'otro')
+
+    def test_sin_extension_otro(self):
+        self.assertEqual(self._tipo('archivo'), 'otro')
 
     def test_extension_mayusculas_jpg(self):
         """Extensiones en mayúsculas deben normalizarse a minúsculas."""
@@ -250,10 +271,12 @@ class EvidenciaStrTests(TestCase):
         self.assertEqual(self._str('pdf', 3), "Evidencia [pdf] — Seminario 3")
 
     def test_formato_imagen(self):
-        self.assertEqual(self._str('imagen', 7), "Evidencia [imagen] — Seminario 7")
+        self.assertEqual(self._str('imagen', 7),
+                         "Evidencia [imagen] — Seminario 7")
 
     def test_formato_otro(self):
-        self.assertEqual(self._str('otro', 1), "Evidencia [otro] — Seminario 1")
+        self.assertEqual(self._str('otro', 1),
+                         "Evidencia [otro] — Seminario 1")
 
     def test_contiene_seminario_id(self):
         self.assertIn('12', self._str('pdf', 12))
