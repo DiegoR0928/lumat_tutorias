@@ -1,0 +1,396 @@
+body { background: #ede9e0; }
+.page-wrapper {
+    min-height: 90vh;
+    background: #ede9e0;
+    padding: 1.5rem 1rem 2.5rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* Contenedor superior para el botón de regreso */
+.top-actions-container {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+/* Cabecera integrada en el panel izquierdo */
+.panel-header-integrated {
+    border-bottom: 1px solid #ddd4c3;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+}
+.eyebrow {
+    font-family: 'Georgia', serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #4a7c7a;
+    font-weight: bold;
+    margin: 0 0 4px;
+}
+.card-title {
+    font-family: 'Georgia', serif;
+    font-size: 1.15rem;
+    color: #4a3f32;
+    font-weight: normal;
+    margin: 0;
+    letter-spacing: 0.04em;
+}
+
+/* Mensajes del sistema */
+.messages-container {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+/* Grid Principal de 3 Columnas */
+.panels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Estilo base para los paneles */
+.panel-card {
+    background: #f7f4ef;
+    border: 1px solid #c8b89a;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(74,63,50,0.08);
+    padding: 22px 24px;
+}
+
+/* Bordes superiores decorativos */
+.panel-info { border-top: 3px solid #8a7560; }
+.panel-form { border-top: 3px solid #4a7c7a; }
+.panel-signatures { border-top: 3px solid #b89c7a; padding: 20px 22px; } /* Ajuste de padding */
+
+/* Adaptación responsiva */
+@media (max-width: 1100px) {
+    .panels-grid { grid-template-columns: 1fr 1fr; }
+    .panel-signatures { grid-column: span 2; }
+}
+@media (max-width: 768px) {
+    .panels-grid { grid-template-columns: 1fr; }
+    .panel-signatures { grid-column: span 1; }
+}
+
+/* Secciones */
+.section-label {
+    font-family: 'Georgia', serif;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #4a7c7a;
+    font-weight: bold;
+    margin: 0 0 12px;
+}
+.section-divider { border: none; border-top: 1px solid #ddd4c3; margin: 18px 0; }
+
+/* Filas dato */
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px solid #eee8de;
+    gap: 12px;
+}
+.data-row:last-child { border-bottom: none; }
+.data-label { font-family: 'Georgia', serif; font-size: 0.78rem; color: #8a7560; flex-shrink: 0; }
+.data-value { font-family: 'Georgia', serif; font-size: 0.88rem; color: #4a3f32; text-align: right; }
+
+/* Badges */
+.rol-badge {
+    font-size: 0.65rem; font-family: 'Georgia', serif;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 2px 10px; border-radius: 20px; font-weight: bold;
+}
+.rol-tutor    { background: #d6eae9; color: #2e6462; border: 1px solid #a8cece; }
+.rol-miembro  { background: #ece6f5; color: #5c3d85; border: 1px solid #c9b8e8; }
+.estado-badge {
+    font-size: 0.65rem; font-family: 'Georgia', serif;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 2px 10px; border-radius: 20px; font-weight: bold;
+}
+.estado-completo  { background: #d6eae9; color: #2e6462; border: 1px solid #a8cece; }
+.estado-pendiente { background: #fdf3e3; color: #8a6020; border: 1px solid #e8cc88; }
+
+/* Formulario informe (tutor) */
+.form-group-custom { margin-bottom: 14px; }
+.form-group-custom label {
+    display: block;
+    font-family: 'Georgia', serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8a7560;
+    margin-bottom: 4px;
+}
+.form-group-custom textarea,
+.form-group-custom input[type="text"] {
+    width: 100%;
+    background: #fff;
+    border: 1px solid #c8b89a;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: 'Georgia', serif;
+    font-size: 0.88rem;
+    color: #4a3f32;
+    resize: vertical;
+    box-sizing: border-box;
+}
+.form-group-custom textarea:focus,
+.form-group-custom input:focus {
+    outline: none; border-color: #4a7c7a; box-shadow: 0 0 0 2px rgba(74,124,122,0.15);
+}
+
+/* Rediseño compacto para flujo de firmas lateral */
+.firmas-mini-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+.firma-mini-row {
+    background: #fff;
+    border: 1px solid #ddd4c3;
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+.firma-mini-meta {
+    text-align: left;
+}
+.firma-mini-name {
+    font-family: 'Georgia', serif;
+    font-size: 0.8rem;
+    color: #4a3f32;
+    font-weight: bold;
+    line-height: 1.2;
+}
+.firma-mini-role {
+    font-size: 0.65rem;
+    color: #8a7560;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.sello-aprobado-mini {
+    border: 1.5px solid #4a7c7a;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'Georgia', serif;
+    font-size: 0.6rem;
+    color: #4a7c7a;
+    text-transform: uppercase;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.pendiente-label-mini {
+    font-family: 'Georgia', serif;
+    font-size: 0.68rem;
+    color: #a89880;
+    font-style: italic;
+}
+.calif-val-mini {
+    font-family: 'Georgia', serif;
+    font-size: 0.78rem;
+    color: #4a3f32;
+    font-weight: bold;
+    margin-top: 1px;
+}
+
+/* Sección de firma interactiva compacta */
+.firma-box {
+    background: #fff;
+    border: 1px solid #ddd4c3;
+    border-radius: 6px;
+    padding: 12px 14px;
+}
+.firma-box label {
+    font-family: 'Georgia', serif;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #8a7560;
+    display: block;
+    margin-bottom: 4px;
+}
+.firma-box input[type="number"] {
+    background: #f7f4ef;
+    border: 1px solid #c8b89a;
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-family: 'Georgia', serif;
+    font-size: 0.85rem;
+    color: #4a3f32;
+    width: 100%;
+    box-sizing: border-box;
+}
+.firma-check-row {
+    display: flex; align-items: center; gap: 6px; margin-top: 8px;
+}
+.firma-check-row label {
+    text-transform: none; font-size: 0.78rem; color: #4a3f32; margin: 0; display: inline;
+}
+
+/* Botones */
+.btn-primary-custom {
+    font-family: 'Georgia', serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: none;
+    background: #4a7c7a;
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s;
+}
+.btn-primary-custom:hover { background: #3a6260; }
+
+.btn-secondary-custom {
+    font-family: 'Georgia', serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid #c8b89a;
+    background: #f7f4ef;
+    color: #6b5b47;
+    text-decoration: none;
+    transition: background .15s;
+    display: inline-block;
+}
+.btn-secondary-custom:hover { background: #e8e0d4; color: #4a3f32; text-decoration: none; }
+
+.btn-pdf {
+    font-family: 'Georgia', serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid #4a7c7a;
+    background: #d6eae9;
+    color: #2e6462;
+    text-decoration: none;
+    display: inline-block;
+}
+.btn-pdf:hover { background: #c0dedd; text-decoration: none; }
+
+.info-box, .success-box {
+    border-radius: 6px; padding: 10px 14px; font-family: 'Georgia', serif; font-size: 0.82rem; margin-bottom: 14px;
+}
+.info-box { background: #fdf3e3; border: 1px solid #e8cc88; color: #7a5c10; }
+.success-box { background: #d6eae9; border: 1px solid #a8cece; color: #2e6462; }
+
+.readonly-block {
+    background: #fff; border: 1px solid #ddd4c3; border-radius: 6px; padding: 10px 14px; margin-bottom: 10px;
+}
+.readonly-block .ro-label {
+    font-family: 'Georgia', serif; font-size: 0.65rem; text-transform: uppercase; color: #4a7c7a; font-weight: bold; margin-bottom: 2px;
+}
+.readonly-block .ro-value { font-family: 'Georgia', serif; font-size: 0.85rem; color: #4a3f32; }
+
+
+.evidencia-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #eee8de;
+}
+.evidencia-item:last-child { border-bottom: none; }
+.evidencia-link {
+    font-family: 'Georgia', serif;
+    font-size: 0.85rem;
+    color: #2e6462;
+    text-decoration: none;
+}
+.evidencia-link:hover { text-decoration: underline; color: #4a7c7a; }
+.evidencia-icon { font-size: 0.9rem; color: #8a7560; }
+.no-evidencias {
+    font-family: 'Georgia', serif;
+    font-size: 0.82rem;
+    color: #a89880;
+    font-style: italic;
+}
+
+/* Cabecera de la sección alineada */
+    .section-header-inline {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 12px;
+    }
+    .section-header-inline .section-label {
+        margin: 0; /* Quita el margen viejo para que se alinee perfectamente con el link */
+    }
+
+    /* Contenedor e ítems minimalistas */
+    .evidencias-wrapper {
+        margin-top: 4px;
+    }
+    .evidencia-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #eee8de;
+    }
+    .evidencia-item:last-child { border-bottom: none; }
+    
+    .evidencia-nombre-txt {
+        font-family: 'Georgia', serif;
+        font-size: 0.85rem;
+        color: #4a3f32;
+        max-width: 65%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Acciones en texto plano discretas */
+    .evidencia-actions {
+        display: flex;
+        gap: 12px;
+    }
+    .link-action-mini {
+        font-family: 'Georgia', serif;
+        font-size: 0.75rem;
+        color: #7a6e5d;
+        text-decoration: none;
+        transition: color .15s;
+    }
+    .link-action-mini:hover {
+        color: #4a7c7a;
+        text-decoration: underline;
+    }
+
+    /* Enlace "Descargar todo" superior */
+    .link-download-all-top {
+        font-family: 'Georgia', serif;
+        font-size: 0.75rem;
+        color: #4a7c7a;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color .15s;
+    }
+    .link-download-all-top:hover {
+        color: #3a6260;
+        text-decoration: underline;
+    }
+    .no-evidencias {
+        font-family: 'Georgia', serif;
+        font-size: 0.82rem;
+        color: #a89880;
+        font-style: italic;
+    }

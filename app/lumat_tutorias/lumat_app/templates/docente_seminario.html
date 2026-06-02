@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Seminarios{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/docente_seminarios.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    
+    <div class="dashboard-layout">
+        
+        <div class="panel-card panel-reminder">
+            <p class="section-label" style="color: #8a7560;">Próximas Citas</p>
+            <div style="display: flex; flex-direction: column; margin-top: 6px;">
+                {% if proximos_seminarios %}
+                    {% for item in proximos_seminarios %}
+                        <a href="{% url 'lumat_app:docente_seminario_detalle' item.seminario.pk %}?rol=todos" class="reminder-box">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <p class="rem-alumno">
+                                    {{ item.seminario.alumno.nombre }} {{ item.seminario.alumno.apellido_paterno }}
+                                </p>
+                                <span class="rol-badge-mini {% if item.rol == 'Tutor' %}rol-t-mini{% else %}rol-m-mini{% endif %}">
+                                    {{ item.rol }}
+                                </span>
+                            </div>
+                            <p class="rem-date">
+                                📅 {{ item.seminario.fecha|date:"d M Y" }} &nbsp;·&nbsp; 🕒 {{ item.seminario.hora|time:"H:i" }} hrs
+                            </p>
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    <p style="font-family: 'Georgia', serif; font-size: 0.8rem; color: #a89880; font-style: italic; margin: 0;">
+                        No tienes seminarios pendientes programados a futuro.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel-card panel-main">
+            
+            <div class="header-actions-row">
+                <div>
+                    <p class="eyebrow" style="text-align: left; margin: 0;">Mis Seminarios</p>
+                </div>
+
+                <form method="get" action="" class="controls-wrapper-right" id="search-form">
+                    <input type="text" 
+                           id="search-input"
+                           name="q" 
+                           value="{{ query_busqueda }}" 
+                           placeholder="Buscar por matrícula..." 
+                           class="search-input-inline"
+                           autocomplete="off">
+
+                    <div class="dropdown-filter-container">
+                        <button type="button" class="btn-trigger-filter" id="btn-filtros">
+                            ⚙ Filtrar
+                            {% if rol_activo != 'todos' or estado_activo != 'todos' %}
+                                <span style="color: #4a7c7a; font-weight: bold;">(Activo)</span>
+                            {% endif %}
+                        </button>
+
+                        <div class="dropdown-filter-menu" id="menu-filtros">
+                            <div class="filter-menu-section">
+                                <span class="filter-menu-label">Filtrar por Rol:</span>
+                                <div class="filter-menu-options">
+                                    <a href="?rol=todos&estado={{ estado_activo }}" class="filter-menu-link {% if rol_activo == 'todos' %}active{% endif %}">Todos</a>
+                                    <a href="?rol=tutor&estado={{ estado_activo }}" class="filter-menu-link {% if rol_activo == 'tutor' %}active{% endif %}">Tutor</a>
+                                    <a href="?rol=miembro&estado={{ estado_activo }}" class="filter-menu-link {% if rol_activo == 'miembro' %}active{% endif %}">Miembro</a>
+                                </div>
+                            </div>
+
+                            <div class="filter-menu-section">
+                                <span class="filter-menu-label">Filtrar por Estado:</span>
+                                <div class="filter-menu-options">
+                                    <a href="?rol={{ rol_activo }}&estado=todos" class="filter-menu-link {% if estado_activo == 'todos' %}active{% endif %}">Todos</a>
+                                    <a href="?rol={{ rol_activo }}&estado=completados" class="filter-menu-link {% if estado_activo == 'completados' %}active{% endif %}">Completados</a>
+                                    <a href="?rol={{ rol_activo }}&estado=pendientes" class="filter-menu-link {% if estado_activo == 'pendientes' %}active{% endif %}">Pendientes</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <hr class="section-divider" style="margin: 12px 0;">
+
+            <p class="count-label" style="font-size: 0.8rem; color: #8a7560; margin-bottom: 14px;">
+                {{ seminarios|length }} seminario{{ seminarios|length|pluralize }}
+                {% if rol_activo != 'todos' or estado_activo != 'pendientes' %}
+                    <span style="font-style: italic;">(Filtro: {{ rol_activo }} / {{ estado_activo }})</span>
+                {% else %}
+                    <span style="font-style: italic;">(Mostrando pendientes por defecto)</span>
+                {% endif %}
+            </p>
+
+            {% if seminarios %}
+                {% for item in seminarios %}
+                <a href="{% url 'lumat_app:docente_seminario_detalle' item.seminario.pk %}?rol={{ rol_activo }}"
+                   class="seminario-row">
+
+                    <div>
+                        <p class="sem-alumno">
+                            {{ item.seminario.alumno.nombre }} {{ item.seminario.alumno.apellido_paterno }}
+                            
+                            {% if item.seminario.formulario_comite.estado_general == 'completo' %}
+                                <span class="estado-tag est-completo">Completado</span>
+                            {% else %}
+                                <span class="estado-tag est-pendiente">Pendiente</span>
+                            {% endif %}
+                        </p>
+                        <p class="sem-meta">
+                            <span>Seminario {{ item.seminario.numero }}</span>
+                            <span>Periodo {{ item.seminario.periodo }}</span>
+                            <span>{{ item.seminario.fecha|date:"d/m/Y" }}</span>
+                            <span>{{ item.seminario.hora|time:"H:i" }} hrs</span>
+                        </p>
+                    </div>
+
+                    <div class="sem-right">
+                        {% if item.rol == 'tutor' %}
+                            <span class="rol-badge rol-tutor">Tutor</span>
+                        {% else %}
+                            <span class="rol-badge rol-miembro">Miembro</span>
+                        {% endif %}
+                        <span class="arrow">›</span>
+                    </div>
+
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon">☁</span>
+                    No hay registros que coincidan con este filtro.
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('btn-filtros');
+        const menu = document.getElementById('menu-filtros');
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+
+        // Lógica para abrir/cerrar el Dropdown
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('open');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.contains(e.target) && e.target !== btn) {
+                menu.classList.remove('open');
+            }
+        });
+
+        // Limpieza visual inmediata del cuadro al dar Enter
+        if (searchForm && searchInput) {
+            searchForm.addEventListener('submit', function () {
+                // Almacenamos el envío y limpiamos la caja inmediatamente en el hilo visual
+                setTimeout(() => {
+                    searchInput.value = '';
+                }, 1);
+            });
+        }
+    });
+</script>
+{% endblock %}

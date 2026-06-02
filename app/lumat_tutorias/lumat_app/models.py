@@ -2,6 +2,7 @@ import os
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from decimal import Decimal, ROUND_HALF_UP
 
 
 class Alumno(models.Model):
@@ -236,3 +237,131 @@ class SolicitudCambioTutor(models.Model):
 
     def __str__(self):
         return f"Solicitud cambio tutor — {self.alumno} ({self.estado})"
+
+
+class FormularioComite(models.Model):
+    ESTADO_CHOICES = [
+        ('rechazado', 'Rechazado'),
+        ('pendiente', 'Pendiente'),
+        ('completo', 'Completo'),
+    ]
+
+    seminario = models.OneToOneField(
+        'Seminario', on_delete=models.CASCADE,
+        related_name='formulario_comite')
+
+    # ── Contenido del informe (sólo el tutor los llena) ──────
+    el_comite_encuentra = models.TextField(blank=True)
+    observaciones = models.TextField(blank=True)
+    dictamen = models.TextField(blank=True)
+    propuestas = models.TextField(blank=True)
+
+    # ── Calificaciones individuales ───────────────────────────
+    calificacion_tutor = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True)
+    calificacion_miembro1 = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True)
+    calificacion_miembro2 = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True)
+
+    # ── Firmas (True = firmado/aprobado) ──────────────────────
+    firma_tutor = models.BooleanField(default=False)
+    firma_miembro1 = models.BooleanField(default=False)
+    firma_miembro2 = models.BooleanField(default=False)
+
+    # ── Calculados automáticamente ────────────────────────────
+    calificacion_final = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True)
+    estado_general = models.CharField(
+        max_length=15, choices=ESTADO_CHOICES, default='pendiente')
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Formulario de Comité'
+
+    # ── Helpers ───────────────────────────────────────────────
+
+    @property
+    def todos_firmaron(self):
+        return self.firma_tutor and self.firma_miembro1 and self.firma_miembro2
+
+    def calcular_calificacion_final(self):
+        califs = [
+            c for c in (
+                self.calificacion_tutor,
+                self.calificacion_miembro1,
+                self.calificacion_miembro2,
+            ) if c is not None
+        ]
+        if not califs:
+            return None
+        promedio = sum(califs) / Decimal(len(califs))
+        return promedio.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+    def save(self, *args, **kwargs):
+        # 1. Calcular calificaciones y estado del formulario como ya lo hacías
+        self.calificacion_final = self.calcular_calificacion_final()
+        self.estado_general = 'completo' if self.todos_firmaron else 'pendiente'
+
+        # 2. Ejecutar el guardado del formulario en la base de datos primero
+        super().save(*args, **kwargs)
+
+        # 3. Sincronizar calificacion en el Seminario asociado
+        if self.calificacion_final is not None:
+            self.seminario.__class__.objects.filter(pk=self.seminario_id).update(
+                calificacion=self.calificacion_final
+            )
+
+        # 4. NUEVA LÓGICA: Promoción de semestre del alumno
+        # Validamos: Firmas completas, nota mayor o igual a 6.00 y que exista el alumno
+        es_completo = self.estado_general == "completo"
+        tiene_nota = self.calificacion_final is not None
+        if es_completo and tiene_nota and self.calificacion_final >= Decimal("6.00"):
+            alumno = self.seminario.alumno
+
+            # Control de Idempotencia: Solo incrementamos si el semestre actual del alumno
+            # es exactamente igual al número de seminario que acaba de acreditar.
+            # Esto evita que si editas el formulario ya completado, le sume otro semestre por error.
+            if alumno.semestre == self.seminario.numero:
+                if alumno.semestre < 8:
+                    alumno.semestre += 1
+                    # update_fields es más eficiente y seguro en concurrencia
+                    alumno.save(update_fields=['semestre'])
+
+    def __str__(self):
+        return f"Formulario Comité — Seminario {self.seminario_id} ({self.estado_general})"
+
+    # ── Helpers ───────────────────────────────────────────────
+
+    @property
+    def todos_firmaron(self):
+        return self.firma_tutor and self.firma_miembro1 and self.firma_miembro2
+
+    def calcular_calificacion_final(self):
+        califs = [
+            c for c in (
+                self.calificacion_tutor,
+                self.calificacion_miembro1,
+                self.calificacion_miembro2,
+            ) if c is not None
+        ]
+        if not califs:
+            return None
+        promedio = sum(califs) / Decimal(len(califs))
+        return promedio.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+    def save(self, *args, **kwargs):
+        self.calificacion_final = self.calcular_calificacion_final()
+        self.estado_general = 'completo' if self.todos_firmaron else 'pendiente'
+        super().save(*args, **kwargs)
+
+        # Sincronizar calificacionFinal en Seminario
+        if self.calificacion_final is not None:
+            self.seminario.__class__.objects.filter(pk=self.seminario_id).update(
+                calificacion=self.calificacion_final
+            )
+
+    def __str__(self):
+        return f"Formulario Comité — Seminario {self.seminario_id} ({self.estado_general})"

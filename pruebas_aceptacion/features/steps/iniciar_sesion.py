@@ -59,6 +59,7 @@ def step_impl(context):
 
     assert "Credenciales inválidas" in error.text
 
+
 @then(u'puedo ver la sección "{seccion}" del sistema')
 def step_impl(context, seccion):
 

@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle Seminario{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/docente_seminario_detalle.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+    <!-- BOTÓN REGRESO: Superior Izquierda -->
+    <div class="top-actions-container">
+        <a href="{% url 'lumat_app:docente_seminarios' %}?rol={{ rol_activo }}"
+           class="btn-secondary-custom">← Volver al listado</a>
+    </div>
+
+    <!-- Alertas Flash -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for msg in messages %}
+        <div class="{% if msg.tags == 'success' %}success-box{% else %}info-box{% endif %}">
+            {{ msg }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- GRID DE LOS 3 PANELES -->
+    <div class="panels-grid">
+        
+        <!-- PANEL 1 (IZQUIERDA): DATOS GENERALES + TÍTULOS MOVIDOS AQUÍ -->
+        <div class="panel-card panel-info">
+            <div class="panel-header-integrated">
+                <p class="eyebrow">Informe del Comité</p>
+            </div>
+
+            <div style="display:flex; gap:6px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+                {% if rol == 'tutor' %}
+                    <span class="rol-badge rol-tutor">Tutor</span>
+                {% else %}
+                    <span class="rol-badge rol-miembro">
+                        {% if rol == 'miembro1' %}Miembro 1{% else %}Miembro 2{% endif %}
+                    </span>
+                {% endif %}
+                <span class="estado-badge {% if formulario.estado_general == 'completo' %}estado-completo{% else %}estado-pendiente{% endif %}">
+                    {{ formulario.get_estado_general_display }}
+                </span>
+            </div>
+
+            <p class="section-label">Alumno</p>
+            <div class="data-row">
+                <span class="data-label">Nombre</span>
+                <span class="data-value">{{ seminario.alumno.nombre }} {{ seminario.alumno.apellido_paterno }} {{ seminario.alumno.apellido_materno }}</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">Matrícula</span>
+                <span class="data-value">{{ seminario.alumno.matricula|default:"—" }}</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">Semestre</span>
+                <span class="data-value">{{ seminario.alumno.semestre }}</span>
+            </div>
+            <div class="data-row" style="margin-bottom:0;">
+                <span class="data-label">Correo</span>
+                <span class="data-value">{{ seminario.alumno.correo }}</span>
+            </div>
+
+            <hr class="section-divider">
+
+            <p class="section-label">Seminario</p>
+            <div class="data-row">
+                <span class="data-label">Fecha</span>
+                <span class="data-value">{{ seminario.fecha|date:"d \d\e F \d\e Y" }}</span>
+            </div>
+            <div class="data-row" style="margin-bottom:0;">
+                <span class="data-label">Hora</span>
+                <span class="data-value">{{ seminario.hora|time:"H:i" }} hrs</span>
+            </div>
+
+            <hr class="section-divider">
+
+            <div class="section-header-inline">
+                <p class="section-label">Evidencias</p>
+                {% if seminario.evidencias.all %}
+                    <a href="{% url 'lumat_app:docente_descargar_evidencias_zip' seminario.id %}" class="link-download-all-top">
+                        ↓ Descargar todo (.ZIP)
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="evidencias-wrapper">
+                {% if seminario.evidencias.all %}
+                    <div>
+                        {% for evidencia in seminario.evidencias.all %}
+                            <div class="evidencia-item">
+                                <span class="evidencia-nombre-txt" title="{{ evidencia.nombre }}">
+                                    {{ evidencia.nombre }}
+                                </span>
+                                
+                                <div class="evidencia-actions">
+                                    <a href="{{ evidencia.archivo.url }}" target="_blank" class="link-action-mini">
+                                        Ver
+                                    </a>
+                                    <a href="{{ evidencia.archivo.url }}" download="{{ evidencia.nombre }}" class="link-action-mini">
+                                        Descargar
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-evidencias">Sin evidencias cargadas.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- PANEL 2 (CENTRO): FORMULARIO DE EVALUACIÓN -->
+        <div class="panel-card panel-form">
+            <p class="section-label">Evaluación del Comité</p>
+
+            {% if rol == 'tutor' %}
+                <!-- TUTOR -->
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="form-group-custom">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <p style="color:#c0392b; font-size:0.78rem; margin-top:3px;">{{ field.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn-primary-custom" style="margin-bottom: 6px;">Guardar informe</button>
+                </form>
+
+            {% else %}
+                <!-- MIEMBROS (Lectura) -->
+                {% if formulario.el_comite_encuentra %}
+                    <div class="readonly-block">
+                        <p class="ro-label">El Comité encuentra que el estudiante</p>
+                        <p class="ro-value">{{ formulario.el_comite_encuentra }}</p>
+                    </div>
+                    <div class="readonly-block">
+                        <p class="ro-label">Otros aspectos observados</p>
+                        <p class="ro-value">{{ formulario.observaciones|default:"—" }}</p>
+                    </div>
+                    <div class="readonly-block">
+                        <p class="ro-label">Dictamen</p>
+                        <p class="ro-value">{{ formulario.dictamen|default:"—" }}</p>
+                    </div>
+                    <div class="readonly-block">
+                        <p class="ro-label">Plan de trabajo propuesto</p>
+                        <p class="ro-value">{{ formulario.propuestas|default:"—" }}</p>
+                    </div>
+                {% else %}
+                    <p style="font-family:'Georgia',serif; font-size:0.85rem; color:#a89880; font-style:italic; margin-bottom: 10px;">
+                        El tutor aún no ha completado el informe.
+                    </p>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- PANEL 3 (DERECHA): FIRMAS Y CALIFICACIONES (MÁS COMPACTO) -->
+        <div class="panel-card panel-signatures">
+            <p class="section-label">Firmas y Notas</p>
+
+            <!-- Lista de firmas compacta y alineada en filas horizontales internas -->
+            <div class="firmas-mini-list" style="margin-bottom:14px;">
+                <!-- Tutor -->
+                <div class="firma-mini-row">
+                    <div class="firma-mini-meta">
+                        <div class="firma-mini-name">{{ seminario.comite.tutor.nombre }} {{ seminario.comite.tutor.apellido_paterno }}</div>
+                        <div class="firma-mini-role">Tutor</div>
+                    </div>
+                    <div>
+                        {% if formulario.firma_tutor %}
+                            <span class="sello-aprobado-mini">APROBADO</span>
+                            <div class="calif-val-mini" style="text-align:right;">{{ formulario.calificacion_tutor }}</div>
+                        {% else %}
+                            <span class="pendiente-label-mini">Pendiente</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Miembro 1 -->
+                <div class="firma-mini-row">
+                    <div class="firma-mini-meta">
+                        <div class="firma-mini-name">{{ seminario.comite.miembro1.nombre }} {{ seminario.comite.miembro1.apellido_paterno }}</div>
+                        <div class="firma-mini-role">Miembro 1</div>
+                    </div>
+                    <div>
+                        {% if formulario.firma_miembro1 %}
+                            <span class="sello-aprobado-mini">APROBADO</span>
+                            <div class="calif-val-mini" style="text-align:right;">{{ formulario.calificacion_miembro1 }}</div>
+                        {% else %}
+                            <span class="pendiente-label-mini">Pendiente</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Miembro 2 -->
+                <div class="firma-mini-row">
+                    <div class="firma-mini-meta">
+                        <div class="firma-mini-name">{{ seminario.comite.miembro2.nombre }} {{ seminario.comite.miembro2.apellido_paterno }}</div>
+                        <div class="firma-mini-role">Miembro 2</div>
+                    </div>
+                    <div>
+                        {% if formulario.firma_miembro2 %}
+                            <span class="sello-aprobado-mini">APROBADO</span>
+                            <div class="calif-val-mini" style="text-align:right;">{{ formulario.calificacion_miembro2 }}</div>
+                        {% else %}
+                            <span class="pendiente-label-mini">Pendiente</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calificación Promedio Compacta -->
+            {% if formulario.calificacion_final %}
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:14px; background:#fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd4c3;">
+                <span style="font-family:'Georgia',serif; font-size:0.7rem; color:#8a7560; text-transform:uppercase; letter-spacing:0.05em; max-width:60%;">Promedio Final:</span>
+                <span style="font-family:'Georgia',serif; font-size:1.35rem; color:#4a3f32; font-weight:bold;">{{ formulario.calificacion_final }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Formulario interactivo compacto para Firmar -->
+            {% if not ya_firme and firma_form %}
+            <div class="firma-box" style="margin-bottom: 10px;">
+                <p class="section-label" style="margin-bottom:8px; color:#8a7560; font-size:0.62rem;">Registrar Firma</p>
+                <form method="post" action="{% url 'lumat_app:docente_firmar_seminario' seminario.pk %}">
+                    {% csrf_token %}
+                    <div style="margin-bottom:8px;">
+                        <label style="font-size:0.68rem;">{{ firma_form.calificacion.label }}</label>
+                        {{ firma_form.calificacion }}
+                        {% if firma_form.calificacion.errors %}
+                            <p style="color:#c0392b; font-size:0.72rem; margin-top:2px;">{{ firma_form.calificacion.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="firma-check-row">
+                        {{ firma_form.confirmar_firma }}
+                        <label for="{{ firma_form.confirmar_firma.id_for_label }}">{{ firma_form.confirmar_firma.label }}</label>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <button type="submit" class="btn-primary-custom" style="width:100%; padding: 6px 0;">Firmar</button>
+                    </div>
+                </form>
+            </div>
+            {% elif ya_firme %}
+            <div class="success-box" style="text-align: center; padding: 8px; font-size:0.78rem;">Firma registrada con éxito.</div>
+            {% endif %}
+
+            <!-- Descargar Acta PDF -->
+            {% if formulario.estado_general == 'completo' %}
+            <hr class="section-divider" style="margin: 12px 0;">
+            <div style="text-align:center;">
+                <a href="{% url 'lumat_app:docente_descargar_acta' seminario.pk %}"
+                   class="btn-pdf" style="width:100%; box-sizing:border-box; text-align:center; padding: 5px 0;">↓ Acta PDF</a>
+            </div>
+            {% endif %}
+        </div>
+
+    </div> <!-- FIN DEL GRID -->
+
+</div>
+{% endblock %}
