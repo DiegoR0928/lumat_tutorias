@@ -5,10 +5,10 @@ Característica: Iniciar sesión
 
         Escenario: Datos correctos
             Dado que ingreso en el sistema de tutorias
-                Y escribo mi usuario "Diegoo"
-                Y escribo la contraseña "12345678"
+                Y escribo mi usuario "amer"
+                Y escribo la contraseña "amer1234"
              Cuando presiono el botón "Entrar"
-             Entonces puedo ver la sección "" del sistema
+             Entonces puedo ver la sección "alumno" del sistema
 
         Escenario: Datos incorrectos
             Dado que ingreso en el sistema de tutorias
