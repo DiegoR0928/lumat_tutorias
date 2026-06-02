@@ -10,25 +10,15 @@ from weasyprint import HTML
 from datetime import datetime, timedelta, time
 import random
 from django.core.files.base import ContentFile
-from django.http import HttpResponse, Http404
 
-from .models import Alumno, Docente, Seminario, CalendarioGenerado, Comite, FormularioComite
+from .models import Alumno, Docente, Seminario, CalendarioGenerado, Comite
 from django.utils import timezone
-from .utils_pdf_comite import generar_pdf_comite
-import io
-import zipfile
-from django.http import HttpResponse
-from django.utils.text import slugify
-from django.db.models import Q
-from datetime import date
 
 from .models import (
     Evidencia,
     SolicitudCambioTutor
 )
 from .forms import (
-    FirmaCalificacionForm,
-    FormularioComiteForm,
     UserForm,
     AlumnoForm,
     AlumnoEditForm,
@@ -397,7 +387,8 @@ def cambio_tutor(request):
 #         rol = 'todos'
 #         estado = 'todos'
 
-#     # 2. FLUJO B: Si no hay búsqueda, funciona el comportamiento por defecto (Pendientes de cualquier rol)
+#     # 2. FLUJO B: Si no hay búsqueda, funciona el comportamiento por
+#       defecto (Pendientes de cualquier rol)
 #     else:
 #         if rol == 'tutor':
 #             seminarios_raw = [{'seminario': s, 'rol': 'tutor'} for s in como_tutor]
@@ -410,7 +401,8 @@ def cambio_tutor(request):
 #             miembros  = [i for i in miembros if i['seminario'].pk not in ids_tutor]
 #             seminarios_raw = tutores + miembros
 
-#         for item in sorted(seminarios_raw, key=lambda i: (i['seminario'].numero, i['seminario'].periodo)):
+#         for item in sorted(seminarios_raw, key=lambda i: (i['seminario'].numero,
+#           i['seminario'].periodo)):
 #             sem = item['seminario']
 #             estado_form = 'pendiente'
 #             if hasattr(sem, 'formulario_comite') and sem.formulario_comite:
@@ -612,7 +604,8 @@ def cambio_tutor(request):
 
 #     # Estructurar el nombre solicitado: nombre-semestre-periodo.zip
 #     nombre_alumno = slugify(f"{seminario.alumno.nombre} {seminario.alumno.apellido_paterno}")
-#     nombre_zip = f"{nombre_alumno}-semestre{seminario.alumno.semestre}-{slugify(seminario.periodo)}.zip"
+#     nombre_zip = f"{nombre_alumno}-semestre{seminario.alumno.semestre}
+# -{slugify(seminario.periodo)}.zip"
 
 #     response = HttpResponse(buffer.getvalue(), content_type='application/zip')
 #     response['Content-Disposition'] = f'attachment; filename="{nombre_zip}"'

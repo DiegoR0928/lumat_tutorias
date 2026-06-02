@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User, Group
 
-from lumat_app.models import Alumno
+from lumat_app.models import Alumno, Docente
 
 
 class TestLoginView(TestCase):
@@ -47,11 +47,39 @@ class TestLoginView(TestCase):
     # --- Redirecciones ---
 
     def test_login_docente_redirige_a_docente(self):
+        # 1. Usamos get_or_create para evitar el error UNIQUE si ya existía en el setUp
+        usuario_django, created = User.objects.get_or_create(
+            username='docente1')
+
+        # Si se acaba de crear o si ya existía, asegúrate de que tenga la contraseña correcta
+        usuario_django.set_password('testpass123')
+        usuario_django.save()
+
+        # 2. Asegurar que el grupo 'Docente' exista y el usuario pertenezca a él
+        # (Vital para tu CustomLoginView)
+        grupo_docente, _ = Group.objects.get_or_create(name='Docente')
+        usuario_django.groups.add(grupo_docente)
+
+        # 3. Crear el perfil Docente (usando get_or_create por si acaso)
+        Docente.objects.get_or_create(
+            user=usuario_django,
+            defaults={
+                'nombre': "Juan",
+                'apellido_paterno': "Pérez",
+                'apellido_materno': "López",
+                'correo': "juan.perez@lumat.com",
+                'firma': "firmas/firma_test.png"
+            }
+        )
+
+        # 4. Ejecutar la petición POST al Login
         response = self.client.post(reverse('lumat_app:login'), {
             'username': 'docente1',
             'password': 'testpass123'
         })
-        url_esperada = reverse('lumat_app:docente_dashboard')
+
+        # 5. Verificar la redirección esperada por grupo
+        url_esperada = reverse('lumat_app:docente_seminarios')
         self.assertRedirects(response, url_esperada)
 
     def test_login_alumno_redirige_a_alumno(self):

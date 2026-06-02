@@ -1,15 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.models import Group
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
-from django.template.loader import render_to_string
-from django.urls import reverse
-from weasyprint import HTML
-from datetime import datetime, timedelta, time
-import random
-from django.core.files.base import ContentFile
 from django.http import HttpResponse, Http404
 
 from .models import Seminario, FormularioComite
@@ -20,11 +11,7 @@ from django.http import HttpResponse
 from django.utils.text import slugify
 from django.db.models import Q
 from datetime import date
-
-from .models import (
-    Evidencia,
-    SolicitudCambioTutor
-)
+import os
 from .forms import (
     FirmaCalificacionForm,
     FormularioComiteForm,
@@ -33,6 +20,105 @@ from .forms import (
 
 def es_docente(user):
     return user.groups.filter(name='Docente').exists()
+
+
+def _obtener_universo_seminarios(docente):
+    """Filtra y devuelve los queries base optimizados como tutor y miembro."""
+    base_qs = Seminario.objects.select_related(
+        'alumno', 'comite', 'formulario_comite'
+    )
+    como_tutor = base_qs.filter(comite__tutor=docente)
+    como_miembro = base_qs.filter(
+        Q(comite__miembro1=docente) | Q(comite__miembro2=docente)
+    ).distinct()
+
+    return como_tutor, como_miembro
+
+
+def _combinar_roles(tutores, miembros):
+    """Une listas de tutores y miembros evitando duplicados basados en pk."""
+    ids_tutor = {i['seminario'].pk for i in tutores}
+    miembros_unicos = [
+        m for m in miembros if m['seminario'].pk not in ids_tutor
+    ]
+    return sorted(
+        tutores + miembros_unicos,
+        key=lambda i: (i['seminario'].numero, i['seminario'].periodo)
+    )
+
+
+def _filtrar_por_busqueda(como_tutor, como_miembro, query):
+    """Flujo A: Filtra por matrícula ignorando el resto de los filtros."""
+    condicion = Q(alumno__matricula__icontains=query)
+
+    tutores_list = [
+        {'seminario': s, 'rol': 'tutor'}
+        for s in como_tutor.filter(condicion)
+    ]
+    miembros_list = [
+        {'seminario': s, 'rol': 'miembro'}
+        for s in como_miembro.filter(condicion)
+    ]
+
+    return _combinar_roles(tutores_list, miembros_list)
+
+
+def _obtener_estado_formulario(seminario):
+    """Determina de forma segura el estado general del formulario."""
+    if hasattr(seminario, 'formulario_comite') and seminario.formulario_comite:
+        return seminario.formulario_comite.estado_general
+    return 'pendiente'
+
+
+def _filtrar_por_rol_y_estado(como_tutor, como_miembro, rol, estado):
+    """Flujo B: Filtra según los dropdowns de control de la pantalla."""
+    tutores = [{'seminario': s, 'rol': 'tutor'} for s in como_tutor]
+    miembros = [{'seminario': s, 'rol': 'miembro'} for s in como_miembro]
+
+    if rol == 'tutor':
+        seminarios_raw = tutores
+    elif rol == 'miembro':
+        seminarios_raw = miembros
+    else:
+        seminarios_raw = _combinar_roles(tutores, miembros)
+
+    resultado = []
+    for item in seminarios_raw:
+        est_form = _obtener_estado_formulario(item['seminario'])
+
+        if estado == 'completados' and est_form == 'completo':
+            resultado.append(item)
+        elif estado == 'pendientes' and est_form == 'pendiente':
+            resultado.append(item)
+        elif estado == 'todos':
+            resultado.append(item)
+
+    return resultado
+
+
+def _obtener_proximos_seminarios(docente):
+    """Genera de forma limpia el panel de recordatorios independientes."""
+    hoy = date.today()
+
+    # Creamos la condición OR usando el conector nativo de Django, sin operadores lógicos sueltos
+    condicion_docente = Q.OR(
+        Q(comite__tutor=docente),
+        Q(comite__miembro1=docente),
+        Q(comite__miembro2=docente)
+    )
+
+    proximos_raw = Seminario.objects.filter(
+        condicion_docente,
+        fecha__gte=hoy
+    ).select_related('comite').order_by('fecha', 'hora').distinct()
+
+    proximos = []
+    for s in proximos_raw:
+        if _obtener_estado_formulario(s) == 'pendiente':
+            rol_label = 'Tutor' if s.comite.tutor == docente else 'Miembro'
+            proximos.append({'seminario': s, 'rol': rol_label})
+
+    return proximos
 
 
 @login_required
@@ -45,95 +131,23 @@ def docente_seminarios(request):
     estado = request.GET.get('estado', 'pendientes')
     query_busqueda = request.GET.get('q', '').strip()
 
-    # Todo tu universo base de seminarios (Tutor + Miembro)
-    como_tutor = Seminario.objects.filter(
-        comite__tutor=docente
-    ).select_related('alumno', 'comite', 'formulario_comite')
+    como_tutor, como_miembro = _obtener_universo_seminarios(docente)
 
-    como_miembro = Seminario.objects.filter(
-        comite__miembro1=docente
-    ).select_related('alumno', 'comite', 'formulario_comite') | Seminario.objects.filter(
-        comite__miembro2=docente
-    ).select_related('alumno', 'comite', 'formulario_comite')
-
-    seminarios = []
-
-    # 1. FLUJO A: Si el usuario escribe una matrícula, busca en TODO sin importar los filtros
     if query_busqueda:
-        condicion_matricula = Q(alumno__matricula__icontains=query_busqueda)
-
-        tutores_filtrados = como_tutor.filter(condicion_matricula)
-        miembros_filtrados = como_miembro.distinct().filter(condicion_matricula)
-
-        tutores_list = [{'seminario': s, 'rol': 'tutor'}
-                        for s in tutores_filtrados]
-        miembros_list = [{'seminario': s, 'rol': 'miembro'}
-                         for s in miembros_filtrados]
-
-        ids_tutor = {i['seminario'].pk for i in tutores_list}
-        miembros_list = [
-            i for i in miembros_list if i['seminario'].pk not in ids_tutor]
-
-        seminarios = sorted(
-            tutores_list + miembros_list,
-            key=lambda i: (i['seminario'].numero, i['seminario'].periodo)
+        seminarios = _filtrar_por_busqueda(
+            como_tutor, como_miembro, query_busqueda
         )
-
-        # Forzamos los estados visuales del dropdown a 'todos' para que coincida con la pantalla
         rol = 'todos'
         estado = 'todos'
-
-    # 2. FLUJO B: Si no hay búsqueda, funciona el comportamiento por defecto (Pendientes de cualquier rol)
     else:
-        if rol == 'tutor':
-            seminarios_raw = [{'seminario': s, 'rol': 'tutor'}
-                              for s in como_tutor]
-        elif rol == 'miembro':
-            seminarios_raw = [{'seminario': s, 'rol': 'miembro'}
-                              for s in como_miembro.distinct()]
-        else:
-            tutores = [{'seminario': s, 'rol': 'tutor'} for s in como_tutor]
-            miembros = [{'seminario': s, 'rol': 'miembro'}
-                        for s in como_miembro.distinct()]
-            ids_tutor = {i['seminario'].pk for i in tutores}
-            miembros = [
-                i for i in miembros if i['seminario'].pk not in ids_tutor]
-            seminarios_raw = tutores + miembros
-
-        for item in sorted(seminarios_raw, key=lambda i: (i['seminario'].numero, i['seminario'].periodo)):
-            sem = item['seminario']
-            estado_form = 'pendiente'
-            if hasattr(sem, 'formulario_comite') and sem.formulario_comite:
-                estado_form = sem.formulario_comite.estado_general
-
-            if estado == 'completados' and estado_form == 'completo':
-                seminarios.append(item)
-            elif estado == 'pendientes' and estado_form == 'pendiente':
-                seminarios.append(item)
-            elif estado == 'todos':
-                seminarios.append(item)
-
-    # --- PANEL DE RECORDATORIOS (Independiente) ---
-    hoy = date.today()
-    todos_mis_seminarios = (Seminario.objects.filter(comite__tutor=docente) |
-                            Seminario.objects.filter(comite__miembro1=docente) |
-                            Seminario.objects.filter(comite__miembro2=docente)).distinct()
-
-    proximos_raw = todos_mis_seminarios.filter(
-        fecha__gte=hoy).order_by('fecha', 'hora')
-    proximos_seminarios = []
-    for s in proximos_raw:
-        est_form = 'pendiente'
-        if hasattr(s, 'formulario_comite') and s.formulario_comite:
-            est_form = s.formulario_comite.estado_general
-        if est_form == 'pendiente':
-            r_label = 'Tutor' if s.comite.tutor == docente else 'Miembro'
-            proximos_seminarios.append({'seminario': s, 'rol': r_label})
+        seminarios = _filtrar_por_rol_y_estado(
+            como_tutor, como_miembro, rol, estado
+        )
 
     return render(request, 'docente_seminario.html', {
         'docente': docente,
         'seminarios': seminarios,
-        'proximos_seminarios': proximos_seminarios,
+        'proximos_seminarios': _obtener_proximos_seminarios(docente),
         'rol_activo': rol,
         'estado_activo': estado,
         'query_busqueda': query_busqueda,
@@ -197,14 +211,14 @@ def docente_seminario_detalle(request, seminario_id):
     firma_form = FirmaCalificacionForm() if not ya_firme else None
 
     return render(request, 'docente_seminario_detalle.html', {
-        'docente':      docente,
-        'seminario':    seminario,
-        'formulario':   formulario,
-        'form':         form,
-        'firma_form':   firma_form,
-        'rol':          rol,
-        'rol_activo':   rol_activo,
-        'ya_firme':     ya_firme,
+        'docente': docente,
+        'seminario': seminario,
+        'formulario': formulario,
+        'form': form,
+        'firma_form': firma_form,
+        'rol': rol,
+        'rol_activo': rol_activo,
+        'ya_firme': ya_firme,
     })
 
 # ── Vista: firmar + calificar ─────────────────────────────────
@@ -241,7 +255,7 @@ def docente_firmar_seminario(request, seminario_id):
 
         # Asignar calificación según rol
         campo_calif = {
-            'tutor':    'calificacion_tutor',
+            'tutor': 'calificacion_tutor',
             'miembro1': 'calificacion_miembro1',
             'miembro2': 'calificacion_miembro2',
         }[rol]
@@ -313,7 +327,8 @@ def descargar_evidencias_zip(request, seminario_id):
     # Estructurar el nombre solicitado: nombre-semestre-periodo.zip
     nombre_alumno = slugify(
         f"{seminario.alumno.nombre} {seminario.alumno.apellido_paterno}")
-    nombre_zip = f"{nombre_alumno}-semestre{seminario.alumno.semestre}-{slugify(seminario.periodo)}.zip"
+    alumno = seminario.alumno
+    nombre_zip = f"{nombre_alumno}-semestre{alumno.semestre}-{slugify(seminario.periodo)}.zip"
 
     response = HttpResponse(buffer.getvalue(), content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="{nombre_zip}"'

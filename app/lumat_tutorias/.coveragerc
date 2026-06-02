@@ -1,0 +1,15 @@
+[run]
+branch = True
+source = .
+omit =
+    *test*
+    *migrations*
+    *__init*
+    *settings*
+    *apps*
+    *wsgi*
+    *admin*
+    *asgi*
+    manage.py
+    *urls*
+    *create_superuser*
