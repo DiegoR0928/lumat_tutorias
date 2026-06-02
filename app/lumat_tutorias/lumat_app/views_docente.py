@@ -101,12 +101,12 @@ def _obtener_proximos_seminarios(docente):
     hoy = date.today()
 
     # Creamos la condición OR usando el conector nativo de Django, sin operadores lógicos sueltos
-    condicion_docente = Q.OR(
-        Q(comite__tutor=docente),
-        Q(comite__miembro1=docente),
+    condicion_docente = (
+        Q(comite__tutor=docente) |
+        Q(comite__miembro1=docente) |
         Q(comite__miembro2=docente)
     )
-
+    
     proximos_raw = Seminario.objects.filter(
         condicion_docente,
         fecha__gte=hoy

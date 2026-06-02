@@ -4,7 +4,7 @@
 con reportlab, siguiendo la estructura del documento de referencia.
 """
 import io
-import os  # 👈 Añadido para verificar rutas de archivos
+import os
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter

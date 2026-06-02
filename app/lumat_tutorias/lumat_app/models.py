@@ -321,13 +321,18 @@ class FormularioComite(models.Model):
         if es_completo and tiene_nota and self.calificacion_final >= Decimal("6.00"):
             alumno = self.seminario.alumno
 
+            # Convertir semestre a entero para comparación
+            try:
+                semestre_actual = int(alumno.semestre) if alumno.semestre else 0
+            except ValueError:
+                semestre_actual = 0
+                
             # Control de Idempotencia: Solo incrementamos si el semestre actual del alumno
             # es exactamente igual al número de seminario que acaba de acreditar.
-            # Esto evita que si editas el formulario ya completado, le sume otro semestre por error.
-            if alumno.semestre == self.seminario.numero:
-                if alumno.semestre < 8:
-                    alumno.semestre += 1
-                    # update_fields es más eficiente y seguro en concurrencia
+            if semestre_actual == self.seminario.numero:
+                if semestre_actual < 8:
+                    nuevo_semestre = semestre_actual + 1
+                    alumno.semestre = str(nuevo_semestre)  # Guardar como string
                     alumno.save(update_fields=['semestre'])
 
     def __str__(self):
