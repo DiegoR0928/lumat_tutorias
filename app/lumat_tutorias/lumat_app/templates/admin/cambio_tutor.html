@@ -1,0 +1,175 @@
+{% extends "unfold/layouts/base_simple.html" %}
+{% load static %}
+
+{% block extrahead %}
+<script>
+    (function() {
+        const theme = localStorage.getItem('theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (theme === 'dark' || (!theme && systemDark)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    })();
+</script>
+<style>
+    .custom-card { background-color: #ffffff; border-color: #e5e7eb; margin-bottom: 2.5rem; }
+    .custom-select { background-color: #ffffff; color: #111827; border-color: #d1d5db; }
+    .custom-list-item { background-color: #f9fafb; border-color: #f3f4f6; }
+    .msg-success { color: #16a34a; background-color: #f0fdf4; }
+    .msg-error { color: #dc2626; background-color: #fef2f2; }
+    .badge-pending { color: #d97706; background-color: #fffbeb; }
+    .badge-approved { color: #16a34a; background-color: #f0fdf4; }
+    .badge-rejected { color: #dc2626; background-color: #fef2f2; }
+
+    .dark .custom-card {
+        background-color: #18181b !important;
+        border-color: #27272a !important;
+    }
+    .dark .custom-select {
+        background-color: #27272a !important;
+        color: #f4f4f5 !important;
+        border-color: #3f3f46 !important;
+    }
+    .dark .custom-list-item {
+        background-color: rgba(39, 39, 42, 0.4) !important;
+        border-color: rgba(63, 63, 70, 0.6) !important;
+    }
+    .dark .msg-success {
+        color: #4ade80 !important;
+        background-color: rgba(22, 163, 74, 0.15) !important;
+    }
+    .dark .msg-error {
+        color: #f87171 !important;
+        background-color: rgba(220, 38, 38, 0.15) !important;
+    }
+    .dark .badge-pending {
+        color: #fbbf24 !important;
+        background-color: rgba(217, 119, 6, 0.15) !important;
+    }
+    .dark .badge-approved {
+        color: #4ade80 !important;
+        background-color: rgba(22, 163, 74, 0.15) !important;
+    }
+    .dark .badge-rejected {
+        color: #f87171 !important;
+        background-color: rgba(220, 38, 38, 0.15) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="px-6 pb-6 max-w-6xl mx-auto">
+    <div class="mb-5">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-zinc-100">{{ title }}</h1>
+        <p class="text-gray-500 dark:text-zinc-400 text-sm mt-1">
+            Revise las solicitudes emitidas y asigne un nuevo docente tutor al sínodo.
+        </p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-3 mb-4 text-sm rounded-lg 
+                {% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="custom-card p-6 rounded-lg border shadow-sm transition-colors duration-200">
+        {% if solicitudes %}
+            <div class="space-y-4">
+                {% for sol in solicitudes %}
+                    <div class="custom-list-item p-5 border rounded-xl flex flex-col 
+                                md:flex-row md:items-start md:justify-between gap-6">
+                        
+                        <div class="space-y-2 flex-1 min-w-0">
+                            <div class="flex items-center gap-3">
+                                <h3 class="font-bold text-gray-800 dark:text-zinc-100 text-base">
+                                    {{ sol.alumno }}
+                                </h3>
+                                <span class="px-2.5 py-0.5 rounded text-xs font-semibold 
+                                    uppercase tracking-wider
+                                    {% if sol.estado == 'pendiente' %}badge-pending
+                                    {% elif sol.estado == 'approved' or sol.estado == 'aprobada' %}
+                                    badge-approved{% else %}badge-rejected{% endif %}">
+                                    {{ sol.get_estado_display }}
+                                </span>
+                            </div>
+                            
+                            <p class="text-gray-600 dark:text-zinc-300 text-sm bg-white/50 
+                                      dark:bg-zinc-900/50 p-3 rounded border border-gray-100 
+                                      dark:border-zinc-800/50 italic break-words">
+                                "{{ sol.motivo }}"
+                            </p>
+                            
+                            <p class="text-xs text-gray-400 dark:text-zinc-500">
+                                Creada el {{ sol.creada_en|date:"d/m/Y H:i" }}
+                                {% if sol.resuelta_en %}
+                                    | Resuelta el {{ sol.resuelta_en|date:"d/m/Y H:i" }}
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        {% if sol.estado == 'pendiente' %}
+                            <form action="/admin/cambio-tutor/" method="POST" 
+                                  class="flex flex-col sm:flex-row items-stretch 
+                                         sm:items-center gap-3 md:shrink-0 w-full md:w-auto">
+                                {% csrf_token %}
+                                <input type="hidden" name="solicitud_id" value="{{ sol.id }}">
+                                
+                                <div>
+                                    <select name="docente_id" class="custom-select border 
+                                        rounded-md p-2 text-sm focus:border-[#4a7c7a] 
+                                        w-full sm:w-48 block transition-colors">
+                                        <option value="">-- Nuevo Tutor --</option>
+                                        {% for doc in docentes %}
+                                            <option value="{{ doc.id }}">
+                                                {{ doc.nombre }} {{ doc.apellido_paterno }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="flex gap-2 shrink-0">
+                                    <button type="submit" name="accion" value="aprobar" 
+                                            class="bg-[#4a7c7a] hover:bg-[#3a9795] text-white 
+                                                   font-medium py-2 px-4 rounded text-sm 
+                                                   transition-all inline-flex items-center">
+                                        Aprobar
+                                    </button>
+                                    <button type="submit" name="accion" value="rechazar" 
+                                            class="bg-red-600 hover:bg-red-700 text-white 
+                                                   font-medium py-2 px-4 rounded text-sm 
+                                                   transition-all inline-flex items-center">
+                                        Rechazar
+                                    </button>
+                                </div>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-400 dark:text-zinc-500 text-sm italic py-4 text-center">
+                No existen solicitudes de cambio de tutor registradas en el sistema.
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function syncTheme() {
+        const theme = localStorage.getItem('theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (theme === 'dark' || (!theme && systemDark)) { 
+            document.documentElement.classList.add('dark'); 
+        } else { 
+            document.documentElement.classList.remove('dark'); 
+        }
+    }
+    window.addEventListener('storage', function(e) { if (e.key === 'theme') { syncTheme(); } });
+    document.addEventListener('themeChanged', function() { syncTheme(); });
+</script>
+{% endblock %}

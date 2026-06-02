@@ -3,7 +3,6 @@
 
 {% block extrahead %}
 <script>
-    // Aplicar tema inmediatamente antes de que se renderice la página
     (function() {
         const theme = localStorage.getItem('theme');
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -17,55 +16,31 @@
 </script>
 
 <style>
-    /* --- Tema Claro (Valores por defecto) --- */
-    .custom-card {
-        background-color: #ffffff;
-        border-color: #e5e7eb;
-        margin-bottom: 2.5rem;
-    }
-    .custom-input {
-        background-color: #ffffff;
-        color: #111827;
-        border-color: #d1d5db;
-    }
-    .custom-list-item {
-        background-color: #f9fafb;
-        border-color: #f3f4f6;
-    }
-    .custom-embed-container {
-        background-color: #f3f4f6;
-        border-color: #e5e7eb;
-    }
-    
-    /* 🌟 Margen superior explícito para separar el botón de los campos de fecha */
-    .custom-btn-container {
-        margin-top: 2.25rem !important;
-    }
-    
-    /* 🔴 Estilos base para Alertas y Mensajes */
+    .custom-card { background-color: #ffffff; border-color: #e5e7eb; margin-bottom: 2.5rem; }
+    .custom-input { background-color: #ffffff; color: #111827; border-color: #d1d5db; }
+    .custom-list-item { background-color: #f9fafb; border-color: #f3f4f6; }
+    .custom-embed-container { background-color: #f3f4f6; border-color: #e5e7eb; }
+    .custom-btn-container { margin-top: 2.25rem !important; }
     .msg-success { color: #16a34a; background-color: #f0fdf4; }
     .msg-error { color: #dc2626; background-color: #fef2f2; }
 
-    /* --- Tema Oscuro (Se activan cuando la raíz tiene la clase .dark) --- */
-    .dark .custom-card { 
-        background-color: #18181b !important; /* zinc-900 */
-        border-color: #27272a !important;     /* zinc-800 */
+    .dark .custom-card {
+        background-color: #18181b !important;
+        border-color: #27272a !important;
     }
-    .dark .custom-input { 
-        background-color: #27272a !important; /* zinc-800 */
-        color: #f4f4f5 !important;             /* zinc-100 */
-        border-color: #3f3f46 !important;     /* zinc-700 */
+    .dark .custom-input {
+        background-color: #27272a !important;
+        color: #f4f4f5 !important;
+        border-color: #3f3f46 !important;
     }
-    .dark .custom-list-item { 
+    .dark .custom-list-item {
         background-color: rgba(39, 39, 42, 0.4) !important;
         border-color: rgba(63, 63, 70, 0.6) !important;
     }
-    .dark .custom-embed-container { 
-        background-color: #09090b !important; /* zinc-950 */
-        border-color: #27272a !important;     /* zinc-800 */
+    .dark .custom-embed-container {
+        background-color: #09090b !important;
+        border-color: #27272a !important;
     }
-    
-    /* 🔴 Mensajes adaptables al modo noche */
     .dark .msg-success {
         color: #4ade80 !important;
         background-color: rgba(22, 163, 74, 0.15) !important;
@@ -78,19 +53,18 @@
 {% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-5xl mx-auto mt-6">
-    
+<div class="px-6 pb-6 max-w-5xl mx-auto">
     <div class="custom-card p-6 rounded-lg border shadow-sm transition-colors duration-200">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-zinc-100 mb-2">{{ title }}</h1>
         <p class="text-gray-600 dark:text-zinc-400 mb-6 text-sm">
-            El sistema tomará todos los seminarios y los distribuirá consecutivamente.
+            El sistema distribuirá los seminarios consecutivamente por horas (8:00 AM a 3:00 PM) 
+            omitiendo fines de semana.
         </p>
 
         {% if messages %}
             {% for message in messages %}
-                <div class="p-3 mb-4 text-sm rounded-lg
-                    {% if message.tags == 'error' %}msg-error{% else %}
-                    msg-success{% endif %}">
+                <div class="p-3 mb-4 text-sm rounded-lg 
+                    {% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -103,28 +77,22 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">
                         Fecha de Inicio
                     </label>
-                    <input type="date"
-                           name="fecha_inicial"
-                           class="custom-input border rounded-md p-2.5
-                                  focus:border-[#4a7c7a] w-full block
-                                  transition-colors"
-                           required>
+                    <input type="date" name="fecha_inicial" 
+                           class="custom-input border rounded-md p-2.5 w-full block 
+                                  focus:border-[#4a7c7a] transition-colors" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">
                         Fecha de Finalización
                     </label>
-                    <input type="date"
-                           name="fecha_final"
-                           class="custom-input border rounded-md p-2.5
-                                  focus:border-[#4a7c7a] w-full block
-                                  transition-colors"
-                           required>
+                    <input type="date" name="fecha_final" 
+                           class="custom-input border rounded-md p-2.5 w-full block 
+                                  focus:border-[#4a7c7a] transition-colors" required>
                 </div>
             </div>
             
             <div class="flex justify-end custom-btn-container">
-                <button type="submit"
+                <button type="submit" 
                         class="bg-[#4a7c7a] hover:bg-[#3a9795] text-white font-medium 
                                py-2.5 px-5 rounded text-sm inline-flex items-center 
                                shadow-sm transition-all">
@@ -140,16 +108,15 @@
             Calendarios Publicados
         </h2>
         <p class="text-gray-500 dark:text-zinc-400 text-sm mb-4">
-            A continuación se muestran los calendarios oficiales vigentes en el sistema.
+            A continuación se muestran los calendarios oficiales vigentes.
         </p>
 
         {% if calendarios %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                     {% for cal in calendarios %}
-                        <div class="custom-list-item p-4 border rounded-xl 
-                                    hover:border-[#4a7c7a] transition-all 
-                                    flex justify-between items-center">
+                        <div class="custom-list-item p-4 border rounded-xl flex justify-between 
+                                    items-center hover:border-[#4a7c7a] transition-all">
                             <div>
                                 <h4 class="font-semibold text-gray-800 dark:text-zinc-200 text-sm">
                                     {{ cal.nombre }}
@@ -159,22 +126,18 @@
                                 </p>
                             </div>
                             <div class="flex space-x-3">
-                                <button onclick="verPdf('{{ cal.archivo_pdf.url }}')"
-                                        class="text-[#4a7c7a] hover:text-[#3a9795]
-                                               text-sm font-medium inline-flex
-                                               items-center">
+                                <button onclick="verPdf('{{ cal.archivo_pdf.url }}')" 
+                                        class="text-[#4a7c7a] hover:text-[#3a9795] text-sm 
+                                               font-medium inline-flex items-center">
                                     <span class="material-symbols-outlined mr-1 text-base">
                                         visibility
                                     </span>
                                     Ver aquí
                                 </button>
-                                <a href="{{ cal.archivo_pdf.url }}"
-                                   target="_blank"
-                                   class="text-gray-500 hover:text-gray-300
-                                          dark:text-zinc-400
-                                          dark:hover:text-zinc-200 text-sm
-                                          font-medium inline-flex
-                                          items-center">
+                                <a href="{{ cal.archivo_pdf.url }}" target="_blank" 
+                                   class="text-gray-500 hover:text-gray-300 dark:text-zinc-400 
+                                          dark:hover:text-zinc-200 text-sm font-medium 
+                                          inline-flex items-center">
                                     <span class="material-symbols-outlined mr-1 text-base">
                                         open_in_new
                                     </span>
@@ -185,11 +148,12 @@
                     {% endfor %}
                 </div>
 
-                <div class="custom-embed-container border rounded-xl h-[450px] 
-                            flex items-center justify-center relative overflow-hidden">
-                    <embed id="visor-pdf" class="w-full h-full hidden" src="" type="application/pdf">
-                    
-                    <div id="visor-placeholder" class="text-center p-6 text-gray-400 dark:text-zinc-600">
+                <div class="custom-embed-container border rounded-xl h-[450px] flex 
+                            items-center justify-center relative overflow-hidden">
+                    <embed id="visor-pdf" class="w-full h-full hidden" src="" 
+                           type="application/pdf">
+                    <div id="visor-placeholder" class="text-center p-6 text-gray-400 
+                                                       dark:text-zinc-600">
                         <span class="material-symbols-outlined text-4xl mb-2">picture_as_pdf</span>
                         <p class="text-xs">
                             Selecciona un calendario de la lista para visualizarlo directamente.
@@ -209,30 +173,20 @@
     function syncTheme() {
         const theme = localStorage.getItem('theme');
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
-        if (theme === 'dark' || (!theme && systemDark)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
+        if (theme === 'dark' || (!theme && systemDark)) { 
+            document.documentElement.classList.add('dark'); 
+        } else { 
+            document.documentElement.classList.remove('dark'); 
         }
     }
+    window.addEventListener('storage', function(e) { if (e.key === 'theme') { syncTheme(); } });
+    document.addEventListener('themeChanged', function() { syncTheme(); });
     
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'theme') {
-            syncTheme();
-        }
-    });
-    
-    document.addEventListener('themeChanged', function() {
-        syncTheme();
-    });
-
     function verPdf(url) {
         const embed = document.getElementById('visor-pdf');
         const placeholder = document.getElementById('visor-placeholder');
-        
-        embed.src = url;
-        embed.classList.remove('hidden');
+        embed.src = url; 
+        embed.classList.remove('hidden'); 
         placeholder.classList.add('hidden');
     }
 </script>

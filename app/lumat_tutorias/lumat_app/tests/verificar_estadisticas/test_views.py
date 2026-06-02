@@ -75,24 +75,27 @@ class TestEstadisticasAdminView(TestCase):
         alumno1 = Alumno.objects.create(matricula="20260001", user=u_a1)
         alumno2 = Alumno.objects.create(matricula="20260002", user=u_a2)
 
-        # 4. Crear 3 seminarios inyectando todas sus dependencias confirmadas
+        # 4. Crear 3 seminarios inyectando el campo 'numero' obligatorio
         Seminario.objects.create(
             alumno=alumno1,
             comite=comite_ejemplo,
             fecha=date(2026, 6, 1),
-            hora=time(10, 0)
+            hora=time(10, 0),
+            numero=1
         )
         Seminario.objects.create(
             alumno=alumno1,
             comite=comite_ejemplo,
             fecha=date(2026, 6, 2),
-            hora=time(11, 0)
+            hora=time(11, 0),
+            numero=2
         )
         Seminario.objects.create(
             alumno=alumno2,
             comite=comite_ejemplo,
             fecha=date(2026, 6, 3),
-            hora=time(12, 0)
+            hora=time(12, 0),
+            numero=3
         )
 
         # Ejecutar la petición autenticados como administrador

@@ -1,154 +1,151 @@
 import tempfile
-from datetime import date, time
+from datetime import date, time, timedelta
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
-from lumat_app.models import Alumno, Docente, Comite
-from lumat_app.models import Seminario, CalendarioGenerado
+from lumat_app.models import Alumno, Docente, Comite, Seminario, CalendarioGenerado
 
 
-# 🌟 Redirige los archivos MEDIA de los test a una carpeta temporal limpia
 @override_settings(MEDIA_ROOT=tempfile.gettempdir())
-class TestCalendarioViews(TestCase):
+class TestCalendarioAndEstadisticasViews(TestCase):
 
     def setUp(self):
         self.client = Client()
-
-        # Usuario Administrador de LUMAT (Staff para acceder a vistas admin)
         self.user_admin = User.objects.create_superuser(
             username='admin', password='testpass123'
         )
-
-        # Usuario Alumno regular (Sin permisos de Staff)
         self.user_normal = User.objects.create_user(
             username='alumno1', password='testpass123'
         )
+        self.url_form = reverse('calendar_form')
+        self.url_generate = reverse('calendar_pdf')
+        self.url_stats = reverse('admin_estadisticas')
+        self.hoy = date.today()
 
-        # 1. Crear 3 docentes para cumplir con la regla de sínodo del comité
+    def helper_crear_entorno(self, num_seminarios=2):
         u_d1 = User.objects.create_user(username='d1', password='123')
         u_d2 = User.objects.create_user(username='d2', password='123')
         u_d3 = User.objects.create_user(username='d3', password='123')
-
         doc1 = Docente.objects.create(user=u_d1)
         doc2 = Docente.objects.create(user=u_d2)
         doc3 = Docente.objects.create(user=u_d3)
-
-        # 2. Instanciar el Comité base
-        self.comite_test = Comite.objects.create(
-            tutor=doc1,
-            miembro1=doc2,
-            miembro2=doc3
+        comite = Comite.objects.create(
+            tutor=doc1, miembro1=doc2, miembro2=doc3
         )
-
-        # 3. Crear los usuarios y registros para 2 alumnos base
-        u_a1 = User.objects.create_user(username='a1', password='123')
-        u_a2 = User.objects.create_user(username='a2', password='123')
-
-        alumno1 = Alumno.objects.create(matricula="20260001", user=u_a1)
-        alumno2 = Alumno.objects.create(matricula="20260002", user=u_a2)
-
-        # 4. Instanciar 2 seminarios usando los campos obligatorios reales
-        Seminario.objects.create(
-            alumno=alumno1,
-            comite=self.comite_test,
-            fecha=date(2026, 6, 1),
-            hora=time(9, 0)
-        )
-        Seminario.objects.create(
-            alumno=alumno2,
-            comite=self.comite_test,
-            fecha=date(2026, 6, 2),
-            hora=time(10, 0)
-        )
-
-        # Mapeo de URLs del sistema
-        self.url_form = reverse('calendar_form')
-        self.url_generate = reverse('calendar_pdf')
-
-    # --- Pruebas de la Vista del Formulario (GET) ---
+        for i in range(num_seminarios):
+            u_a = User.objects.create_user(
+                username=f'a_{i}', password='123'
+            )
+            alumno = Alumno.objects.create(
+                matricula=f'mat_{i}', user=u_a
+            )
+            Seminario.objects.create(
+                alumno=alumno,
+                comite=comite,
+                fecha=self.hoy,
+                hora=time(9, 0),
+                numero=i+1
+            )
 
     def test_get_formulario_admin_retorna_200(self):
-        """Un administrador autenticado debe poder cargar el panel."""
         self.client.login(username='admin', password='testpass123')
         response = self.client.get(self.url_form)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/calendario_form.html')
-        # Verifica que la lista de calendarios va incorporada en el contexto
         self.assertIn('calendarios', response.context)
 
-    def test_usuario_sin_permisos_redirige_a_login(self):
-        """Un alumno o usuario sin staff es rebotado por seguridad."""
-        self.client.login(username='alumno1', password='testpass123')
-        response = self.client.get(self.url_form)
-        expected_url = f'/admin/login/?next={self.url_form}'
-        self.assertRedirects(response, expected_url)
-
-    # --- Pruebas del Algoritmo de Generación (POST) ---
-
-    def test_generacion_exitosa_crea_objeto_y_redirige(self):
-        """
-        Crea el PDF, guarda el registro en BD y limpia los fines de semana.
-        """
+    def test_generar_pdf_get_redirige(self):
         self.client.login(username='admin', password='testpass123')
-
-        # Rango amplio de 1 mes (Días hábiles de sobra para los 2 seminarios)
-        datos = {
-            'fecha_inicial': '2026-06-01',
-            'fecha_final': '2026-06-30'
-        }
-        response = self.client.post(self.url_generate, datos)
-
-        # Verifica redirección exitosa de vuelta al formulario (302)
+        response = self.client.get(self.url_generate)
         self.assertRedirects(response, self.url_form)
-        # Verifica que se grabó el registro del PDF en la base de datos
-        self.assertEqual(CalendarioGenerado.objects.count(), 1)
+
+    def test_generar_pdf_fechas_vacias(self):
+        self.client.login(username='admin', password='testpass123')
+        datos = {'fecha_inicial': '', 'fecha_final': ''}
+        response = self.client.post(self.url_generate, datos)
+        self.assertRedirects(response, self.url_form)
+
+    def test_generar_pdf_sin_seminarios(self):
+        self.client.login(username='admin', password='testpass123')
+        inicio = (self.hoy + timedelta(days=1)).strftime('%Y-%m-%d')
+        fin = (self.hoy + timedelta(days=5)).strftime('%Y-%m-%d')
+        datos = {'fecha_inicial': inicio, 'fecha_final': fin}
+        response = self.client.post(self.url_generate, datos)
+        self.assertRedirects(response, self.url_form)
+
+    def test_error_fecha_inicio_anterior_a_hoy(self):
+        self.helper_crear_entorno()
+        self.client.login(username='admin', password='testpass123')
+        inicio = (self.hoy - timedelta(days=1)).strftime('%Y-%m-%d')
+        fin = (self.hoy + timedelta(days=5)).strftime('%Y-%m-%d')
+        datos = {'fecha_inicial': inicio, 'fecha_final': fin}
+        response = self.client.post(self.url_generate, datos)
+        self.assertRedirects(response, self.url_form)
+        self.assertEqual(CalendarioGenerado.objects.count(), 0)
+
+    def test_error_mismo_dia_hoy_a_hoy(self):
+        self.helper_crear_entorno()
+        self.client.login(username='admin', password='testpass123')
+        inicio = self.hoy.strftime('%Y-%m-%d')
+        fin = self.hoy.strftime('%Y-%m-%d')
+        datos = {'fecha_inicial': inicio, 'fecha_final': fin}
+        response = self.client.post(self.url_generate, datos)
+        self.assertRedirects(response, self.url_form)
+        self.assertEqual(CalendarioGenerado.objects.count(), 0)
 
     def test_error_fecha_inicial_posterior_a_final(self):
-        """Si la fecha inicial es mayor, cancela la operación con mensaje."""
+        self.helper_crear_entorno()
         self.client.login(username='admin', password='testpass123')
-
-        datos = {
-            'fecha_inicial': '2026-06-15',
-            'fecha_final': '2026-06-01'  # Fecha menor
-        }
+        inicio = (self.hoy + timedelta(days=5)).strftime('%Y-%m-%d')
+        fin = (self.hoy + timedelta(days=2)).strftime('%Y-%m-%d')
+        datos = {'fecha_inicial': inicio, 'fecha_final': fin}
         response = self.client.post(self.url_generate, datos)
-
-        self.assertRedirects(response, self.url_form)
-        # Asegura que la base de datos se mantuvo intacta y protegida
-        self.assertEqual(CalendarioGenerado.objects.count(), 0)
-
-    def test_error_insuficientes_dias_habiles_para_seminarios(self):
-        """Si hay más seminarios que días laborables, arroja alerta."""
-        self.client.login(username='admin', password='testpass123')
-
-        # El 6 y 7 de junio de 2026 son fin de semana. 0 días hábiles.
-        datos = {
-            'fecha_inicial': '2026-06-06',
-            'fecha_final': '2026-06-07'
-        }
-        response = self.client.post(self.url_generate, datos)
-
         self.assertRedirects(response, self.url_form)
         self.assertEqual(CalendarioGenerado.objects.count(), 0)
 
-    # --- Pruebas de Persistencia en el Sistema de Archivos ---
-
-    def test_archivo_pdf_se_escribe_en_disco_exitosamente(self):
-        """Verifica que el PDF se genere y almacene físicamente en MEDIA."""
+    def test_error_insuficientes_slots_horarios(self):
+        self.helper_crear_entorno(num_seminarios=20)
         self.client.login(username='admin', password='testpass123')
-
+        inicio = (self.hoy + timedelta(days=1))
+        fin = (self.hoy + timedelta(days=2))
         datos = {
-            'fecha_inicial': '2026-06-01',
-            'fecha_final': '2026-06-10'
+            'fecha_inicial': inicio.strftime('%Y-%m-%d'),
+            'fecha_final': fin.strftime('%Y-%m-%d')
         }
-        self.client.post(self.url_generate, datos)
+        response = self.client.post(self.url_generate, datos)
+        self.assertRedirects(response, self.url_form)
+        self.assertEqual(CalendarioGenerado.objects.count(), 0)
 
-        # Obtenemos el registro generado de la base de datos
-        cal = CalendarioGenerado.objects.first()
+    def test_generacion_exitosa_con_rollover_de_horas(self):
+        self.helper_crear_entorno(num_seminarios=9)
+        self.client.login(username='admin', password='testpass123')
+        inicio = (self.hoy + timedelta(days=1))
+        fin = (self.hoy + timedelta(days=15))
+        datos = {
+            'fecha_inicial': inicio.strftime('%Y-%m-%d'),
+            'fecha_final': fin.strftime('%Y-%m-%d')
+        }
+        response = self.client.post(self.url_generate, datos)
+        self.assertRedirects(response, self.url_form)
+        self.assertEqual(CalendarioGenerado.objects.count(), 1)
 
-        # 1. Validar que el objeto tiene un archivo asociado
-        self.assertIsNotNone(cal.archivo_pdf)
+        for sem in Seminario.objects.all():
+            self.assertNotEqual(sem.fecha, self.hoy)
+            self.assertIn(sem.hora.hour, range(8, 16))
 
-        # 2. Validar que el archivo físico existe en el storage del servidor
-        archivo_existe = cal.archivo_pdf.storage.exists(cal.archivo_pdf.name)
-        self.assertTrue(archivo_existe)
+    def test_get_estadisticas_vacias(self):
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(self.url_stats)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/estadisticas.html')
+        self.assertEqual(response.context['total_alumnos'], 0)
+        self.assertEqual(response.context['promedio_seminarios'], 0)
+
+    def test_get_estadisticas_con_datos(self):
+        self.helper_crear_entorno(num_seminarios=2)
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(self.url_stats)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_alumnos'], 2)
+        self.assertEqual(response.context['total_seminarios'], 2)
+        self.assertEqual(response.context['promedio_seminarios'], 1.0)

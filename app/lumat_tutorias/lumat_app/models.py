@@ -90,7 +90,7 @@ class Seminario(models.Model):
 
     def __str__(self):
         return (
-            f"Seminario {self.numero} "
+            f"Seminario"
             f"(Periodo {self.periodo}) - "
             f"{self.alumno}"
         )

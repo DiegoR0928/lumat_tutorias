@@ -24,8 +24,11 @@
         .agenda-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .agenda-table th { background-color: #4a7c7a; color: white; padding: 10px; border: 1px solid #c8b89a; font-size: 11pt; }
         .agenda-table td { padding: 12px 10px; border: 1px solid #c8b89a; background: white; font-size: 10pt; }
-        .date-col { width: 30%; font-weight: bold; color: #746350; text-align: center; }
-        .name-col { width: 70%; text-align: left; padding-left: 15px; }
+        
+        /* 🌟 Anchos proporcionales equilibrados */
+        .date-col { width: 25%; font-weight: bold; color: #746350; text-align: center; }
+        .time-col { width: 15%; font-weight: bold; color: #4a7c7a; text-align: center; }
+        .name-col { width: 60%; text-align: left; padding-left: 15px; }
         
         .total { text-align: right; font-size: 9pt; color: #8a7560; margin-top: 15px; }
     </style>
@@ -45,6 +48,7 @@
         <thead>
             <tr>
                 <th>Fecha Asignada</th>
+                <th>Hora</th>
                 <th>Seminario / Proyecto</th>
             </tr>
         </thead>
@@ -52,6 +56,7 @@
             {% for item in agenda %}
             <tr>
                 <td class="date-col">{{ item.fecha|date:"l, d \d\e F" }}</td>
+                <td class="time-col">{{ item.hora|time:"H:i" }}</td>
                 <td class="name-col">{{ item.nombre }}</td>
             </tr>
             {% endfor %}

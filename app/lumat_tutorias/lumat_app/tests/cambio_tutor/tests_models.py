@@ -60,3 +60,40 @@ class SolicitudCambioTutorModelTest(TestCase):
             str(solicitud),
             esperado
         )
+
+
+class TestSolicitudCambioTutorModel(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='alumno1', password='123')
+        self.alumno = Alumno.objects.create(
+            matricula="20260001", user=self.user)
+
+    def test_creacion_solicitud_valores_por_defecto(self):
+        solicitud = SolicitudCambioTutor.objects.create(
+            alumno=self.alumno,
+            motivo="Falta de coincidencia en líneas de investigación."
+        )
+        self.assertEqual(solicitud.estado, 'pendiente')
+        self.assertIsNotNone(solicitud.creada_en)
+        self.assertIsNone(solicitud.resuelta_en)
+
+    def test_string_representation(self):
+        solicitud = SolicitudCambioTutor.objects.create(
+            alumno=self.alumno,
+            motivo="Motivo de prueba"
+        )
+        expected_str = f"Solicitud cambio tutor — {self.alumno} (pendiente)"
+        self.assertEqual(str(solicitud), expected_str)
+
+    def test_ordenamiento_por_defecto_mas_reciente_primero(self):
+        sol1 = SolicitudCambioTutor.objects.create(
+            alumno=self.alumno, motivo="Motivo 1"
+        )
+        sol2 = SolicitudCambioTutor.objects.create(
+            alumno=self.alumno, motivo="Motivo 2"
+        )
+        solicitudes = SolicitudCambioTutor.objects.all()
+        self.assertEqual(solicitudes[0], sol2)
+        self.assertEqual(solicitudes[1], sol1)

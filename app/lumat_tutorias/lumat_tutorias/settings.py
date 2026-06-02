@@ -201,6 +201,11 @@ UNFOLD = {
                         "icon": "analytics",
                         "link": "/admin/estadisticas/",
                     },
+                    {
+                        "title": "Cambio de tutor",
+                        "icon": "manage_accounts",
+                        "link": "/admin/cambio-tutor/",
+                    },
                 ],
             },
         ],

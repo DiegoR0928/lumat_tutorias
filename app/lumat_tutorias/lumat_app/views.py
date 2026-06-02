@@ -7,11 +7,11 @@ from django.contrib import messages
 from django.template.loader import render_to_string
 from django.urls import reverse
 from weasyprint import HTML
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import random
 from django.core.files.base import ContentFile
 
-from .models import Alumno, Docente, Seminario, CalendarioGenerado
+from .models import Alumno, Docente, Seminario, CalendarioGenerado, Comite
 from django.utils import timezone
 
 from .models import (
@@ -472,106 +472,113 @@ def _validar_rango_calendario(fecha_inicio, fecha_fin, total_seminarios):
         return "No se pueden generar calendarios en fechas anteriores a hoy."
 
     if fecha_inicio == fecha_fin:
-        return ("No se pueden generar calendarios de hoy a hoy mismo"
-                " (mismo día).")
+        return "No se pueden generar calendarios de hoy a hoy mismo (mismo día)."
 
     if fecha_fin < fecha_inicio:
         return "La fecha inicial no puede ser posterior a la fecha final."
 
     dias_habiles = _calcular_dias_habiles(fecha_inicio, fecha_fin)
-    if total_seminarios > dias_habiles:
+    total_slots = dias_habiles * 8  # 8 espacios diarios por hora (8am a 3pm)
+
+    if total_seminarios > total_slots:
         return (
-            f"El rango seleccionado solo contiene {dias_habiles} días "
-            f"hábiles, pero necesitas acomodar {total_seminarios} "
-            f"seminarios. Amplía el rango de fechas."
+            f"El rango seleccionado solo contiene {total_slots} espacios "
+            f"disponibles ({dias_habiles} días hábiles), pero necesitas "
+            f"acomodar {total_seminarios} seminarios. Amplía el rango."
         )
     return None
 
 
 def admin_calendario_generar_pdf_view(request):
     """
-    Asigna fechas consecutivas omitiendo fines de semana (Sábados y Domingos),
-    mezclando aleatoriamente a las personas.
+    Asigna fechas y horas consecutivas (8am a 3pm) omitiendo fines de semana,
+    mezclando aleatoriamente a las personas y guardándolas en la base de datos.
     """
-    if request.method == "POST":
-        fecha_inicio_str = request.POST.get("fecha_inicial")
-        fecha_fin_str = request.POST.get("fecha_final")
-
-        if not fecha_inicio_str or not fecha_fin_str:
-            messages.error(request, "Ambas fechas son obligatorias.")
-            return redirect('calendar_form')
-
-        fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
-        fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
-
-        seminarios_db = list(Seminario.objects.all())
-
-        if not seminarios_db:
-            messages.error(
-                request, "No hay seminarios registrados en la base de datos."
-            )
-            return redirect('calendar_form')
-
-        error_msg = _validar_rango_calendario(
-            fecha_inicio, fecha_fin, len(seminarios_db)
-        )
-        if error_msg:
-            messages.error(request, error_msg)
-            return redirect('calendar_form')
-
-        random.shuffle(seminarios_db)
-
-        agenda_sorteada = []
-        fecha_actual = fecha_inicio
-
-        for seminario in seminarios_db:
-            while fecha_actual.weekday() >= 5:
-                fecha_actual += timedelta(days=1)
-
-            agenda_sorteada.append({
-                "fecha": fecha_actual,
-                "nombre": str(seminario)
-            })
-            fecha_actual += timedelta(days=1)
-
-        # Compilar la plantilla del PDF
-        context_pdf = {
-            "fecha_inicio": fecha_inicio,
-            "fecha_fin": fecha_fin,
-            "agenda": agenda_sorteada,
-            "total_seminarios": len(agenda_sorteada)
-        }
-
-        html_string = render_to_string(
-            "pdf/calendario_pdf_template.html", context_pdf
-        )
-        pdf_file = HTML(string=html_string).write_pdf()
-
-        # Guardar localmente en el servidor (MEDIA)
-        mes_inicio = fecha_inicio.strftime("%B")
-        mes_fin = fecha_fin.strftime("%B %Y")
-        nombre_periodo = f"Seminarios {mes_inicio} - {mes_fin}"
-
-        nuevo_calendario = CalendarioGenerado(
-            nombre=nombre_periodo,
-            fecha_inicio=fecha_inicio,
-            fecha_fin=fecha_fin,
-        )
-
-        nombre_archivo = (
-            f"calendario_{fecha_inicio_str}_al_{fecha_fin_str}.pdf"
-        )
-        nuevo_calendario.archivo_pdf.save(
-            nombre_archivo, ContentFile(pdf_file))
-        nuevo_calendario.save()
-
-        mensaje_exito = (
-            f"¡Éxito! El {nombre_periodo} ha sido generado, "
-            f"filtrado por días hábiles y guardado localmente."
-        )
-        messages.success(request, mensaje_exito)
+    if request.method != "POST":
         return redirect('calendar_form')
 
+    fecha_inicio_str = request.POST.get("fecha_inicial")
+    fecha_fin_str = request.POST.get("fecha_final")
+
+    if not fecha_inicio_str or not fecha_fin_str:
+        messages.error(request, "Ambas fechas son obligatorias.")
+        return redirect('calendar_form')
+
+    fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
+    fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+
+    seminarios_db = list(Seminario.objects.all())
+    if not seminarios_db:
+        messages.error(
+            request, "No hay seminarios registrados en la base de datos.")
+        return redirect('calendar_form')
+
+    error_msg = _validar_rango_calendario(
+        fecha_inicio, fecha_fin, len(seminarios_db))
+    if error_msg:
+        messages.error(request, error_msg)
+        return redirect('calendar_form')
+
+    random.shuffle(seminarios_db)
+
+    agenda_sorteada = []
+    fecha_actual = fecha_inicio
+    horas_disponibles = list(range(8, 16))
+    hora_idx = 0
+
+    for seminario in seminarios_db:
+        while fecha_actual.weekday() >= 5:
+            fecha_actual += timedelta(days=1)
+            hora_idx = 0
+
+        # Calcular hora asignada
+        actual_time = time(horas_disponibles[hora_idx], 0)
+
+        # 🌟 PERSISTENCIA EN BD: Actualiza y guarda la asignación de cada registro
+        seminario.fecha = fecha_actual
+        seminario.hora = actual_time
+        seminario.save()
+
+        agenda_sorteada.append({
+            "fecha": fecha_actual,
+            "hora": actual_time,
+            "nombre": str(seminario)
+        })
+
+        # Control de flujo horario secuencial
+        hora_idx += 1
+        if hora_idx >= len(horas_disponibles):
+            hora_idx = 0
+            fecha_actual += timedelta(days=1)
+
+    # Compilar la estructura del contexto para la generación del PDF
+    context_pdf = {
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin,
+        "agenda": agenda_sorteada,
+        "total_seminarios": len(agenda_sorteada)
+    }
+
+    html_string = render_to_string(
+        "pdf/calendario_pdf_template.html", context_pdf)
+    pdf_file = HTML(string=html_string).write_pdf()
+
+    mes_inicio = fecha_inicio.strftime("%B")
+    mes_fin = fecha_fin.strftime("%B %Y")
+    nombre_periodo = f"Seminarios {mes_inicio} - {mes_fin}"
+
+    nuevo_calendario = CalendarioGenerado(
+        nombre=nombre_periodo, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin
+    )
+    nombre_archivo = f"calendario_{fecha_inicio_str}_al_{fecha_fin_str}.pdf"
+    nuevo_calendario.archivo_pdf.save(nombre_archivo, ContentFile(pdf_file))
+    nuevo_calendario.save()
+
+    mensaje_exito = (
+        f"¡Éxito! El {nombre_periodo} ha sido generado, "
+        f"filtrado por días y horas hábiles y guardado localmente."
+    )
+    messages.success(request, mensaje_exito)
     return redirect('calendar_form')
 
 
@@ -598,3 +605,56 @@ def admin_estadisticas_view(request):
         "promedio_seminarios": promedio_seminarios,
     }
     return render(request, "admin/estadisticas.html", context)
+
+
+def admin_cambio_tutor_view(request):
+    if request.method == "POST":
+        sol_id = request.POST.get("solicitud_id")
+        doc_id = request.POST.get("docente_id")
+        accion = request.POST.get("accion")
+        solicitud = SolicitudCambioTutor.objects.get(id=sol_id)
+
+        if accion == "aprobar":
+            if not doc_id:
+                messages.error(
+                    request,
+                    "Debe seleccionar un nuevo tutor para aprobar la solicitud."
+                )
+                return redirect('/admin/cambio-tutor/')
+
+            nuevo_tutor = Docente.objects.get(id=doc_id)
+            comite = Comite.objects.filter(
+                seminario__alumno=solicitud.alumno
+            ).first()
+
+            if comite:
+                if nuevo_tutor in [comite.miembro1, comite.miembro2]:
+                    messages.error(
+                        request,
+                        "El docente ya es miembro activo de este comité."
+                    )
+                    return redirect('/admin/cambio-tutor/')
+
+                comite.tutor = nuevo_tutor
+                comite.save()
+
+            solicitud.estado = "aprobada"
+            solicitud.resuelta_en = datetime.now()
+            solicitud.save()
+            messages.success(request, "Solicitud aprobada con éxito.")
+
+        elif accion == "rechazar":
+            solicitud.estado = "rechazada"
+            solicitud.resuelta_en = datetime.now()
+            solicitud.save()
+            messages.error(request, "Solicitud rechazada.")
+        return redirect('/admin/cambio-tutor/')
+
+    from django.contrib import admin
+    context = {
+        **admin.site.each_context(request),
+        "title": "Gestión de Cambio de Tutor",
+        "solicitudes": SolicitudCambioTutor.objects.all(),
+        "docentes": Docente.objects.all(),
+    }
+    return render(request, "admin/cambio_tutor.html", context)
