@@ -22,7 +22,6 @@
         box-shadow: 0 8px 28px rgba(74,63,50,0.12);
     ">
 
-        <!-- Encabezado -->
         <div style="
             background: #eee8de;
             border-bottom: 1px solid #c8b89a;
@@ -48,7 +47,6 @@
             ">Iniciar sesión</h5>
         </div>
 
-        <!-- Cuerpo -->
         <div style="padding: 28px;">
 
             <form method="POST">
@@ -58,7 +56,6 @@
                     <input type="hidden" name="next" value="{{ next }}">
                 {% endif %}
 
-                <!-- Usuario -->
                 <div style="margin-bottom: 18px;">
                     <label for="id_usuario" style="
                         display: block;
@@ -91,7 +88,6 @@
                     >
                 </div>
 
-                <!-- Contraseña -->
                 <div style="margin-bottom: 18px;">
                     <label for="id_contrasena" style="
                         display: block;
@@ -124,7 +120,6 @@
                     >
                 </div>
 
-                <!-- Error -->
                 {% if form.errors %}
                 <div class="alert-danger" style="
                     background: #faeae6;
@@ -141,7 +136,6 @@
                 </div>
                 {% endif %}
 
-                <!-- Botón -->
                 <button
                     type="submit"
                     id="btn_login"
@@ -165,11 +159,29 @@
                     Entrar
                 </button>
 
+                <div style="
+                    text-align: center;
+                    margin-top: 20px;
+                    font-family: Arial, sans-serif;
+                    font-size: 0.85rem;
+                    color: #4a3f32;
+                ">
+                    ¿No tienes una cuenta? 
+                    <a href="{% url 'lumat_app:registro' %}" style="
+                        color: #4a7c7a;
+                        text-decoration: none;
+                        font-weight: bold;
+                        transition: color 0.2s;
+                    "
+                    onmouseover="this.style.color='#3a6260'; this.style.textDecoration='underline'"
+                    onmouseout="this.style.color='#4a7c7a'; this.style.textDecoration='none'"
+                    >Regístrate aquí</a>
+                </div>
+
             </form>
 
         </div>
 
-        <!-- Pie de la tarjeta -->
         <div style="
             border-top: 1px solid #e3d9cb;
             padding: 12px 28px;

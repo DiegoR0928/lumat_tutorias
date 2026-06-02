@@ -151,6 +151,28 @@
         gap: 0 20px;
     }
 
+    /* Estilos nuevos para el enlace de redirección al Login */
+    .login-redirect-container {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 15px;
+        font-family: Arial, sans-serif;
+        font-size: 0.88rem;
+        color: #4a3f32;
+    }
+
+    .link-login {
+        color: #4a7c7a;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.2s;
+    }
+
+    .link-login:hover {
+        color: #3a6260;
+        text-decoration: underline;
+    }
+
     @media (max-width: 640px) {
         .form-grid { grid-template-columns: 1fr; }
     }
@@ -175,7 +197,6 @@
             <form method="POST">
                 {% csrf_token %}
 
-                <!-- Sección: Cuenta de acceso -->
                 <p class="section-divider">Cuenta de acceso</p>
 
                 <div class="form-grid">
@@ -196,7 +217,6 @@
                     </div>
                 </div>
 
-                <!-- Sección: Datos personales -->
                 <p class="section-divider" style="margin-top: 24px;">Datos personales</p>
 
                 <div class="form-grid">
@@ -218,10 +238,15 @@
                 </div>
 
             </form>
+
+            <div class="login-redirect-container">
+                ¿Ya tienes una cuenta? 
+                <a href="{% url 'lumat_app:login' %}" class="link-login">Inicia sesión aquí</a>
+            </div>
         </div>
 
         <div class="form-card-footer">
-            <button type="submit" form="registro-form" class="btn-guardar"
+            <button type="submit" class="btn-guardar"
                 onclick="this.closest('.form-card').querySelector('form').submit()">
                 Guardar
             </button>
