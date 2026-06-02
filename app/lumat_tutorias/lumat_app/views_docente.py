@@ -106,7 +106,7 @@ def _obtener_proximos_seminarios(docente):
         Q(comite__miembro1=docente) |
         Q(comite__miembro2=docente)
     )
-    
+
     proximos_raw = Seminario.objects.filter(
         condicion_docente,
         fecha__gte=hoy

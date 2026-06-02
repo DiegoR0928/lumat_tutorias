@@ -2,7 +2,7 @@
 import datetime
 from behave import given, when, then
 from django.contrib.auth.models import User
-from lumat_app.models import Alumno, Docente, Comite, Seminario, FormularioComite
+from lumat_app.models import Alumno, Docente, Comite, Seminario
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
