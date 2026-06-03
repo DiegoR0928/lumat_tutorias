@@ -183,7 +183,7 @@ def docente_seminario_detalle(request, seminario_id):
         Seminario.objects.select_related(
             'alumno', 'comite',
             'comite__tutor', 'comite__miembro1', 'comite__miembro2'
-        ).prefetch_related('evidencias'),  # 👈 AQUÍ: Precarga todas las evidencias asociadas
+        ).prefetch_related('evidencias'),
         pk=seminario_id
     )
 

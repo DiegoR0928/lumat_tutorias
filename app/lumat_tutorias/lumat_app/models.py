@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from decimal import Decimal, ROUND_HALF_UP
+from django.core.files.base import ContentFile
 
 
 class Alumno(models.Model):
@@ -12,7 +13,7 @@ class Alumno(models.Model):
     nombre = models.CharField(max_length=100)
     apellido_paterno = models.CharField(max_length=100)
     apellido_materno = models.CharField(max_length=100)
-    semestre = models.CharField(max_length=50)
+    semestre = models.CharField(max_length=50, default=1)
     correo = models.EmailField()
 
     def __str__(self):
@@ -300,12 +301,60 @@ class FormularioComite(models.Model):
         promedio = sum(califs) / Decimal(len(califs))
         return promedio.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-    def save(self, *args, **kwargs):
-        # 1. Calcular calificaciones y estado del formulario como ya lo hacías
-        self.calificacion_final = self.calcular_calificacion_final()
-        self.estado_general = 'completo' if self.todos_firmaron else 'pendiente'
+    def generar_y_guardar_pdf(self):
+        """
+        Genera el PDF del informe del comité usando utils_pdf_comite
+        y lo guarda en el campo actaComite del Seminario asociado.
+        """
+        from .utils_pdf_comite import generar_pdf_comite
+        
+        try:
+            # Generar el PDF en bytes
+            pdf_bytes = generar_pdf_comite(self)
+            
+            # Crear nombre del archivo
+            sem_num = self.seminario.numero
+            periodo = self.seminario.periodo
+            alumno_nombre = self.seminario.alumno.nombre.replace(' ', '_')
+            filename = f'acta_comite_sem{sem_num}_p{periodo}_{alumno_nombre}_{self.seminario.alumno.id}.pdf'
+            
+            # Eliminar el archivo anterior si existe
+            if self.seminario.actaComite:
+                self.seminario.actaComite.delete(save=False)
+            
+            # Guardar el PDF en el campo actaComite del seminario
+            self.seminario.actaComite.save(filename, ContentFile(pdf_bytes), save=False)
+            self.seminario.save(update_fields=['actaComite'])
+            
+            return True
+            
+        except Exception as e:
+            # Loggear el error si es necesario
+            print(f"Error generando PDF para seminario {self.seminario_id}: {str(e)}")
+            return False
 
-        # 2. Ejecutar el guardado del formulario en la base de datos primero
+    def save(self, *args, **kwargs):
+        # Guardar el estado anterior para detectar cambios en las firmas
+        if self.pk:
+            try:
+                old_instance = FormularioComite.objects.get(pk=self.pk)
+                old_firmas = (old_instance.firma_tutor, old_instance.firma_miembro1, old_instance.firma_miembro2)
+                new_firmas = (self.firma_tutor, self.firma_miembro1, self.firma_miembro2)
+                firmas_cambiaron = old_firmas != new_firmas
+            except FormularioComite.DoesNotExist:
+                firmas_cambiaron = True
+        else:
+            firmas_cambiaron = True
+
+        # 1. Calcular calificaciones y estado del formulario
+        self.calificacion_final = self.calcular_calificacion_final()
+        estaba_completo = self.estado_general == "completo" if self.pk else False
+        self.estado_general = 'completo' if self.todos_firmaron else 'pendiente'
+        
+        # Detectar si ACABAMOS de completar el formulario (transición a completo)
+        se_completo_ahora = not estaba_completo and self.estado_general == "completo"
+
+        # 2. Ejecutar el guardado del formulario en la base de datos
         super().save(*args, **kwargs)
 
         # 3. Sincronizar calificacion en el Seminario asociado
@@ -314,17 +363,24 @@ class FormularioComite(models.Model):
                 calificacion=self.calificacion_final
             )
 
-        # 4. NUEVA LÓGICA: Promoción de semestre del alumno
-        # Validamos: Firmas completas, nota mayor o igual a 6.00 y que exista el alumno
-        es_completo = self.estado_general == "completo"
-        tiene_nota = self.calificacion_final is not None
-        if es_completo and tiene_nota and self.calificacion_final >= Decimal("6.00"):
+        # 4. Generar el PDF si:
+        #    a) Acabamos de completar el formulario (transición a completo) O
+        #    b) Ya estaba completo pero cambiaron las firmas (por si acaso)
+        #    c) No existe el actaComite y ya está completo
+        if (se_completo_ahora or 
+            (self.estado_general == "completo" and not self.seminario.actaComite) or
+            (self.estado_general == "completo" and firmas_cambiaron)):
+            
+            # Generar y guardar el PDF en el seminario
+            self.generar_y_guardar_pdf()
+
+        # 5. LÓGICA DE PROMOCIÓN: Solo si está completo y tiene calificación suficiente
+        if self.estado_general == "completo" and self.calificacion_final is not None and self.calificacion_final >= Decimal("6.00"):
             alumno = self.seminario.alumno
 
             # Convertir semestre a entero para comparación
             try:
-                semestre_actual = int(
-                    alumno.semestre) if alumno.semestre else 0
+                semestre_actual = int(alumno.semestre) if alumno.semestre else 0
             except ValueError:
                 semestre_actual = 0
 
@@ -338,37 +394,50 @@ class FormularioComite(models.Model):
                     alumno.save(update_fields=['semestre'])
 
     def __str__(self):
-        return f"Formulario Comité — Seminario {self.seminario_id} ({self.estado_general})"
+        pdf_status = "✓ PDF" if self.seminario.actaComite else "✗ PDF"
+        return f"Formulario Comité — Seminario {self.seminario_id} ({self.estado_general}) {pdf_status}"
+    
 
-    # ── Helpers ───────────────────────────────────────────────
-
-    @property
-    def todos_firmaron(self):
-        return self.firma_tutor and self.firma_miembro1 and self.firma_miembro2
-
-    def calcular_calificacion_final(self):
-        califs = [
-            c for c in (
-                self.calificacion_tutor,
-                self.calificacion_miembro1,
-                self.calificacion_miembro2,
-            ) if c is not None
-        ]
-        if not califs:
-            return None
-        promedio = sum(califs) / Decimal(len(califs))
-        return promedio.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
-    def save(self, *args, **kwargs):
-        self.calificacion_final = self.calcular_calificacion_final()
-        self.estado_general = 'completo' if self.todos_firmaron else 'pendiente'
-        super().save(*args, **kwargs)
-
-        # Sincronizar calificacionFinal en Seminario
-        if self.calificacion_final is not None:
-            self.seminario.__class__.objects.filter(pk=self.seminario_id).update(
-                calificacion=self.calificacion_final
-            )
-
+class ActaAlumnoData(models.Model):
+    """
+    Almacena los datos que el alumno llenó para su acta semestral.
+    Una vez creado, el formulario queda bloqueado.
+    """
+    seminario = models.OneToOneField(
+        'Seminario',
+        on_delete=models.CASCADE,
+        related_name='acta_data'
+    )
+ 
+    actividad_principal = models.CharField(max_length=200)
+    reuniones_tutor     = models.PositiveSmallIntegerField(default=0)
+    reuniones_comite    = models.PositiveSmallIntegerField(default=0)
+    coloquios           = models.PositiveSmallIntegerField(default=0)
+    cursos              = models.TextField(blank=True)
+    articulos           = models.TextField(blank=True)
+    eventos             = models.TextField(blank=True)
+    plan_siguiente      = models.TextField()
+    comentarios         = models.TextField(blank=True)
+ 
+    generado_en = models.DateTimeField(auto_now_add=True)
+ 
+    class Meta:
+        verbose_name = "Datos de acta del alumno"
+ 
     def __str__(self):
-        return f"Formulario Comité — Seminario {self.seminario_id} ({self.estado_general})"
+        return f"Acta — {self.seminario}"
+ 
+    def to_dict(self):
+        """Devuelve los datos como dict compatible con generar_acta_alumno."""
+        return {
+            'actividad_principal': self.actividad_principal,
+            'reuniones_tutor':     self.reuniones_tutor,
+            'reuniones_comite':    self.reuniones_comite,
+            'coloquios':           self.coloquios,
+            'cursos':              self.cursos,
+            'articulos':           self.articulos,
+            'eventos':             self.eventos,
+            'plan_siguiente':      self.plan_siguiente,
+            'comentarios':         self.comentarios,
+        }
+ 

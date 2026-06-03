@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --lumat-bg:             #F7F4EF;
+  --lumat-surface:        #FFFFFF;
+  --lumat-border:         #E2DDD5;
+  --lumat-border-strong:  #C8C0B4;
+  --lumat-text:           #1C1916;
+  --lumat-muted:          #6B6560;
+  --lumat-accent:         #2C5F8A;
+  --lumat-accent-bg:      #EBF2F9;
+  --lumat-accent-light:   #D0E4F3;
+  --lumat-success:        #2D6A4F;
+  --lumat-success-bg:     #EDFAF3;
+  --lumat-success-border: #A8D8C0;
+  --lumat-warn:           #7D4E1A;
+  --lumat-warn-bg:        #FEF6EC;
+  --lumat-warn-border:    #F4C98A;
+  --lumat-danger:         #8B2020;
+  --lumat-danger-bg:      #FDF0F0;
+  --lumat-danger-border:  #F4B8B8;
+  --lumat-radius:         10px;
+  --lumat-radius-sm:      6px;
+}
+
+body { font-family: 'DM Sans', sans-serif; background: var(--lumat-bg); color: var(--lumat-text); }
+
+/* Toasts */
+.toast-container { position: fixed; top: 70px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; min-width: 280px; max-width: 380px; }
+.toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--lumat-radius-sm); font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,.10); border: 0.5px solid transparent; }
+.toast__icon { font-size: 16px; flex-shrink: 0; }
+.toast--success { background: var(--lumat-success-bg); color: var(--lumat-success); border-color: var(--lumat-success-border); }
+.toast--error   { background: var(--lumat-danger-bg);  color: var(--lumat-danger);  border-color: var(--lumat-danger-border); }
+.toast--warning { background: var(--lumat-warn-bg);    color: var(--lumat-warn);    border-color: var(--lumat-warn-border); }
+
+/* Layout */
+.acta-page { max-width: 760px; margin: 0 auto; padding: 32px 16px 56px; }
+
+.acta-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--lumat-muted); margin-bottom: 20px; }
+.acta-breadcrumb a { color: var(--lumat-accent); text-decoration: none; }
+.acta-breadcrumb a:hover { text-decoration: underline; }
+
+/* Encabezado de página */
+.acta-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.acta-page-title { font-family: 'DM Serif Display', serif; font-size: 24px; margin: 0 0 3px; }
+.acta-page-sub   { font-size: 13px; color: var(--lumat-muted); margin: 0; }
+
+/* Badge de estado */
+.acta-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.acta-status-badge.editable  { background: var(--lumat-accent-bg); color: var(--lumat-accent); border: 0.5px solid var(--lumat-accent-light); }
+.acta-status-badge.bloqueado { background: var(--lumat-success-bg); color: var(--lumat-success); border: 0.5px solid var(--lumat-success-border); }
+
+/* Banner bloqueado */
+.acta-banner-bloqueado {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--lumat-success-bg);
+  border: 0.5px solid var(--lumat-success-border);
+  border-radius: var(--lumat-radius);
+  margin-bottom: 20px;
+}
+.acta-banner-bloqueado i { font-size: 20px; color: var(--lumat-success); flex-shrink: 0; margin-top: 1px; }
+.acta-banner-bloqueado p { margin: 0; font-size: 13px; line-height: 1.6; }
+.acta-banner-bloqueado strong { color: var(--lumat-success); }
+.acta-banner-bloqueado .banner-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.acta-banner-bloqueado .ban-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 14px; font-size: 12px; font-weight: 500;
+  border-radius: var(--lumat-radius-sm); text-decoration: none;
+  border: 0.5px solid transparent; cursor: pointer; font-family: inherit;
+  transition: opacity .15s;
+}
+.ban-btn--primary   { background: var(--lumat-success); color: #fff; }
+.ban-btn--primary:hover { opacity: .88; color: #fff; }
+.ban-btn--secondary { background: var(--lumat-surface); color: var(--lumat-muted); border-color: var(--lumat-border-strong); }
+.ban-btn--secondary:hover { background: var(--lumat-bg); color: var(--lumat-text); }
+
+/* Aviso editable */
+.acta-aviso {
+  display: flex; gap: 10px; padding: 12px 16px;
+  background: var(--lumat-accent-bg); border: 0.5px solid var(--lumat-accent-light);
+  border-radius: var(--lumat-radius-sm); font-size: 13px; color: var(--lumat-accent);
+  margin-bottom: 20px;
+}
+.acta-aviso i { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.acta-aviso p { margin: 0; line-height: 1.5; }
+
+/* Info card */
+.acta-info-card {
+  background: var(--lumat-surface);
+  border: 0.5px solid var(--lumat-border);
+  border-radius: var(--lumat-radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 24px;
+}
+.acta-info-row { font-size: 13px; }
+.acta-info-row span { color: var(--lumat-muted); margin-right: 4px; }
+
+/* Secciones */
+.acta-section { background: var(--lumat-surface); border: 0.5px solid var(--lumat-border); border-radius: var(--lumat-radius); overflow: hidden; margin-bottom: 12px; }
+.acta-section.is-locked { opacity: .95; }
+
+.acta-section-header {
+  padding: 10px 16px;
+  background: var(--lumat-bg);
+  border-bottom: 0.5px solid var(--lumat-border);
+  font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--lumat-muted); display: flex; align-items: center; gap: 6px;
+}
+.acta-section-header .lock-icon { margin-left: auto; font-size: 13px; color: var(--lumat-success); }
+
+.acta-section-body { padding: 16px; }
+
+/* Campos */
+.acta-field { margin-bottom: 14px; }
+.acta-field:last-child { margin-bottom: 0; }
+
+.acta-label { display: block; font-size: 12px; font-weight: 500; color: var(--lumat-muted); margin-bottom: 5px; }
+.acta-label .req { color: var(--lumat-danger); margin-left: 2px; }
+
+.acta-input, .acta-textarea {
+  width: 100%; padding: 8px 10px; font-size: 13px; font-family: inherit;
+  color: var(--lumat-text); background: var(--lumat-surface);
+  border: 0.5px solid var(--lumat-border-strong); border-radius: var(--lumat-radius-sm);
+  transition: border-color .15s; box-sizing: border-box;
+}
+.acta-input:focus, .acta-textarea:focus { outline: none; border-color: var(--lumat-accent); }
+.acta-textarea { resize: vertical; line-height: 1.5; }
+.acta-input--sm { width: 80px; }
+
+/* Estado readonly */
+.acta-input[readonly], .acta-textarea[readonly] {
+  background: var(--lumat-bg);
+  color: var(--lumat-text);
+  border-color: var(--lumat-border);
+  cursor: default;
+}
+.acta-input[disabled], .acta-textarea[disabled] {
+  background: var(--lumat-bg);
+  color: var(--lumat-muted);
+  border-color: var(--lumat-border);
+  cursor: default;
+  opacity: 1;
+}
+
+.acta-field-error { font-size: 11px; color: var(--lumat-danger); margin-top: 3px; }
+
+.acta-counters { display: flex; gap: 24px; flex-wrap: wrap; }
+.acta-counter-field { display: flex; flex-direction: column; gap: 5px; }
+
+/* Botones */
+.acta-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.acta-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; font-size: 13px; font-weight: 500; font-family: inherit;
+  border-radius: var(--lumat-radius-sm); border: 0.5px solid transparent;
+  cursor: pointer; text-decoration: none; transition: opacity .15s, background .15s;
+}
+.acta-btn--primary   { background: var(--lumat-accent); color: #fff; }
+.acta-btn--primary:hover { opacity: .88; }
+.acta-btn--secondary { background: var(--lumat-surface); color: var(--lumat-muted); border-color: var(--lumat-border-strong); }
+.acta-btn--secondary:hover { background: var(--lumat-bg); color: var(--lumat-text); text-decoration: none; }
+.acta-btn--download  { background: var(--lumat-success); color: #fff; }
+.acta-btn--download:hover { opacity: .88; color: #fff; text-decoration: none; }
+</style>
+{% endblock extra_css %}
+
+
+{% block content %}
+
+{% if messages %}
+<div class="toast-container" id="django-messages" aria-live="polite">
+  {% for message in messages %}
+  <div class="toast toast--{{ message.tags }}">
+    {% if message.tags == 'success' %}<i class="ti ti-circle-check toast__icon"></i>
+    {% elif message.tags == 'error' %}<i class="ti ti-alert-circle toast__icon"></i>
+    {% elif message.tags == 'warning' %}<i class="ti ti-alert-triangle toast__icon"></i>
+    {% else %}<i class="ti ti-info-circle toast__icon"></i>{% endif %}
+    <span>{{ message }}</span>
+  </div>
+  {% endfor %}
+</div>
+<script>setTimeout(function(){ var e=document.getElementById('django-messages'); if(e) e.remove(); }, 10000);</script>
+{% endif %}
+
+<div class="acta-page">
+
+  {# Breadcrumb #}
+  <nav class="acta-breadcrumb">
+    <a href="{% url 'lumat_app:seminario_detalle' num=num %}">
+      <i class="ti ti-arrow-left"></i> Seminario {{ num }}
+    </a>
+    <i class="ti ti-chevron-right"></i>
+    <span>Informe semestral</span>
+  </nav>
+
+  {# Encabezado #}
+  <div class="acta-page-header">
+    <div>
+      <h1 class="acta-page-title">Informe Semestral — Seminario {{ num }}</h1>
+      <p class="acta-page-sub">Semestre {{ seminario.fecha|date:"Y" }} · {{ alumno.nombre }} {{ alumno.apellido_paterno }}</p>
+    </div>
+    {% if bloqueado %}
+      <span class="acta-status-badge bloqueado">
+        <i class="ti ti-lock"></i> Acta generada
+      </span>
+    {% else %}
+      <span class="acta-status-badge editable">
+        <i class="ti ti-edit"></i> Pendiente de llenar
+      </span>
+    {% endif %}
+  </div>
+
+  {# ── Banner cuando ya está bloqueado ── #}
+  {% if bloqueado %}
+  <div class="acta-banner-bloqueado">
+    <i class="ti ti-circle-check"></i>
+    <div>
+      <p>
+        Tu acta fue generada el <strong>{{ acta_existente.generado_en|date:"d \d\e F, Y" }}</strong>.
+        Los datos no pueden modificarse. Puedes descargar el PDF en cualquier momento desde
+        la página del seminario.
+      </p>
+      <div class="banner-actions">
+        {% if seminario.actaAlumno %}
+        <a href="{{ seminario.actaAlumno.url }}" download class="ban-btn ban-btn--primary">
+          <i class="ti ti-download"></i> Descargar PDF
+        </a>
+        {% endif %}
+        <a href="{% url 'lumat_app:seminario_detalle' num=num %}" class="ban-btn ban-btn--secondary">
+          <i class="ti ti-arrow-left"></i> Volver al seminario
+        </a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="acta-aviso">
+    <i class="ti ti-info-circle"></i>
+    <p>
+      Llena el formulario con tu actividad del semestre. Una vez enviado,
+      <strong>no podrás modificarlo</strong> — el PDF se guardará automáticamente
+      en tu expediente y podrás descargarlo desde la página del seminario.
+    </p>
+  </div>
+  {% endif %}
+
+  {# Info del alumno (siempre solo lectura) #}
+  <div class="acta-info-card">
+    <div class="acta-info-row"><span>Nombre:</span><strong>{{ alumno.nombre }} {{ alumno.apellido_paterno }} {{ alumno.apellido_materno }}</strong></div>
+    <div class="acta-info-row"><span>Matrícula:</span><strong>{{ alumno.matricula|default:"—" }}</strong></div>
+    <div class="acta-info-row"><span>Correo:</span><strong>{{ alumno.correo }}</strong></div>
+    <div class="acta-info-row"><span>Semestre:</span><strong>{{ alumno.semestre }}°</strong></div>
+    <div class="acta-info-row"><span>Tutor:</span><strong>{{ comite.tutor.nombre }} {{ comite.tutor.apellido_paterno }}</strong></div>
+    <div class="acta-info-row"><span>Fecha del seminario:</span><strong>{{ seminario.fecha|date:"d/m/Y" }}</strong></div>
+  </div>
+
+  {# ── Formulario ── #}
+  <form method="post" id="acta-form">
+    {% csrf_token %}
+
+    {# Actividad y contadores #}
+    <div class="acta-section {% if bloqueado %}is-locked{% endif %}">
+      <div class="acta-section-header">
+        <i class="ti ti-activity"></i>
+        Actividad del semestre
+        {% if bloqueado %}<i class="ti ti-lock lock-icon"></i>{% endif %}
+      </div>
+      <div class="acta-section-body">
+
+        <div class="acta-field">
+          <label class="acta-label" for="{{ form.actividad_principal.id_for_label }}">
+            {{ form.actividad_principal.label }}{% if not bloqueado %}<span class="req">*</span>{% endif %}
+          </label>
+          <input type="text"
+                 id="{{ form.actividad_principal.id_for_label }}"
+                 name="actividad_principal"
+                 class="acta-input"
+                 value="{{ form.actividad_principal.value|default:'' }}"
+                 maxlength="200"
+                 {% if bloqueado %}readonly{% endif %}>
+          {% if form.actividad_principal.errors %}
+            <p class="acta-field-error">{{ form.actividad_principal.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div class="acta-counters">
+          <div class="acta-counter-field">
+            <label class="acta-label" for="{{ form.reuniones_tutor.id_for_label }}">{{ form.reuniones_tutor.label }}</label>
+            <input type="number" id="{{ form.reuniones_tutor.id_for_label }}" name="reuniones_tutor"
+                   class="acta-input acta-input--sm" min="0" max="99"
+                   value="{{ form.reuniones_tutor.value|default:'0' }}"
+                   {% if bloqueado %}readonly{% endif %}>
+          </div>
+          <div class="acta-counter-field">
+            <label class="acta-label" for="{{ form.reuniones_comite.id_for_label }}">{{ form.reuniones_comite.label }}</label>
+            <input type="number" id="{{ form.reuniones_comite.id_for_label }}" name="reuniones_comite"
+                   class="acta-input acta-input--sm" min="0" max="99"
+                   value="{{ form.reuniones_comite.value|default:'0' }}"
+                   {% if bloqueado %}readonly{% endif %}>
+          </div>
+          <div class="acta-counter-field">
+            <label class="acta-label" for="{{ form.coloquios.id_for_label }}">{{ form.coloquios.label }}</label>
+            <input type="number" id="{{ form.coloquios.id_for_label }}" name="coloquios"
+                   class="acta-input acta-input--sm" min="0" max="99"
+                   value="{{ form.coloquios.value|default:'0' }}"
+                   {% if bloqueado %}readonly{% endif %}>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {# Cursos y artículos #}
+    <div class="acta-section {% if bloqueado %}is-locked{% endif %}">
+      <div class="acta-section-header">
+        <i class="ti ti-book"></i>
+        Cursos y producción académica
+        {% if bloqueado %}<i class="ti ti-lock lock-icon"></i>{% endif %}
+      </div>
+      <div class="acta-section-body">
+        <div class="acta-field">
+          <label class="acta-label" for="{{ form.cursos.id_for_label }}">{{ form.cursos.label }}</label>
+          <textarea id="{{ form.cursos.id_for_label }}" name="cursos"
+                    class="acta-textarea" rows="3"
+                    {% if bloqueado %}readonly{% endif %}>{{ form.cursos.value|default:'' }}</textarea>
+        </div>
+        <div class="acta-field">
+          <label class="acta-label" for="{{ form.articulos.id_for_label }}">{{ form.articulos.label }}</label>
+          <textarea id="{{ form.articulos.id_for_label }}" name="articulos"
+                    class="acta-textarea" rows="4"
+                    {% if bloqueado %}readonly{% endif %}>{{ form.articulos.value|default:'' }}</textarea>
+        </div>
+        <div class="acta-field">
+          <label class="acta-label" for="{{ form.eventos.id_for_label }}">{{ form.eventos.label }}</label>
+          <textarea id="{{ form.eventos.id_for_label }}" name="eventos"
+                    class="acta-textarea" rows="3"
+                    {% if bloqueado %}readonly{% endif %}>{{ form.eventos.value|default:'' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    {# Plan y comentarios #}
+    <div class="acta-section {% if bloqueado %}is-locked{% endif %}">
+      <div class="acta-section-header">
+        <i class="ti ti-notes"></i>
+        Planeación y comentarios
+        {% if bloqueado %}<i class="ti ti-lock lock-icon"></i>{% endif %}
+      </div>
+      <div class="acta-section-body">
+        <div class="acta-field">
+          <label class="acta-label" for="{{ form.plan_siguiente.id_for_label }}">
+            {{ form.plan_siguiente.label }}{% if not bloqueado %}<span class="req">*</span>{% endif %}
+          </label>
+          <textarea id="{{ form.plan_siguiente.id_for_label }}" name="plan_siguiente"
+                    class="acta-textarea" rows="3"
+                    {% if bloqueado %}readonly{% endif %}>{{ form.plan_siguiente.value|default:'' }}</textarea>
+          {% if form.plan_siguiente.errors %}
+            <p class="acta-field-error">{{ form.plan_siguiente.errors.0 }}</p>
+          {% endif %}
+        </div>
+        <div class="acta-field">
+          <label class="acta-label" for="{{ form.comentarios.id_for_label }}">{{ form.comentarios.label }}</label>
+          <textarea id="{{ form.comentarios.id_for_label }}" name="comentarios"
+                    class="acta-textarea" rows="3"
+                    {% if bloqueado %}readonly{% endif %}>{{ form.comentarios.value|default:'' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    {# Acciones #}
+    <div class="acta-actions">
+      {% if bloqueado %}
+        {% if seminario.actaAlumno %}
+        <a href="{{ seminario.actaAlumno.url }}" download class="acta-btn acta-btn--download">
+          <i class="ti ti-download"></i> Descargar PDF
+        </a>
+        {% endif %}
+        <a href="{% url 'lumat_app:seminario_detalle' num=num %}" class="acta-btn acta-btn--secondary">
+          <i class="ti ti-arrow-left"></i> Volver al seminario
+        </a>
+      {% else %}
+        <button type="submit" class="acta-btn acta-btn--primary">
+          <i class="ti ti-file-download"></i> Generar y guardar acta
+        </button>
+        <a href="{% url 'lumat_app:seminario_detalle' num=num %}" class="acta-btn acta-btn--secondary">
+          Cancelar
+        </a>
+      {% endif %}
+    </div>
+
+  </form>
+</div>
+{% endblock %}

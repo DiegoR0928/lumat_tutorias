@@ -1,0 +1,331 @@
+{# templates/alumno_generar_acta.html #}
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .acta-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+    }
+    
+    .acta-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #4a7c7a;
+    }
+    
+    .alumno-info {
+        background: #e8f4f3;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .form-section-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #4a7c7a;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+    }
+    
+    .btn-submit {
+        background: #4a7c7a;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    
+    .btn-submit:hover {
+        background: #3a6260;
+    }
+    
+    .help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .col {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="acta-container">
+    <div class="acta-header">
+        <h1 class="acta-title">Generar Acta de Seminario {{ seminario.numero }}</h1>
+        <p>Completa el siguiente formulario para generar tu acta de seminario</p>
+        {% if seminario.calificacion %}
+            <div class="alert alert-success">
+                ✅ Seminario aprobado con calificación: {{ seminario.calificacion }}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Datos del alumno (automáticos) -->
+    <div class="alumno-info">
+        <h3>Tus datos registrados:</h3>
+        <p><strong>Nombre:</strong> {{ alumno.nombre }} {{ alumno.apellido_paterno }} {{ alumno.apellido_materno }}</p>
+        <p><strong>Matrícula:</strong> {{ alumno.matricula }}</p>
+        <p><strong>Email:</strong> {{ alumno.correo }}</p>
+        <p><strong>Semestre actual:</strong> {{ alumno.semestre }}°</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Datos adicionales (opcionales) -->
+        <div class="form-section">
+            <h2 class="form-section-title">Datos Adicionales (Opcionales)</h2>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Plan de Estudios</label>
+                        {{ form.plan_estudios }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label>Fecha de nacimiento</label>
+                        {{ form.fecha_nacimiento }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Semestre de ingreso</label>
+                        {{ form.semestre_ingreso }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label>CVU</label>
+                        {{ form.cvU }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>País de origen</label>
+                        {{ form.pais_origen }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label>No. Becario CONACYT</label>
+                        {{ form.no_becario_conacyt }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reuniones -->
+        <div class="form-section">
+            <h2 class="form-section-title">Reuniones</h2>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label>Reuniones con tutor principal</label>
+                        {{ form.reuniones_tutor_principal }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label>Reuniones con comité tutor</label>
+                        {{ form.reuniones_comite_tutor }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label>Asistencia al Coloquio</label>
+                        {{ form.asistencia_coloquio }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actividad principal -->
+        <div class="form-section">
+            <h2 class="form-section-title">Actividad Principal</h2>
+            <div class="form-group">
+                <label>Actividad principal durante el semestre</label>
+                {{ form.actividad_principal }}
+            </div>
+            <div class="form-group" id="otro_actividad" style="display: none;">
+                <label>Especificar otra actividad</label>
+                {{ form.actividad_principal_otro }}
+            </div>
+        </div>
+        
+        <!-- Cursos -->
+        <div class="form-section">
+            <h2 class="form-section-title">Cursos</h2>
+            <div class="form-group">
+                <label>
+                    {{ form.cursos_pcf }} ¿Inscribiste curso del PCF durante el semestre?
+                </label>
+            </div>
+            <div class="form-group" id="cursos_desc" style="display: none;">
+                <label>Lista de cursos inscritos</label>
+                {{ form.cursos_descripcion }}
+            </div>
+        </div>
+        
+        <!-- Exámenes predoctorales -->
+        <div class="form-section">
+            <h2 class="form-section-title">Exámenes Predoctorales</h2>
+            <div class="form-group">
+                <label>
+                    {{ form.examenes_predoctorales }} ¿Presentaste algún examen predoctoral?
+                </label>
+            </div>
+            <div class="form-group" id="examenes_desc" style="display: none;">
+                <label>Describe los exámenes presentados</label>
+                {{ form.examenes_descripcion }}
+            </div>
+        </div>
+        
+        <!-- Artículos -->
+        <div class="form-section">
+            <h2 class="form-section-title">Artículos</h2>
+            <div class="form-group">
+                <label>Artículos enviados/publicados</label>
+                {{ form.articulos }}
+                <div class="help-text">Lista cada artículo en una línea nueva</div>
+            </div>
+        </div>
+        
+        <!-- Eventos -->
+        <div class="form-section">
+            <h2 class="form-section-title">Eventos Académicos</h2>
+            <div class="form-group">
+                <label>
+                    {{ form.eventos_asistio }} ¿Asististe a eventos o realizaste estancias?
+                </label>
+            </div>
+            <div class="form-group" id="eventos_desc" style="display: none;">
+                <label>Describe los eventos o estancias</label>
+                {{ form.eventos_descripcion }}
+            </div>
+        </div>
+        
+        <!-- Examen de candidatura -->
+        <div class="form-section">
+            <h2 class="form-section-title">Examen de Candidatura</h2>
+            <div class="form-group">
+                <label>
+                    {{ form.examen_candidatura }} ¿Presentaste examen de candidatura?
+                </label>
+            </div>
+            <div class="form-group" id="examen_fecha" style="display: none;">
+                <label>Fecha del examen</label>
+                {{ form.examen_candidatura_fecha }}
+            </div>
+        </div>
+        
+        <!-- Otras actividades -->
+        <div class="form-section">
+            <h2 class="form-section-title">Otras Actividades Académicas</h2>
+            <div class="form-group">
+                <label>Seminarios, coloquios, mini-cursos, etc.</label>
+                {{ form.otras_actividades }}
+            </div>
+        </div>
+        
+        <!-- Plan de actividades -->
+        <div class="form-section">
+            <h2 class="form-section-title">Plan de Actividades</h2>
+            <div class="form-group">
+                <label>Plan de actividades para el siguiente semestre</label>
+                {{ form.plan_actividades }}
+            </div>
+        </div>
+        
+        <!-- Comentarios -->
+        <div class="form-section">
+            <h2 class="form-section-title">Comentarios Adicionales</h2>
+            <div class="form-group">
+                <label>Comentarios adicionales (opcional)</label>
+                {{ form.comentarios_adicionales }}
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button type="submit" class="btn-submit">Generar Acta</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Mostrar/ocultar campos condicionales
+    document.getElementById('id_actividad_principal').addEventListener('change', function() {
+        var otroDiv = document.getElementById('otro_actividad');
+        otroDiv.style.display = this.value === 'otro' ? 'block' : 'none';
+    });
+    
+    document.getElementById('id_cursos_pcf').addEventListener('change', function() {
+        var descDiv = document.getElementById('cursos_desc');
+        descDiv.style.display = this.checked ? 'block' : 'none';
+    });
+    
+    document.getElementById('id_examenes_predoctorales').addEventListener('change', function() {
+        var descDiv = document.getElementById('examenes_desc');
+        descDiv.style.display = this.checked ? 'block' : 'none';
+    });
+    
+    document.getElementById('id_eventos_asistio').addEventListener('change', function() {
+        var descDiv = document.getElementById('eventos_desc');
+        descDiv.style.display = this.checked ? 'block' : 'none';
+    });
+    
+    document.getElementById('id_examen_candidatura').addEventListener('change', function() {
+        var fechaDiv = document.getElementById('examen_fecha');
+        fechaDiv.style.display = this.checked ? 'block' : 'none';
+    });
+</script>
+{% endblock %}

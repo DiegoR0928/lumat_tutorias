@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
-from .models import Alumno, FormularioComite
+from .models import Alumno, FormularioComite 
+from .models import ActaAlumnoData
 
 
 class UserForm(forms.ModelForm):
@@ -85,4 +86,101 @@ class FirmaCalificacionForm(forms.Form):
     confirmar_firma = forms.BooleanField(
         label='Confirmo mi firma y calificación',
         required=True,
+    )
+
+class ActaAlumnoForm(forms.Form):
+    """Formulario para que el alumno llene su informe semestral."""
+
+    actividad_principal = forms.CharField(
+        label="Actividad principal durante el semestre",
+        widget=forms.TextInput(attrs={
+            "class": "acta-input",
+            "placeholder": "Ej: Investigación, Redacción de tesis, Cursos...",
+            "maxlength": 200,
+        }),
+    )
+
+    reuniones_tutor = forms.IntegerField(
+        label="Reuniones con tutor principal",
+        min_value=0,
+        max_value=99,
+        initial=0,
+        widget=forms.NumberInput(attrs={
+            "class": "acta-input acta-input--sm",
+            "min": 0,
+            "max": 99,
+        }),
+    )
+
+    reuniones_comite = forms.IntegerField(
+        label="Reuniones con comité tutor",
+        min_value=0,
+        max_value=99,
+        initial=0,
+        widget=forms.NumberInput(attrs={
+            "class": "acta-input acta-input--sm",
+            "min": 0,
+            "max": 99,
+        }),
+    )
+
+    coloquios = forms.IntegerField(
+        label="Asistencias al coloquio",
+        min_value=0,
+        max_value=99,
+        initial=0,
+        widget=forms.NumberInput(attrs={
+            "class": "acta-input acta-input--sm",
+            "min": 0,
+            "max": 99,
+        }),
+    )
+
+    cursos = forms.CharField(
+        label="Cursos inscritos",
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "acta-textarea",
+            "rows": 3,
+            "placeholder": "Lista los cursos que inscribiste este semestre, o escribe 'Ninguno'.",
+        }),
+    )
+
+    articulos = forms.CharField(
+        label="Artículos enviados / publicados",
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "acta-textarea",
+            "rows": 4,
+            "placeholder": "Título de cada artículo, uno por línea. Si no tienes, déjalo en blanco.",
+        }),
+    )
+
+    eventos = forms.CharField(
+        label="Eventos académicos / estancias de investigación",
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "acta-textarea",
+            "rows": 3,
+            "placeholder": "Congresos, talleres, estancias, etc. Si no asististe, déjalo en blanco.",
+        }),
+    )
+
+    plan_siguiente = forms.CharField(
+        label="Plan de actividades para el siguiente semestre",
+        widget=forms.Textarea(attrs={
+            "class": "acta-textarea",
+            "rows": 3,
+            "placeholder": "Describe brevemente qué planeas realizar el próximo semestre.",
+        }),
+    )
+
+    comentarios = forms.CharField(
+        label="Comentarios adicionales",
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "acta-textarea",
+            "rows": 3,
+            "placeholder": "Cualquier observación adicional (opcional).",
+        }),
     )
