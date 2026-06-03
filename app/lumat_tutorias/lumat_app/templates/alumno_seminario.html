@@ -6,6 +6,97 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/seminario.css' %}">
+<style>
+  /* Estilos para la subdivisión del Panel Central */
+  .tabs-container {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--lumat-border, #e8e8e8);
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b6560;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .tab-btn:hover {
+    color: #2C5F8A;
+  }
+  .tab-btn.active {
+    color: #2C5F8A;
+    border-bottom-color: #2C5F8A;
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  /* Estilos del Formulario embebido */
+  .acta-form-card {
+    background: #ffffff;
+    border: 1px solid #C8C0B4;
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .acta-grid-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .acta-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .acta-field-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2C5F8A;
+  }
+  .acta-input, .acta-textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #C8C0B4;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: #F7F4EF;
+  }
+  .acta-input:focus, .acta-textarea:focus {
+    outline: none;
+    border-color: #2C5F8A;
+    background-color: #fff;
+  }
+  .acta-submit-container {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .btn-submit-acta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #2C5F8A;
+    color: #fff;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .btn-submit-acta:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+  }
+</style>
 {% endblock extra_css %}
 
 {% block content %}
@@ -13,14 +104,6 @@
 {% include 'partials/messages.html' %}
 
 {% with semestre_int=alumno.semestre|add:"0" %}
-
-<!-- {# ── Obtener datos del seminario actual (si existe) ──
-   En el view deberías pasar: seminario, comite, evidencias
-   Aquí asumimos que el context incluye:
-     seminario  → objeto Seminario o None
-     comite     → objeto Comite o None
-     evidencias → lista de objetos Evidencia
-#} -->
 
 <div class="sem-shell">
 
@@ -58,7 +141,6 @@
 
       {# ── Acciones rápidas ── #}
       <div class="sem-sidebar-actions">
-
         {% if proximo_seminario %}
         <div class="sidebar-alerta prox">
           <i class="ti ti-calendar-due" aria-hidden="true"></i>
@@ -77,7 +159,17 @@
         </div>
         {% endif %}
 
-        <a href="#" class="bar-btn">
+        {% if solicitud_pendiente %}
+        <div class="sidebar-alerta sin" style="background:#fff3cd; border-left-color:#ffc107;">
+          <i class="ti ti-alert-circle" aria-hidden="true"></i>
+          <div>
+            <div class="alerta-label">Solicitud pendiente</div>
+            <div class="alerta-fecha">Cambio de tutor en revisión</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'lumat_app:calendario' %}" class="bar-btn">
           <i class="ti ti-calendar" aria-hidden="true"></i>
           Ver calendario
         </a>
@@ -85,94 +177,160 @@
           <i class="ti ti-user-x" aria-hidden="true"></i>
           Cambio de tutor
         </a>
-
       </div>
-
     </div>
   </aside>
 
-
-  {# ═══ HEADER STRIP ═══ #}
-  <header class="sem-header">
-    <h1 class="sem-title">Seminario {{ num }}</h1>
-
-    {% if seminario %}
-      {% if seminario.calificacion %}
-        <span class="sem-badge realizado">
-          <i class="ti ti-circle-check" aria-hidden="true"></i>
-          Realizado
-        </span>
-      {% else %}
-        <span class="sem-badge programado">
-          <i class="ti ti-clock" aria-hidden="true"></i>
-          Programado
-        </span>
-      {% endif %}
-    {% else %}
-      <span class="sem-badge sin-programar">
-        <i class="ti ti-hourglass" aria-hidden="true"></i>
-        Sin programar
-      </span>
-    {% endif %}
-  </header>
-
-
-  {# ═══ CONTENIDO PRINCIPAL ═══ #}
+  {# ═══ CONTENIDO PRINCIPAL REFACTORIZADO ═══ #}
   <main class="sem-main">
 
-    {% if seminario and seminario.actaAlumno %}
-    {# ── ESTADO: REALIZADO — muestra PDF ── #}
-    <div class="sem-pdf-card">
-      <div class="sem-pdf-toolbar">
-        <span>
-          <i class="ti ti-file-type-pdf" aria-hidden="true" style="vertical-align:-2px;"></i>
-          Acta del alumno
-        </span>
-        <div class="pdf-actions">
-          <a href="{{ seminario.actaAlumno.url }}" target="_blank" class="pdf-btn">
-            <i class="ti ti-external-link" aria-hidden="true"></i> Abrir
-          </a>
-          <a href="{{ seminario.actaAlumno.url }}" download class="pdf-btn">
-            <i class="ti ti-download" aria-hidden="true"></i> Descargar
-          </a>
+  <div class="tabs-container">
+    <button class="tab-btn active" onclick="switchTab('comite-tab')">Acta Comité</button>
+    <button class="tab-btn" onclick="switchTab('alumno-tab')">Acta Alumno</button>
+  </div>
+
+  <div id="comite-tab" class="tab-content active">
+    {% if acta_comite_url %}
+      <div class="sem-pdf-card">
+        <div class="sem-pdf-toolbar">
+          <span>
+            <i class="ti ti-file-type-pdf" aria-hidden="true" style="vertical-align:-2px;"></i>
+            Acta del Comité Tutor - Seminario {{ num }}
+          </span>
+          <div class="pdf-actions">
+            <a href="{{ acta_comite_url }}" target="_blank" class="pdf-btn">
+              <i class="ti ti-external-link" aria-hidden="true"></i> Abrir en ventana
+            </a>
+            <a href="{{ acta_comite_url }}" download class="pdf-btn">
+              <i class="ti ti-download" aria-hidden="true"></i> Descargar PDF
+            </a>
+          </div>
         </div>
+        <iframe src="{{ acta_comite_url }}#toolbar=0&navpanes=0" class="sem-pdf-frame" title="Acta Comité" loading="lazy"></iframe>
       </div>
-      <iframe
-        src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0"
-        class="sem-pdf-frame"
-        title="Acta del seminario {{ num }}"
-        loading="lazy">
-      </iframe>
-    </div>
-
-    {% elif seminario and not seminario.actaAlumno %}
-    {# ── ESTADO: PROGRAMADO — muestra fecha ── #}
-    <div class="sem-programado-card">
-      <i class="ti ti-calendar-event big-icon" aria-hidden="true"></i>
-      <p class="sem-programado-label">Programado para</p>
-      <p class="sem-programado-fecha">{{ seminario.fecha|date:"d \d\e F, Y" }}</p>
-      <p class="sem-programado-hora">
-        <i class="ti ti-clock" aria-hidden="true" style="vertical-align:-2px;"></i>
-        {{ seminario.hora|time:"H:i" }} hrs
-      </p>
-      <div class="sem-programado-divider"></div>
-      <p class="sem-programado-lugar">
-        <i class="ti ti-map-pin" aria-hidden="true" style="vertical-align:-2px;"></i>
-        Pendiente de confirmar ubicación
-      </p>
-    </div>
-
+    {% elif seminario and seminario.calificacion %}
+      <div class="sem-programado-card">
+        <i class="ti ti-file-info big-icon" aria-hidden="true"></i>
+        <p class="sem-programado-label">Seminario completado</p>
+        <p>Calificación final: <strong>{{ seminario.calificacion }}</strong></p>
+        <div class="sem-programado-divider"></div>
+        <p>El informe oficial del comité se renderizará aquí automáticamente una vez que todos los sinodales concluyan sus firmas.</p>
+        {% if formulario_comite %}
+          <p class="sem-programado-lugar" style="margin-top: 12px;">
+            <i class="ti ti-users" aria-hidden="true"></i> Estado de las firmas: 
+            <span style="color: #ffc107; font-weight: 500;">
+              ({{ formulario_comite.firma_tutor|yesno:"✓," }}{{ formulario_comite.firma_miembro1|yesno:"✓," }}{{ formulario_comite.firma_miembro2|yesno:"✓," }})
+            </span>
+          </p>
+        {% endif %}
+      </div>
+    {% elif seminario and not seminario.calificacion %}
+      <div class="sem-programado-card">
+        <i class="ti ti-calendar-event big-icon" aria-hidden="true"></i>
+        <p class="sem-programado-label">Programado para</p>
+        <p class="sem-programado-fecha">{{ seminario.fecha|date:"d \d\e F, Y" }}</p>
+        <p class="sem-programado-hora"><i class="ti ti-clock" aria-hidden="true"></i> {{ seminario.hora|time:"H:i" }} hrs</p>
+      </div>
     {% else %}
-    {# ── ESTADO: SIN PROGRAMAR ── #}
-    <div class="sem-sin-programar-card">
-      <i class="ti ti-calendar-off" aria-hidden="true"></i>
-      <p style="font-weight:500;">Aún no hay fecha asignada</p>
-      <p>Tu tutor programará este seminario en su momento.</p>
-    </div>
+      <div class="sem-sin-programar-card">
+        <i class="ti ti-calendar-off" aria-hidden="true"></i>
+        <p style="font-weight:500;">Aún no hay fecha asignada</p>
+      </div>
     {% endif %}
+  </div>
 
-  </main>
+  <div id="alumno-tab" class="tab-content">
+    {% if seminario and seminario.actaAlumno %}
+      <div class="sem-pdf-card">
+        <div class="sem-pdf-toolbar">
+          <span>
+            <i class="ti ti-file-type-pdf" aria-hidden="true" style="vertical-align:-2px;"></i>
+            Tu Acta Semestral Generada (Solo Lectura)
+          </span>
+          <div class="pdf-actions">
+            <a href="{{ seminario.actaAlumno.url }}" target="_blank" class="pdf-btn">
+              <i class="ti ti-external-link" aria-hidden="true"></i> Abrir PDF
+            </a>
+            <a href="{{ seminario.actaAlumno.url }}" download class="pdf-btn">
+              <i class="ti ti-download" aria-hidden="true"></i> Descargar
+            </a>
+          </div>
+        </div>
+        <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0" class="sem-pdf-frame" title="Acta Alumno" loading="lazy"></iframe>
+      </div>
+      
+    {% elif seminario and seminario.calificacion %}
+      <div class="acta-form-card">
+        <h3 style="color:#2C5F8A; margin-bottom: 8px; font-weight:600;">Llenar Informe Semestral del Alumno</h3>
+        <p style="font-size:13px; color:#6b6560; margin-bottom: 20px;">
+          Ingresa las actividades desarrolladas en este ciclo académico. Al enviar, el sistema guardará de forma definitiva y bloqueará modificaciones.
+        </p>
 
+        <form method="post" action="{% url 'lumat_app:generar_acta' num=num %}" id="real-acta-form">
+          {% csrf_token %}
+          
+          <div class="acta-field-group">
+            <label>{{ form_acta.actividad_principal.label }}</label>
+            {{ form_acta.actividad_principal }}
+          </div>
+
+          <div class="acta-grid-row">
+            <div class="acta-field-group">
+              <label>{{ form_acta.reuniones_tutor.label }}</label>
+              {{ form_acta.reuniones_tutor }}
+            </div>
+            <div class="acta-field-group">
+              <label>{{ form_acta.reuniones_comite.label }}</label>
+              {{ form_acta.reuniones_comite }}
+            </div>
+            <div class="acta-field-group">
+              <label>{{ form_acta.coloquios.label }}</label>
+              {{ form_acta.coloquios }}
+            </div>
+          </div>
+
+          <div class="acta-field-group">
+            <label>{{ form_acta.cursos.label }}</label>
+            {{ form_acta.cursos }}
+          </div>
+
+          <div class="acta-field-group">
+            <label>{{ form_acta.articulos.label }}</label>
+            {{ form_acta.articulos }}
+          </div>
+
+          <div class="acta-field-group">
+            <label>{{ form_acta.eventos.label }}</label>
+            {{ form_acta.eventos }}
+          </div>
+
+          <div class="acta-field-group">
+            <label>{{ form_acta.plan_siguiente.label }}</label>
+            {{ form_acta.plan_siguiente }}
+          </div>
+
+          <div class="acta-field-group">
+            <label>{{ form_acta.comentarios.label }}</label>
+            {{ form_acta.comentarios }}
+          </div>
+
+          <div class="acta-submit-container">
+            <button type="button" class="btn-submit-acta" onclick="document.getElementById('real-acta-form').submit();">
+              <i class="ti ti-file-check" aria-hidden="true"></i> Guardar y generar acta alumno
+            </button>
+          </div>
+        </form>
+      </div>
+    {% else %}
+      <div class="sem-sin-programar-card">
+        <i class="ti ti-lock" aria-hidden="true"></i>
+        <p style="font-weight:500;">Opción no disponible</p>
+        <p>Podrás llenar y emitir tu informe semestral en cuanto tu comité asigne una calificación formal al seminario.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</main>
 
   {# ═══ PANEL DERECHO ═══ #}
   <aside class="sem-panel" aria-label="Información del seminario">
@@ -190,22 +348,12 @@
         </div>
         <div class="det-row">
           <span class="det-label">Fecha</span>
-          <span class="det-value">
-            {% if seminario %}
-              {{ seminario.fecha|date:"d/m/Y" }}
-            {% else %}
-              —
-            {% endif %}
-          </span>
+          <span class="det-value">{% if seminario %}{{ seminario.fecha|date:"d/m/Y" }}{% else %}—{% endif %}</span>
         </div>
         <div class="det-row">
           <span class="det-label">Calificación</span>
           <span class="det-value {% if seminario and seminario.calificacion %}calif{% endif %}">
-            {% if seminario and seminario.calificacion %}
-              {{ seminario.calificacion }}
-            {% else %}
-              —
-            {% endif %}
+            {% if seminario and seminario.calificacion %}{{ seminario.calificacion }}{% else %}—{% endif %}
           </span>
         </div>
         <div class="det-row">
@@ -262,15 +410,13 @@
       </div>
     </div>
 
-    {# — Evidencias (CU-03) — #}
+    {# — Evidencias — #}
     <div class="panel-card">
       <div class="panel-card-header">
         <i class="ti ti-paperclip" aria-hidden="true"></i>
         Actividades cargadas
       </div>
       <div class="panel-card-body">
-
-        {# Lista de evidencias existentes #}
         {% if evidencias %}
           <div class="ev-list" id="ev-list">
             {% for ev in evidencias %}
@@ -285,131 +431,45 @@
           <p class="ev-empty">Sin actividades cargadas aún.</p>
         {% endif %}
 
-        {# Formulario CU-03 #}
-        {% if seminario %}
+        {% if seminario and not seminario.calificacion %}
         <hr class="ev-form-divider">
         <label class="ev-form-label">Cargar actividad</label>
-
-        <form method="post"
-              action="{% url 'lumat_app:subir_evidencia' seminario.id %}"
-              enctype="multipart/form-data"
-              id="ev-form"
-              novalidate>
+        <form method="post" action="{% url 'lumat_app:subir_evidencia' seminario.id %}" enctype="multipart/form-data" id="ev-form" novalidate>
           {% csrf_token %}
-
-          {# Paso 3 del flujo: nombre descriptivo #}
-          <input type="text"
-                 id="ev-nombre"
-                 name="nombre"
-                 class="ev-input"
-                 placeholder="Nombre de la actividad"
-                 maxlength="200"
-                 autocomplete="off">
+          <input type="text" id="ev-nombre" name="nombre" class="ev-input" placeholder="Nombre de la actividad" maxlength="200" autocomplete="off">
           <p class="ev-error-msg" id="err-nombre">Ingresa un nombre para la actividad.</p>
 
-          {# Paso 4 del flujo: selección de archivo PDF #}
-          <input type="file"
-                 id="ev-archivo"
-                 name="archivo"
-                 class="ev-file-input"
-                 accept="application/pdf">
+          <input type="file" id="ev-archivo" name="archivo" class="ev-file-input" accept="application/pdf">
           <label for="ev-archivo" class="ev-file-label" id="ev-file-label">
             <i class="ti ti-upload" aria-hidden="true"></i>
             <span id="ev-file-text">Seleccionar PDF…</span>
           </label>
           <p class="ev-error-msg" id="err-archivo">Solo se permiten archivos PDF (máx. 10 MB).</p>
 
-          {# Paso 5: enviar #}
-          <button type="submit" class="ev-submit-btn" id="ev-submit" disabled>
-            <i class="ti ti-circle-check" aria-hidden="true"></i>
-            Cargar actividad
-          </button>
+          <button type="submit" class="ev-submit-btn" id="ev-submit" disabled>Cargar actividad</button>
         </form>
-
-        <script>
-        (function () {
-          const nombre  = document.getElementById('ev-nombre');
-          const archivo = document.getElementById('ev-archivo');
-          const fileLabel = document.getElementById('ev-file-label');
-          const fileText  = document.getElementById('ev-file-text');
-          const submit    = document.getElementById('ev-submit');
-          const errNombre  = document.getElementById('err-nombre');
-          const errArchivo = document.getElementById('err-archivo');
-
-          function validate() {
-            const hasName = nombre.value.trim().length > 0;
-            const file = archivo.files[0];
-            const validFile = file && file.type === 'application/pdf' && file.size <= 10 * 1024 * 1024;
-            submit.disabled = !(hasName && validFile);
-          }
-
-          nombre.addEventListener('input', validate);
-
-          archivo.addEventListener('change', function () {
-            const file = archivo.files[0];
-            errArchivo.classList.remove('visible');
-            fileLabel.classList.remove('has-file');
-
-            if (!file) { fileText.textContent = 'Seleccionar PDF…'; validate(); return; }
-
-            // FA-01: validar tipo y tamaño
-            if (file.type !== 'application/pdf') {
-              errArchivo.textContent = 'El archivo debe ser un PDF.';
-              errArchivo.classList.add('visible');
-              fileLabel.classList.remove('has-file');
-              fileText.textContent = 'Seleccionar PDF…';
-              archivo.value = '';
-            } else if (file.size > 10 * 1024 * 1024) {
-              errArchivo.textContent = 'El archivo supera el límite de 10 MB.';
-              errArchivo.classList.add('visible');
-              fileLabel.classList.remove('has-file');
-              fileText.textContent = 'Seleccionar PDF…';
-              archivo.value = '';
-            } else {
-              fileText.textContent = file.name;
-              fileLabel.classList.add('has-file');
-            }
-            validate();
-          });
-
-          document.getElementById('ev-form').addEventListener('submit', function (e) {
-            let ok = true;
-            if (!nombre.value.trim()) {
-              errNombre.classList.add('visible');
-              nombre.classList.add('error');
-              ok = false;
-            }
-            if (!archivo.files[0]) {
-              errArchivo.textContent = 'Selecciona un archivo PDF.';
-              errArchivo.classList.add('visible');
-              ok = false;
-            }
-            if (!ok) e.preventDefault();
-          });
-
-          nombre.addEventListener('input', function () {
-            errNombre.classList.remove('visible');
-            nombre.classList.remove('error');
-            validate();
-          });
-        })();
-        </script>
-
-        {% else %}
-          <hr class="ev-form-divider">
-          <p style="font-size:12px; color:var(--lumat-muted); text-align:center; padding: 4px 0 2px;">
-            Disponible cuando el seminario esté programado.
-          </p>
         {% endif %}
-
       </div>
     </div>
-
   </aside>
 
-
-
-</div>{# end sem-shell #}
+</div>
 
 {% endwith %}
+
+{# Script vanilla JS para alternar paneles de Actas #}
+<script>
+  function switchTab(tabId) {
+    // Desactivar todos los botones y contenidos
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Activar el correspondiente
+    const targetContent = document.getElementById(tabId);
+    if(targetContent) targetContent.classList.add('active');
+    
+    // Marcar botón activo analizando el evento
+    event.currentTarget.classList.add('active');
+  }
+</script>
 {% endblock %}

@@ -1,0 +1,154 @@
+[
+
+
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$600000$demo$demo",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "alumno_demo",
+            "first_name": "",
+            "last_name": "",
+            "email": "alumno@demo.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2026-01-01T00:00:00Z",
+            "user_permissions": []
+        }
+    },
+
+    {
+        "model": "lumat_app.alumno",
+        "pk": 1,
+        "fields": {
+            "user": 1,
+            "matricula": "20240001",
+            "nombre": "Juan",
+            "apellido_paterno": "Perez",
+            "apellido_materno": "Lopez",
+            "semestre": "5",
+            "correo": "alumno@demo.com"
+        }
+    },
+
+    {
+        "model": "auth.user",
+        "pk": 2,
+        "fields": {
+            "password": "pbkdf2_sha256$600000$demo$demo",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "docente0",
+            "first_name": "",
+            "last_name": "",
+            "email": "docente1@demo.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2026-01-01T00:00:00Z",
+            "user_permissions": []
+        }
+    },
+
+    {
+        "model": "auth.user",
+        "pk": 3,
+        "fields": {
+            "password": "pbkdf2_sha256$600000$demo$demo",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "docente2",
+            "first_name": "",
+            "last_name": "",
+            "email": "docente2@demo.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2026-01-01T00:00:00Z",
+            "user_permissions": []
+        }
+    },
+
+    {
+        "model": "auth.user",
+        "pk": 4,
+        "fields": {
+            "password": "pbkdf2_sha256$600000$demo$demo",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "docente3",
+            "first_name": "",
+            "last_name": "",
+            "email": "docente3@demo.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2026-01-01T00:00:00Z",
+            "user_permissions": []
+        }
+    },
+
+    {
+        "model": "lumat_app.docente",
+        "pk": 1,
+        "fields": {
+            "user": 2,
+            "nombre": "Carlos",
+            "apellido_paterno": "Ramirez",
+            "apellido_materno": "Lopez",
+            "correo": "docente1@demo.com",
+            "firma": ""
+        }
+    },
+
+    {
+        "model": "lumat_app.docente",
+        "pk": 2,
+        "fields": {
+            "user": 3,
+            "nombre": "Maria",
+            "apellido_paterno": "Gonzalez",
+            "apellido_materno": "Perez",
+            "correo": "docente2@demo.com",
+            "firma": ""
+        }
+    },
+
+    {
+        "model": "lumat_app.docente",
+        "pk": 3,
+        "fields": {
+            "user": 4,
+            "nombre": "Jose",
+            "apellido_paterno": "Sanchez",
+            "apellido_materno": "Torres",
+            "correo": "docente3@demo.com",
+            "firma": ""
+        }
+    },
+
+    {
+        "model": "lumat_app.comite",
+        "pk": 1,
+        "fields": {
+            "tutor": 1,
+            "miembro1": 2,
+            "miembro2": 3
+        }
+    },
+
+    {
+        "model": "lumat_app.seminario",
+        "pk": 1,
+        "fields": {
+            "alumno": 1,
+            "comite": 1,
+            "fecha": "2026-06-15",
+            "hora": "10:00:00",
+            "calificacion": null,
+            "actaComite": "",
+            "actaAlumno": "",
+            "numero": 5,
+            "periodo": 1
+        }
+    }
+]

@@ -44,7 +44,7 @@ class TestCalendarioAndEstadisticasViews(TestCase):
                 comite=comite,
                 fecha=self.hoy,
                 hora=time(9, 0),
-                numero=i+1
+                numero=i + 1
             )
 
     def test_get_formulario_admin_retorna_200(self):

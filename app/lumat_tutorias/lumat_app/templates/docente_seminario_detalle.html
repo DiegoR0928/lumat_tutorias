@@ -5,18 +5,96 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/docente_seminario_detalle.css' %}">
+<style>
+  /* Estructura limpia para la navegación de pestañas (Tabs) en el panel central */
+  .tabs-container {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e2ddd5;
+  }
+  .tab-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b6560;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .tab-btn:hover {
+    color: #4a7c7a;
+  }
+  .tab-btn.active {
+    color: #4a7c7a;
+    border-bottom-color: #4a7c7a;
+    font-weight: 600;
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .docente-pdf-frame {
+    width: 100%;
+    height: 460px;
+    border: 1px solid #c8b89a;
+    border-radius: 6px;
+    background: #f0ede8;
+    display: block;
+    margin-top: 10px;
+  }
+  .no-pdf-block {
+    padding: 30px;
+    text-align: center;
+    background: #f7f4ef;
+    border: 1px dashed #c8b89a;
+    border-radius: 6px;
+    color: #8a7560;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    margin-top: 10px;
+  }
+  
+  /* Alineación flex horizontal para colocar las acciones al lado del título */
+  .pdf-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  .pdf-toolbar-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .pdf-toolbar-link {
+    font-size: 0.78rem;
+    color: #4a7c7a;
+    text-decoration: none;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    transition: color 0.2s;
+  }
+  .pdf-toolbar-link:hover {
+    color: #385f5d;
+    text-decoration: underline;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="page-wrapper">
 
-    <!-- BOTÓN REGRESO: Superior Izquierda -->
     <div class="top-actions-container">
         <a href="{% url 'lumat_app:docente_seminarios' %}?rol={{ rol_activo }}"
            class="btn-secondary-custom">← Volver al listado</a>
     </div>
 
-    <!-- Alertas Flash -->
     {% if messages %}
     <div class="messages-container">
         {% for msg in messages %}
@@ -27,10 +105,8 @@
     </div>
     {% endif %}
 
-    <!-- GRID DE LOS 3 PANELES -->
     <div class="panels-grid">
         
-        <!-- PANEL 1 (IZQUIERDA): DATOS GENERALES + TÍTULOS MOVIDOS AQUÍ -->
         <div class="panel-card panel-info">
             <div class="panel-header-integrated">
                 <p class="eyebrow">Informe del Comité</p>
@@ -116,60 +192,111 @@
             </div>
         </div>
 
-        <!-- PANEL 2 (CENTRO): FORMULARIO DE EVALUACIÓN -->
         <div class="panel-card panel-form">
-            <p class="section-label">Evaluación del Comité</p>
+            
+            <div class="tabs-container">
+                <button class="tab-btn active" id="btn-form-tab" onclick="switchTab('form-tab')">Formulario</button>
+                <button class="tab-btn" id="btn-comite-tab" onclick="switchTab('comite-tab')">Acta Comité</button>
+                <button class="tab-btn" id="btn-alumno-tab" onclick="switchTab('alumno-tab')">Acta Alumno</button>
+            </div>
 
-            {% if rol == 'tutor' %}
-                <!-- TUTOR -->
-                <form method="post">
-                    {% csrf_token %}
-                    {% for field in form %}
-                    <div class="form-group-custom">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <p style="color:#c0392b; font-size:0.78rem; margin-top:3px;">{{ field.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                    <button type="submit" class="btn-primary-custom" style="margin-bottom: 6px;">Guardar informe</button>
-                </form>
+            <div id="form-tab" class="tab-content active">
+                <p class="section-label">Evaluación del Comité</p>
 
-            {% else %}
-                <!-- MIEMBROS (Lectura) -->
-                {% if formulario.el_comite_encuentra %}
-                    <div class="readonly-block">
-                        <p class="ro-label">El Comité encuentra que el estudiante</p>
-                        <p class="ro-value">{{ formulario.el_comite_encuentra }}</p>
-                    </div>
-                    <div class="readonly-block">
-                        <p class="ro-label">Otros aspectos observados</p>
-                        <p class="ro-value">{{ formulario.observaciones|default:"—" }}</p>
-                    </div>
-                    <div class="readonly-block">
-                        <p class="ro-label">Dictamen</p>
-                        <p class="ro-value">{{ formulario.dictamen|default:"—" }}</p>
-                    </div>
-                    <div class="readonly-block">
-                        <p class="ro-label">Plan de trabajo propuesto</p>
-                        <p class="ro-value">{{ formulario.propuestas|default:"—" }}</p>
-                    </div>
+                {% if rol == 'tutor' %}
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="form-group-custom">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <p style="color:#c0392b; font-size:0.78rem; margin-top:3px;">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn-primary-custom" style="margin-bottom: 6px;" {% if ya_firme %}disabled style="opacity:0.5; cursor:not-allowed;"{% endif %}>
+                            {% if ya_firme %}Informe Guardado{% else %}Guardar informe{% endif %}
+                        </button>
+                    </form>
+
                 {% else %}
-                    <p style="font-family:'Georgia',serif; font-size:0.85rem; color:#a89880; font-style:italic; margin-bottom: 10px;">
-                        El tutor aún no ha completado el informe.
-                    </p>
+                    {% if formulario.el_comite_encuentra %}
+                        <div class="readonly-block">
+                            <p class="ro-label">El Comité encuentra que el estudiante</p>
+                            <p class="ro-value">{{ formulario.el_comite_encuentra }}</p>
+                        </div>
+                        <div class="readonly-block">
+                            <p class="ro-label">Otros aspectos observados</p>
+                            <p class="ro-value">{{ formulario.observaciones|default:"—" }}</p>
+                        </div>
+                        <div class="readonly-block">
+                            <p class="ro-label">Dictamen</p>
+                            <p class="ro-value">{{ formulario.dictamen|default:"—" }}</p>
+                        </div>
+                        <div class="readonly-block">
+                            <p class="ro-label">Plan de trabajo propuesto</p>
+                            <p class="ro-value">{{ formulario.propuestas|default:"—" }}</p>
+                        </div>
+                    {% else %}
+                        <p style="font-family:'Georgia',serif; font-size:0.85rem; color:#a89880; font-style:italic; margin-bottom: 10px;">
+                            El tutor aún no ha completado el informe.
+                        </p>
+                    {% endif %}
                 {% endif %}
-            {% endif %}
+            </div>
+
+            <!-- PESTAÑA: ACTA COMITÉ REFACTORIZADA CON BOTONES ALINEADOS AL TÍTULO -->
+            <div id="comite-tab" class="tab-content">
+                <div class="pdf-header-container">
+                    <p class="section-label" style="margin: 0;">Vista Previa — Acta de Comité</p>
+                    {% if seminario.actaComite %}
+                        <div class="pdf-toolbar-actions">
+                            <a href="{{ seminario.actaComite.url }}" target="_blank" class="pdf-toolbar-link">↗ Abrir</a>
+                            {% if formulario.estado_general == 'completo' %}
+                                <a href="{% url 'lumat_app:docente_descargar_acta' seminario.id %}" class="pdf-toolbar-link">↓ Descargar</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if seminario.actaComite %}
+                    <iframe src="{{ seminario.actaComite.url }}#toolbar=0&navpanes=0" class="docente-pdf-frame" title="Acta del Comité"></iframe>
+                {% else %}
+                    <div class="no-pdf-block">
+                        El acta oficial del sínodo se generará y estará disponible aquí una vez que los 3 docentes del comité asienten sus firmas.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- PESTAÑA: ACTA ALUMNO REFACTORIZADA CON BOTONES ALINEADOS AL TÍTULO -->
+            <div id="alumno-tab" class="tab-content">
+                <div class="pdf-header-container">
+                    <p class="section-label" style="margin: 0;">Vista Previa — Acta del Alumno</p>
+                    {% if seminario.actaAlumno %}
+                        <div class="pdf-toolbar-actions">
+                            <a href="{{ seminario.actaAlumno.url }}" target="_blank" class="pdf-toolbar-link">↗ Abrir</a>
+                            <a href="{{ seminario.actaAlumno.url }}" download class="pdf-toolbar-link">↓ Descargar</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if seminario.actaAlumno %}
+                    <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0" class="docente-pdf-frame" title="Acta del Alumno"></iframe>
+                {% else %}
+                    <div class="no-pdf-block">
+                        El estudiante aún no ha generado ni cargado su informe semestral de actividades.
+                    </div>
+                {% endif %}
+            </div>
+
         </div>
 
-        <!-- PANEL 3 (DERECHA): FIRMAS Y CALIFICACIONES (MÁS COMPACTO) -->
         <div class="panel-card panel-signatures">
             <p class="section-label">Firmas y Notas</p>
 
-            <!-- Lista de firmas compacta y alineada en filas horizontales internas -->
             <div class="firmas-mini-list" style="margin-bottom:14px;">
-                <!-- Tutor -->
                 <div class="firma-mini-row">
                     <div class="firma-mini-meta">
                         <div class="firma-mini-name">{{ seminario.comite.tutor.nombre }} {{ seminario.comite.tutor.apellido_paterno }}</div>
@@ -185,7 +312,6 @@
                     </div>
                 </div>
 
-                <!-- Miembro 1 -->
                 <div class="firma-mini-row">
                     <div class="firma-mini-meta">
                         <div class="firma-mini-name">{{ seminario.comite.miembro1.nombre }} {{ seminario.comite.miembro1.apellido_paterno }}</div>
@@ -201,7 +327,6 @@
                     </div>
                 </div>
 
-                <!-- Miembro 2 -->
                 <div class="firma-mini-row">
                     <div class="firma-mini-meta">
                         <div class="firma-mini-name">{{ seminario.comite.miembro2.nombre }} {{ seminario.comite.miembro2.apellido_paterno }}</div>
@@ -218,7 +343,6 @@
                 </div>
             </div>
 
-            <!-- Calificación Promedio Compacta -->
             {% if formulario.calificacion_final %}
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:14px; background:#fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd4c3;">
                 <span style="font-family:'Georgia',serif; font-size:0.7rem; color:#8a7560; text-transform:uppercase; letter-spacing:0.05em; max-width:60%;">Promedio Final:</span>
@@ -226,11 +350,10 @@
             </div>
             {% endif %}
 
-            <!-- Formulario interactivo compacto para Firmar -->
             {% if not ya_firme and firma_form %}
             <div class="firma-box" style="margin-bottom: 10px;">
                 <p class="section-label" style="margin-bottom:8px; color:#8a7560; font-size:0.62rem;">Registrar Firma</p>
-                <form method="post" action="{% url 'lumat_app:docente_firmar_seminario' seminario.pk %}">
+                <form method="post" action="{% url 'lumat_app:docente_firmar_seminario' seminario.id %}">
                     {% csrf_token %}
                     <div style="margin-bottom:8px;">
                         <label style="font-size:0.68rem;">{{ firma_form.calificacion.label }}</label>
@@ -252,17 +375,28 @@
             <div class="success-box" style="text-align: center; padding: 8px; font-size:0.78rem;">Firma registrada con éxito.</div>
             {% endif %}
 
-            <!-- Descargar Acta PDF -->
             {% if formulario.estado_general == 'completo' %}
             <hr class="section-divider" style="margin: 12px 0;">
             <div style="text-align:center;">
-                <a href="{% url 'lumat_app:docente_descargar_acta' seminario.pk %}"
-                   class="btn-pdf" style="width:100%; box-sizing:border-box; text-align:center; padding: 5px 0;">↓ Acta PDF</a>
+                <a href="{% url 'lumat_app:docente_descargar_acta' seminario.id %}"
+                   class="btn-pdf" style="width:100%; box-sizing:border-box; text-align:center; padding: 5px 0;">↓ Descargar Acta</a>
             </div>
             {% endif %}
         </div>
 
-    </div> <!-- FIN DEL GRID -->
+    </div> </div>
 
-</div>
+<script>
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    const targetContent = document.getElementById(tabId);
+    if(targetContent) targetContent.classList.add('active');
+    
+    if (tabId === 'form-tab') document.getElementById('btn-form-tab').classList.add('active');
+    if (tabId === 'comite-tab') document.getElementById('btn-comite-tab').classList.add('active');
+    if (tabId === 'alumno-tab') document.getElementById('btn-alumno-tab').classList.add('active');
+  }
+</script>
 {% endblock %}

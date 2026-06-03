@@ -1,0 +1,255 @@
+:root {
+  --lumat-bg:             #F7F4EF;
+  --lumat-surface:        #FFFFFF;
+  --lumat-border:         #E2DDD5;
+  --lumat-border-strong:  #C8C0B4;
+  --lumat-text:           #1C1916;
+  --lumat-muted:          #6B6560;
+  --lumat-accent:         #4a7c7a;
+  --lumat-accent-bg:      #EBF2F9;
+  --lumat-accent-light:   #D0E4F3;
+  --lumat-success:        #2D6A4F;
+  --lumat-success-bg:     #EDFAF3;
+  --lumat-success-border: #A8D8C0;
+  --lumat-radius:         10px;
+  --lumat-radius-sm:      6px;
+}
+
+body { font-family: 'DM Sans', sans-serif; background: var(--lumat-bg); color: var(--lumat-text); }
+
+.cal-page { 
+  max-width: 1400px; 
+  margin: 0 auto; 
+  padding: 32px 24px 48px; 
+}
+
+/* Layout con dos columnas */
+.cal-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+/* Breadcrumb */
+.cal-breadcrumb { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+  font-size: 13px; 
+  color: var(--lumat-muted); 
+  margin-bottom: 20px; 
+}
+.cal-breadcrumb a { 
+  color: var(--lumat-accent); 
+  text-decoration: none; 
+}
+.cal-breadcrumb a:hover { 
+  text-decoration: underline; 
+}
+
+/* Header */
+.cal-header { 
+  margin-bottom: 20px; 
+}
+.cal-title { 
+  font-family: 'DM Serif Display', serif; 
+  font-size: 28px; 
+  margin: 0 0 6px; 
+  color: var(--lumat-text);
+}
+.cal-sub { 
+  font-size: 14px; 
+  color: var(--lumat-muted); 
+  margin: 0; 
+}
+
+/* Panel lateral - Información del periodo */
+.cal-sidebar {
+  background: var(--lumat-surface);
+  border: 0.5px solid var(--lumat-border);
+  border-radius: var(--lumat-radius);
+  overflow: hidden;
+  position: sticky;
+  top: 24px;
+}
+
+.cal-sidebar-header {
+  background: var(--lumat-accent);
+  color: white;
+  padding: 16px 20px;
+  border-bottom: none;
+}
+
+.cal-sidebar-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-sidebar-header h3 i {
+  font-size: 18px;
+}
+
+.cal-sidebar-body {
+  padding: 20px;
+}
+
+.cal-info-item {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 0.5px solid var(--lumat-border);
+}
+
+.cal-info-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.cal-info-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: var(--lumat-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cal-info-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--lumat-text);
+  word-break: break-word;
+}
+
+.cal-info-value strong {
+  font-size: 18px;
+  color: var(--lumat-accent);
+}
+
+/* Panel principal - Visor PDF */
+.cal-main {
+  background: var(--lumat-surface);
+  border: 0.5px solid var(--lumat-border);
+  border-radius: var(--lumat-radius);
+  overflow: hidden;
+}
+
+.cal-pdf-toolbar {
+  padding: 12px 20px;
+  border-bottom: 0.5px solid var(--lumat-border);
+  background: var(--lumat-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cal-pdf-toolbar span { 
+  font-size: 13px; 
+  color: var(--lumat-muted); 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+  font-weight: 500;
+}
+
+.cal-pdf-actions { 
+  display: flex; 
+  gap: 8px; 
+}
+
+.cal-pdf-btn {
+  display: inline-flex; 
+  align-items: center; 
+  gap: 6px;
+  padding: 6px 14px; 
+  font-size: 13px;
+  border: 0.5px solid var(--lumat-border-strong);
+  border-radius: var(--lumat-radius-sm);
+  background: var(--lumat-surface); 
+  color: var(--lumat-muted);
+  text-decoration: none; 
+  transition: all .15s;
+}
+.cal-pdf-btn:hover { 
+  background: var(--lumat-accent-bg); 
+  color: var(--lumat-accent); 
+  border-color: var(--lumat-accent-light); 
+  text-decoration: none; 
+}
+
+.cal-pdf-frame { 
+  width: 100%; 
+  height: 700px; 
+  border: none; 
+  display: block; 
+  background: #f0ede8; 
+}
+
+/* Estado vacío */
+.cal-empty {
+  background: var(--lumat-surface);
+  border: 0.5px solid var(--lumat-border);
+  border-radius: var(--lumat-radius);
+  padding: 80px 32px;
+  text-align: center;
+  color: var(--lumat-muted);
+}
+.cal-empty i { 
+  font-size: 64px; 
+  color: var(--lumat-border-strong); 
+  display: block; 
+  margin-bottom: 20px; 
+}
+.cal-empty p { 
+  font-size: 15px; 
+  margin: 0; 
+}
+
+/* Botón volver */
+.cal-back-btn {
+  display: inline-flex; 
+  align-items: center; 
+  gap: 6px;
+  font-size: 13px; 
+  color: var(--lumat-muted);
+  padding: 8px 16px; 
+  border: 0.5px solid var(--lumat-border-strong);
+  border-radius: var(--lumat-radius-sm);
+  background: var(--lumat-surface); 
+  text-decoration: none;
+  transition: all .15s;
+}
+.cal-back-btn:hover { 
+  background: var(--lumat-bg); 
+  color: var(--lumat-text); 
+  text-decoration: none; 
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cal-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .cal-sidebar {
+    position: static;
+  }
+  
+  .cal-page {
+    padding: 20px 16px;
+  }
+  
+  .cal-pdf-frame {
+    height: 450px;
+  }
+}

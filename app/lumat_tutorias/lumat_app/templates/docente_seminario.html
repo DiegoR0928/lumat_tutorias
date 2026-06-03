@@ -37,6 +37,32 @@
                     </p>
                 {% endif %}
             </div>
+            
+            <hr style="border: none; border-top: 0.5px solid #e2ddd5; margin: 16px 0;">
+
+            <p class="section-label" style="color: #8a7560;">Calendario Académico</p>
+
+            {% if ultimo_calendario %}
+            <a href="{% url 'lumat_app:calendario' %}" class="reminder-box" id="btn-ver-calendario"
+               style="text-decoration: none; margin-top: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <p class="rem-alumno" style="display: flex; align-items: center; gap: 6px;">
+                        <i class="ti ti-calendar-event" style="font-size: 14px;"></i>
+                        {{ ultimo_calendario.nombre }}
+                    </p>
+                    <span style="font-size: 11px; background: #edfaf3; color: #2d6a4f; border: 0.5px solid #a8d8c0; border-radius: 20px; padding: 2px 8px; white-space: nowrap;">
+                        Vigente
+                    </span>
+                </div>
+                <p class="rem-date">
+                    {{ ultimo_calendario.fecha_inicio|date:"d M Y" }} — {{ ultimo_calendario.fecha_fin|date:"d M Y" }}
+                </p>
+            </a>
+            {% else %}
+            <p style="font-family: 'Georgia', serif; font-size: 0.8rem; color: #a89880; font-style: italic; margin: 6px 0 0;">
+                No hay calendario publicado aún.
+            </p>
+            {% endif %}
         </div>
 
         <div class="panel-card panel-main">
