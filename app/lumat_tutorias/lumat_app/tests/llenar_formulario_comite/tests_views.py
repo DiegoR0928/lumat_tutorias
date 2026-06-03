@@ -70,7 +70,8 @@ class BaseDocenteTest(TestCase):
         )
         self.alumno = Alumno.objects.create(
             user=self.user_alumno, nombre='Pedro', apellido_paterno='Gomez',
-            apellido_materno='Lopez', matricula='20230001', semestre='7', correo='pedro@test.com'
+            apellido_materno='Lopez', matricula='20230001', semestre='7',
+            correo='pedro@test.com'
         )
 
     def setup_comite_seminario(self):
@@ -540,8 +541,13 @@ class DescargarEvidenciasZipEstructuraNombreTest(BaseDocenteTest):
             username='alumno_nombre', password='testpass123', email='alumno@test.com'
         )
         self.alumno = Alumno.objects.create(
-            user=self.user_alumno, nombre='Juan Carlos', apellido_paterno='González',
-            apellido_materno='Rodríguez', matricula='20230002', semestre='5', correo='juancarlos@test.com'
+            user=self.user_alumno,
+            nombre="Juan Carlos",
+            apellido_paterno="González",
+            apellido_materno="Rodríguez",
+            matricula="20230002",
+            semestre="5",
+            correo="juancarlos@test.com",
         )
 
     def setup_comite_seminario(self):

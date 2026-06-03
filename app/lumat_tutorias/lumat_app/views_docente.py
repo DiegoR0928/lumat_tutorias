@@ -4,9 +4,8 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
-from django.urls import reverse
 
-from .models import ActaAlumnoData, CalendarioGenerado, Docente, Seminario, FormularioComite
+from .models import CalendarioGenerado, Docente, Seminario, FormularioComite
 from .utils_pdf_comite import generar_pdf_comite
 import io
 import zipfile
@@ -281,7 +280,8 @@ def docente_seminario_detalle(request, seminario_id):
 def text_form_valido(form, request):
     if form.is_valid():
         return True
-    messages.error(request, "La calificación debe ser un número válido entre 0 y 10.")
+    messages.error(
+        request, "La calificación debe ser un número válido entre 0 y 10.")
     return False
 
 
@@ -293,16 +293,31 @@ def _verificar_y_generar_pdf_comite(request, seminario, formulario):
     if formulario.estado_general == 'completo':
         try:
             seminario.calificacion = formulario.calificacion_final
-            
+
             # Aquí desmarcas e integras tu generador real de PDF:
             # pdf_buffer = generar_acta_comite(seminario=seminario, formulario=formulario)
-            # nombre_archivo = f"acta_comite_{seminario.numero}_{seminario.alumno.matricula or seminario.alumno.id}.pdf"
+            # nombre_archivo = f"acta_comite_{seminario.numero}_{seminario.alumno.matricula
+            # or seminario.alumno.id}.pdf"
             # seminario.actaComite.save(nombre_archivo, ContentFile(pdf_buffer.read()), save=False)
-            
+
             seminario.save()
-            messages.info(request, "El sínodo se ha completado. Se ha emitido y archivado el Acta del Comité PDF.")
+            messages.info(
+                request,
+                (
+                    "El sínodo se ha completado. "
+                    "Se ha emitido y archivado el Acta del Comité PDF."
+                ),
+            )
+
         except Exception as e:
-            messages.error(request, f"Las firmas son válidas pero ocurrió un error al construir el archivo PDF: {e}")
+            messages.error(
+                request,
+                (
+                    "Las firmas son válidas pero ocurrió un error al "
+                    f"construir el archivo PDF: {e}"
+                ),
+            )
+
 
 def text_form_valido(form, request, formulario, rol):
     if form.is_valid():

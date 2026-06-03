@@ -10,9 +10,14 @@ class DocenteFormSimpleTest(TestCase):
         """El formulario es válido si cuenta con datos correctos y archivo simulado."""
         # Creamos un archivo de imagen falso en bytes transparentes
         imagen_falsa = SimpleUploadedFile(
-            name='firma_test.png',
-            content=b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b',
-            content_type='image/png'
+            name="firma_test.png",
+            content=(
+                b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00"
+                b"\x00\x00\x00\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00"
+                b"\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02"
+                b"\x4c\x01\x00\x3b"
+            ),
+            content_type="image/png",
         )
 
         datos = {

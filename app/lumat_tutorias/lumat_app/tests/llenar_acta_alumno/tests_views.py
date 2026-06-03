@@ -44,7 +44,8 @@ class GenerarActaRedireccionesTest(TestCase):
         self.comite = Comite.objects.create(
             tutor=self.docente_tutor, miembro1=self.docente_m1, miembro2=self.docente_m2)
 
-        # 4. Configurar el Seminario con numero=1 (para que machee con el semestre del alumno y no dé 404)
+        # 4. Configurar el Seminario con numero=1 (para que machee con el
+        # semestre del alumno y no dé 404)
         self.seminario_incompleto = Seminario.objects.create(
             alumno=self.alumno,
             numero=1,             # <-- Debe coincidir con el num del request
@@ -67,7 +68,10 @@ class GenerarActaRedireccionesTest(TestCase):
                              status_code=302, target_status_code=200)
 
     def test_verificacion_manual_de_estados_en_redireccion(self):
-        """Prueba manual siguiendo la cadena de peticiones paso a paso sin seguir el redireccionamiento."""
+        """
+        Prueba manual siguiendo la cadena de peticiones paso a paso
+        sin seguir el redireccionamiento.
+        """
         self.client.force_login(self.user_alumno)
 
         payload = {'actividad_principal': 'Intento en seminario incompleto'}

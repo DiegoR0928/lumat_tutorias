@@ -316,8 +316,10 @@ class FormularioComite(models.Model):
             sem_num = self.seminario.numero
             periodo = self.seminario.periodo
             alumno_nombre = self.seminario.alumno.nombre.replace(' ', '_')
-            filename = f'acta_comite_sem{sem_num}_p{periodo}_{alumno_nombre}_{self.seminario.alumno.id}.pdf'
-
+            filename = (
+                f"acta_comite_sem{sem_num}_p{periodo}_{alumno_nombre}_"
+                f"{self.seminario.alumno.id}.pdf"
+            )
             # Eliminar el archivo anterior si existe
             if self.seminario.actaComite:
                 self.seminario.actaComite.delete(save=False)
@@ -336,71 +338,37 @@ class FormularioComite(models.Model):
             return False
 
     def save(self, *args, **kwargs):
-        # Guardar el estado anterior para detectar cambios en las firmas
-        if self.pk:
-            try:
-                old_instance = FormularioComite.objects.get(pk=self.pk)
-                old_firmas = (old_instance.firma_tutor,
-                              old_instance.firma_miembro1, old_instance.firma_miembro2)
-                new_firmas = (self.firma_tutor,
-                              self.firma_miembro1, self.firma_miembro2)
-                firmas_cambiaron = old_firmas != new_firmas
-            except FormularioComite.DoesNotExist:
-                firmas_cambiaron = True
-        else:
-            firmas_cambiaron = True
+        firmas_cambiaron = self._firmas_cambiaron()
 
-        # 1. Calcular calificaciones y estado del formulario
         self.calificacion_final = self.calcular_calificacion_final()
         estaba_completo = self.estado_general == "completo" if self.pk else False
-        self.estado_general = 'completo' if self.todos_firmaron else 'pendiente'
+        self.estado_general = (
+            "completo" if self.todos_firmaron else "pendiente"
+        )
 
-        # Detectar si ACABAMOS de completar el formulario (transición a completo)
-        se_completo_ahora = not estaba_completo and self.estado_general == "completo"
+        se_completo_ahora = (
+            not estaba_completo
+            and self.estado_general == "completo"
+        )
 
-        # 2. Ejecutar el guardado del formulario en la base de datos
         super().save(*args, **kwargs)
 
-        # 3. Sincronizar calificacion en el Seminario asociado
-        if self.calificacion_final is not None:
-            self.seminario.__class__.objects.filter(pk=self.seminario_id).update(
-                calificacion=self.calificacion_final
-            )
+        self._sincronizar_calificacion()
 
-        # 4. Generar el PDF si:
-        #    a) Acabamos de completar el formulario (transición a completo) O
-        #    b) Ya estaba completo pero cambiaron las firmas (por si acaso)
-        #    c) No existe el actaComite y ya está completo
-        if (se_completo_ahora or
-            (self.estado_general == "completo" and not self.seminario.actaComite) or
-                (self.estado_general == "completo" and firmas_cambiaron)):
-
-            # Generar y guardar el PDF en el seminario
+        if self._debe_generar_pdf(
+            se_completo_ahora,
+            firmas_cambiaron,
+        ):
             self.generar_y_guardar_pdf()
 
-        # 5. LÓGICA DE PROMOCIÓN: Solo si está completo y tiene calificación suficiente
-        if self.estado_general == "completo" and self.calificacion_final is not None and self.calificacion_final >= Decimal("6.00"):
-            alumno = self.seminario.alumno
-
-            # Convertir semestre a entero para comparación
-            try:
-                semestre_actual = int(
-                    alumno.semestre) if alumno.semestre else 0
-            except ValueError:
-                semestre_actual = 0
-
-            # Control de Idempotencia: Solo incrementamos si el semestre actual del alumno
-            # es exactamente igual al número de seminario que acaba de acreditar.
-            if semestre_actual == self.seminario.numero:
-                if semestre_actual < 8:
-                    nuevo_semestre = semestre_actual + 1
-                    # Guardar como string
-                    alumno.semestre = str(nuevo_semestre)
-                    alumno.save(update_fields=['semestre'])
+        self._promover_alumno_si_corresponde()
 
     def __str__(self):
         pdf_status = "✓ PDF" if self.seminario.actaComite else "✗ PDF"
-        return f"Formulario Comité — Seminario {self.seminario_id} ({self.estado_general}) {pdf_status}"
+        return (
+            f"Formulario Comité — Seminario {self.seminario_id} "
+            f"({self.estado_general}) {pdf_status}"
+        )
 
 
 class ActaAlumnoData(models.Model):

@@ -143,7 +143,10 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
                 normal,
             ),
             Paragraph(
-                f"Me reuní <b>{d.get('reuniones_tutor', 0)}</b> veces con mi <b>tutor principal</b>.",
+                (
+                    f"Me reuní <b>{d.get('reuniones_tutor', 0)}</b> veces con mi "
+                    f"<b>tutor principal</b>."
+                ),
                 normal,
             ),
         ],
@@ -172,12 +175,12 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
     ]
     t_comite = Table(miembros, colWidths=["55%", "45%"])
     t_comite.setStyle(TableStyle([
-        ("BOX",        (0, 0), (-1, -1), 0.5, GRIS_BORDE),
-        ("INNERGRID",  (0, 0), (-1, -1), 0.5, GRIS_BORDE),
+        ("BOX", (0, 0), (-1, -1), 0.5, GRIS_BORDE),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, GRIS_BORDE),
         ("BACKGROUND", (0, 0), (-1, -1), GRIS_BG),
-        ("TOPPADDING",    (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
     ]))
     story.append(t_comite)
 
@@ -243,7 +246,7 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
     ]
     t_firmas = Table(firmas, colWidths=["33%", "34%", "33%"])
     t_firmas.setStyle(TableStyle([
-        ("ALIGN",      (0, 0), (-1, -1), "CENTER"),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("TOPPADDING", (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
     ]))
@@ -272,11 +275,11 @@ def _caja(texto, style):
         colWidths=["100%"],
     )
     t.setStyle(TableStyle([
-        ("BOX",           (0, 0), (-1, -1), 0.5, colors.HexColor("#C8C0B4")),
-        ("BACKGROUND",    (0, 0), (-1, -1), colors.HexColor("#F7F4EF")),
-        ("TOPPADDING",    (0, 0), (-1, -1), 6),
+        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#C8C0B4")),
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F7F4EF")),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
     ]))
     return t

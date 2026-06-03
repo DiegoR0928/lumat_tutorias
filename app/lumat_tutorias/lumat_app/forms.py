@@ -2,7 +2,6 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
 from .models import Alumno, FormularioComite, Docente
-from .models import ActaAlumnoData
 
 
 class UserForm(forms.ModelForm):
@@ -167,7 +166,10 @@ class ActaAlumnoForm(forms.Form):
         widget=forms.Textarea(attrs={
             "class": "acta-textarea",
             "rows": 4,
-            "placeholder": "Título de cada artículo, uno por línea. Si no tienes, déjalo en blanco.",
+            "placeholder": (
+                "Título de cada artículo, uno por línea. "
+                "Si no tienes, déjalo en blanco."
+            ),
         }),
     )
 
@@ -177,7 +179,9 @@ class ActaAlumnoForm(forms.Form):
         widget=forms.Textarea(attrs={
             "class": "acta-textarea",
             "rows": 3,
-            "placeholder": "Congresos, talleres, estancias, etc. Si no asististe, déjalo en blanco.",
+            "placeholder": (
+                "Congresos, talleres, estancias, etc. Si no asististe, déjalo en blanco."
+            ),
         }),
     )
 

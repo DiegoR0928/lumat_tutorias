@@ -33,9 +33,11 @@ class DocenteDescargarActaViewTest(TestCase):
         self.user_docente_no_autorizado.groups.add(self.grupo_docente)
 
         self.docente_autorizado = Docente.objects.create(
-            user=self.user_docente_autorizado, nombre="Dr. T", apellido_paterno="Pérez", correo="t@edu")
+            user=self.user_docente_autorizado, nombre="Dr. T",
+            apellido_paterno="Pérez", correo="t@edu")
         self.docente_no_autorizado = Docente.objects.create(
-            user=self.user_docente_no_autorizado, nombre="Dr. X", apellido_paterno="A", correo="x@edu")
+            user=self.user_docente_no_autorizado, nombre="Dr. X",
+            apellido_paterno="A", correo="x@edu")
 
         # Miembros adicionales para cumplir restricciones de unicidad en Comité
         u1 = User.objects.create(username='u1')

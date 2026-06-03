@@ -1,4 +1,3 @@
-import datetime
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -40,9 +39,14 @@ class EditarPerfilDocenteViewSimpleTest(TestCase):
 
         # 3. Crear una firma en bytes falsa reutilizable para peticiones POST válidas
         self.imagen_simulada = SimpleUploadedFile(
-            name='firma_docente.png',
-            content=b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b',
-            content_type='image/png'
+            name="firma_docente.png",
+            content=(
+                b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00"
+                b"\x00\x00\x00\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00"
+                b"\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02"
+                b"\x4c\x01\x00\x3b"
+            ),
+            content_type="image/png",
         )
 
     # ── 1. PRUEBAS DE AUTENTICACIÓN Y ROLES ──
@@ -153,7 +157,10 @@ class EditarPerfilDocenteViewSimpleTest(TestCase):
         self.assertEqual(str(mensajes[0]), "Contraseña actualizada con éxito.")
 
     def test_post_cambiar_password_fallido_mantiene_modo_edicion_200(self):
-        """Un cambio de contraseña inválido (no coinciden) recarga la página con código 200 en modo password."""
+        """
+        Un cambio de contraseña inválido (no coinciden) recarga la página
+        con código 200 en modo password.
+        """
         self.client.force_login(self.user_docente)
 
         payload = {

@@ -1,6 +1,5 @@
 import datetime
 from datetime import time
-from io import BytesIO
 from unittest.mock import patch, MagicMock
 
 from django.test import TestCase, Client
@@ -19,7 +18,8 @@ class GenerarActaViewAllPathsTest(TestCase):
         self.url_detalle = reverse(
             'lumat_app:seminario_detalle', kwargs={'num': 1})
 
-        # 1. Configurar el rol y el grupo requeridos para pasar el decorador @user_passes_test(es_alumno)
+        # 1. Configurar el rol y el grupo requeridos para pasar el decorador
+        # @user_passes_test(es_alumno)
         self.grupo_alumno, _ = Group.objects.get_or_create(name='Alumno')
         self.user_alumno = User.objects.create_user(
             username='alumno_sga', password='password123')
@@ -71,7 +71,10 @@ class GenerarActaViewAllPathsTest(TestCase):
 
     # ── PATH 1: REDIRECCIÓN CUANDO NO EXISTE EL SEMINARIO ──
     def test_seminario_inexistente_redirige_a_detalle_200(self):
-        """Si se busca un número de seminario que no existe, da error y el destino responde con 200."""
+        """
+        Si se busca un número de seminario que no existe, da error y
+        el destino responde con 200.
+        """
         url_invalida = reverse('lumat_app:generar_acta', kwargs={
                                'num': 9})  # No existe seminario 9
         response = self.client.post(url_invalida, data=self.payload_valido)
@@ -88,7 +91,10 @@ class GenerarActaViewAllPathsTest(TestCase):
 
     # ── PATH 2: REDIRECCIÓN CUANDO EL SEMINARIO NO TIENE CALIFICACIÓN ──
     def test_seminario_sin_calificacion_redirige_a_detalle_200(self):
-        """Si el seminario existe pero no tiene calificación, da error y el destino responde con 200."""
+        """
+        Si el seminario existe pero no tiene calificación, da error y el destino
+        responde con 200.
+        """
         self.seminario.calificacion = None
         self.seminario.save()
 
@@ -103,7 +109,10 @@ class GenerarActaViewAllPathsTest(TestCase):
 
     # ── PATH 3: REDIRECCIÓN CUANDO EL ACTA YA EXISTE (POST) ──
     def test_acta_ya_existente_bloquea_post_y_redirige_a_detalle_200(self):
-        """Si el acta ya fue creada con anterioridad, prohíbe la duplicación y el destino responde con 200."""
+        """
+        Si el acta ya fue creada con anterioridad, prohíbe la duplicación y
+        el destino responde con 200.
+        """
         # Instanciar un acta previa ligada al seminario
         ActaAlumnoData.objects.create(
             seminario=self.seminario, actividad_principal="Previa", plan_siguiente="Previa")
@@ -119,7 +128,10 @@ class GenerarActaViewAllPathsTest(TestCase):
 
     # ── PATH 4: REDIRECCIÓN POR FORMULARIO INVALIDO ──
     def test_formulario_invalido_guarda_en_sesion_y_redirige_a_detalle_200(self):
-        """Si faltan campos requeridos, guarda la información en la sesión y el destino responde con 200."""
+        """
+        Si faltan campos requeridos, guarda la información en la sesión y
+        el destino responde con 200.
+        """
         payload_incompleto = {
             'actividad_principal': '',  # Campo obligatorio vacío
             'reuniones_tutor': -5       # Dato numérico erróneo
@@ -139,7 +151,10 @@ class GenerarActaViewAllPathsTest(TestCase):
     # ── PATH 5: FLUJO COMPLETO EXITOSO (POST) ──
     @patch('lumat_app.views.generar_acta_alumno')
     def test_flujo_exitoso_crea_datos_pdf_y_redirige_a_detalle_200(self, mock_generar_pdf):
-        """Flujo ideal: persiste datos, guarda archivo adjunto en Seminario y el destino responde con 200."""
+        """
+        Flujo ideal: persiste datos, guarda archivo adjunto en Seminario
+        y el destino responde con 200.
+        """
         # Mockear el generador ReportLab para retornar un flujo BytesIO simulado
         mock_buffer = MagicMock()
         mock_buffer.read.return_value = b"%PDF-1.4 simulacion_binaria_pdf"
@@ -166,7 +181,10 @@ class GenerarActaViewAllPathsTest(TestCase):
     # ── PATH 6: REDIRECCIÓN POR EXCEPCIÓN / FALLO TÉCNICO PDF ──
     @patch('lumat_app.views.generar_acta_alumno')
     def test_error_en_pdf_limpia_data_y_redirige_a_detalle_200(self, mock_generar_pdf):
-        """Si el compilador de ReportLab arroja una excepción, borra data huérfana y el destino responde con 200."""
+        """
+        Si el compilador de ReportLab arroja una excepción, borra data
+        huérfana y el destino responde con 200.
+        """
         mock_generar_pdf.side_effect = Exception(
             "Fallo crítico inesperado de ReportLab")
 
@@ -184,7 +202,10 @@ class GenerarActaViewAllPathsTest(TestCase):
 
     # ── PATH 7: REDIRECCIÓN EN ACCESO POR MÉTODO GET ──
     def test_peticion_get_manual_redirige_a_detalle_200(self):
-        """Si un alumno intenta forzar la URL por método GET, se le deniega el acceso y el destino responde con 200."""
+        """
+        Si un alumno intenta forzar la URL por método GET, se le deniega
+        el acceso y el destino responde con 200.
+        """
         response = self.client.get(self.url)
 
         self.assertRedirects(response, self.url_detalle,

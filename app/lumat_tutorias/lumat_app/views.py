@@ -1,4 +1,3 @@
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import Group
 from django.contrib.auth import update_session_auth_hash
@@ -13,7 +12,8 @@ from datetime import datetime, timedelta, time
 import random
 from django.core.files.base import ContentFile
 
-from .models import ActaAlumnoData, Alumno, Docente, FormularioComite, Seminario, CalendarioGenerado, Comite
+from .models import ActaAlumnoData, Alumno, Docente, FormularioComite
+from .models import Seminario, CalendarioGenerado, Comite
 from django.utils import timezone
 
 from .models import (
@@ -220,7 +220,8 @@ def seminario_detalle(request, num):
     if acta_existente:
         form_acta = ActaAlumnoForm(initial=acta_existente.to_dict())
     else:
-        # Intentamos recuperar datos que hayan fallado en la validación del POST (enviados via sesión)
+        # Intentamos recuperar datos que hayan fallado en la validación
+        # del POST (enviados via sesión)
         session_form_data = request.session.pop('failed_acta_form_data', None)
         if session_form_data:
             form_acta = ActaAlumnoForm(session_form_data)
@@ -319,7 +320,8 @@ def generar_acta_view(request, num):
             # Si el formulario tiene errores de validación, alertamos al usuario
             messages.error(
                 request, "Por favor corrige los campos marcados en rojo antes de guardar.")
-            # Guardamos temporalmente la data inválida en la sesión para no borrar lo que el alumno escribió
+            # Guardamos temporalmente la data inválida en la sesión para no borrar lo
+            # que el alumno escribió
             request.session['failed_acta_form_data'] = request.POST
             return redirect("lumat_app:seminario_detalle", num=num)
 
