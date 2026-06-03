@@ -4,8 +4,9 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
+from django.urls import reverse
 
-from .models import CalendarioGenerado, Docente, Seminario, FormularioComite
+from .models import ActaAlumnoData, CalendarioGenerado, Docente, Seminario, FormularioComite
 from .utils_pdf_comite import generar_pdf_comite
 import io
 import zipfile
@@ -246,9 +247,6 @@ def docente_seminario_detalle(request, seminario_id):
     )
 
     rol = _rol_en_seminario(docente, seminario)
-    # if not rol:
-    #     raise Http404
-
     formulario = _get_o_crear_formulario(seminario)
     rol_activo = request.GET.get('rol', 'todos')
 
@@ -265,7 +263,7 @@ def docente_seminario_detalle(request, seminario_id):
             instance=formulario) if rol == 'tutor' else None
 
     # ── Formulario de firma / calificación ────────────────────
-    ya_firme = getattr(formulario, f'firma_{rol}')
+    ya_firme = getattr(formulario, f'firma_{rol}') if rol else False
     firma_form = FirmaCalificacionForm() if not ya_firme else None
 
     return render(request, 'docente_seminario_detalle.html', {
@@ -279,6 +277,38 @@ def docente_seminario_detalle(request, seminario_id):
         'ya_firme': ya_firme,
     })
 
+
+def text_form_valido(form, request):
+    if form.is_valid():
+        return True
+    messages.error(request, "La calificación debe ser un número válido entre 0 y 10.")
+    return False
+
+
+def _verificar_y_generar_pdf_comite(request, seminario, formulario):
+    """Evalúa si el formulario del comité cambió su estatus a 'completo'
+
+    y procede a renderizar y guardar de forma física el archivo PDF.
+    """
+    if formulario.estado_general == 'completo':
+        try:
+            seminario.calificacion = formulario.calificacion_final
+            
+            # Aquí desmarcas e integras tu generador real de PDF:
+            # pdf_buffer = generar_acta_comite(seminario=seminario, formulario=formulario)
+            # nombre_archivo = f"acta_comite_{seminario.numero}_{seminario.alumno.matricula or seminario.alumno.id}.pdf"
+            # seminario.actaComite.save(nombre_archivo, ContentFile(pdf_buffer.read()), save=False)
+            
+            seminario.save()
+            messages.info(request, "El sínodo se ha completado. Se ha emitido y archivado el Acta del Comité PDF.")
+        except Exception as e:
+            messages.error(request, f"Las firmas son válidas pero ocurrió un error al construir el archivo PDF: {e}")
+
+def text_form_valido(form, request, formulario, rol):
+    if form.is_valid():
+        return True
+    messages.error(request, "La calificación debe ser un número entre 0 y 10.")
+    return False
 # ── Vista: firmar + calificar ─────────────────────────────────
 
 

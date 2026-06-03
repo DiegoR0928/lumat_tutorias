@@ -122,12 +122,12 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
     ]
     t_alumno = Table(datos_alumno, colWidths=["50%", "50%"])
     t_alumno.setStyle(TableStyle([
-        ("BOX",        (0, 0), (-1, -1), 0.5, GRIS_BORDE),
-        ("INNERGRID",  (0, 0), (-1, -1), 0.5, GRIS_BORDE),
+        ("BOX", (0, 0), (-1, -1), 0.5, GRIS_BORDE),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, GRIS_BORDE),
         ("BACKGROUND", (0, 0), (-1, -1), GRIS_BG),
-        ("TOPPADDING",    (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
     ]))
     story.append(t_alumno)
 
