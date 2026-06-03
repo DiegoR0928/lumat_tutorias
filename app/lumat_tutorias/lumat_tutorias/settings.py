@@ -129,7 +129,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 UNFOLD = {
     "SITE_TITLE": "Lumat Admin",
 
-    # Logo corregido
     "SITE_LOGO": {
         "light": lambda request: static("logos/lumat.png"),
         "dark": lambda request: static("logos/lumat.png"),
@@ -151,7 +150,7 @@ UNFOLD = {
     },
 
     "SIDEBAR": {
-        "show_search": True,            # Habilita un buscador rápido en el menú
+        "show_search": True,            
         "show_all_applications": False,
 
         "navigation": [
@@ -228,9 +227,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
 
-# Si el comando ejecutado es 'test', sobreescribimos la base de datos a SQLite en memoria
 if 'test' in sys.argv:
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': ':memory:',
     }
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'app']

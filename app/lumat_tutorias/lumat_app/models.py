@@ -65,8 +65,8 @@ class Comite(models.Model):
 class Seminario(models.Model):
     alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE)
     comite = models.ForeignKey(Comite, on_delete=models.CASCADE)
-    fecha = models.DateField()
-    hora = models.TimeField()
+    fecha = models.DateField(null=True, blank=True)
+    hora = models.TimeField(null=True, blank=True)
     calificacion = models.DecimalField(
         max_digits=4, decimal_places=2, null=True, blank=True)
     actaComite = models.FileField(upload_to='actas/', null=True, blank=True)

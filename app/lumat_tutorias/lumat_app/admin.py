@@ -36,6 +36,12 @@ class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
 
     obtener_rol.short_description = "Tipo de Usuario"
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 class AlumnoForm(forms.ModelForm):
     username = forms.CharField(
