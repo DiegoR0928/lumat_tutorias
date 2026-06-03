@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/calendario.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="cal-page">
+
+  {# Breadcrumb #}
+  <nav class="cal-breadcrumb" aria-label="Ruta de navegación">
+    <a href="javascript:history.back()">
+      <i class="ti ti-arrow-left" aria-hidden="true"></i>
+      Volver
+    </a>
+    <i class="ti ti-chevron-right" aria-hidden="true"></i>
+    <span>Calendario académico</span>
+  </nav>
+
+  {# Header #}
+  <div class="cal-header">
+    <h1 class="cal-title">Calendario académico</h1>
+  </div>
+
+  {% if calendario %}
+    
+    {# Layout de dos columnas #}
+    <div class="cal-layout">
+      
+      {# PANEL LATERAL - Información del periodo #}
+      <aside class="cal-sidebar">
+        <div class="cal-sidebar-header">
+          <h3>
+            <i class="ti ti-info-circle" aria-hidden="true"></i>
+            Información del periodo
+          </h3>
+        </div>
+        <div class="cal-sidebar-body">
+          <div class="cal-info-item">
+            <div class="cal-info-label">
+              <i class="ti ti-calendar-event" aria-hidden="true"></i>
+              Periodo
+            </div>
+            <div class="cal-info-value">
+              <strong>{{ calendario.nombre }}</strong>
+            </div>
+          </div>
+          
+          <div class="cal-info-item">
+            <div class="cal-info-label">
+              <i class="ti ti-calendar" aria-hidden="true"></i>
+              Fecha de inicio
+            </div>
+            <div class="cal-info-value">
+              {{ calendario.fecha_inicio|date:"l d \d\e F \d\e Y" }}
+              <br>
+              <small style="color: var(--lumat-muted);">{{ calendario.fecha_inicio|date:"d/m/Y" }}</small>
+            </div>
+          </div>
+          
+          <div class="cal-info-item">
+            <div class="cal-info-label">
+              <i class="ti ti-calendar-due" aria-hidden="true"></i>
+              Fecha de término
+            </div>
+            <div class="cal-info-value">
+              {{ calendario.fecha_fin|date:"l d \d\e F \d\e Y" }}
+              <br>
+              <small style="color: var(--lumat-muted);">{{ calendario.fecha_fin|date:"d/m/Y" }}</small>
+            </div>
+          </div>
+          
+          <div class="cal-info-item">
+            <div class="cal-info-label">
+              <i class="ti ti-clock" aria-hidden="true"></i>
+              Publicado
+            </div>
+            <div class="cal-info-value">
+              {{ calendario.fecha_creacion|date:"l d \d\e F \d\e Y" }}
+              <br>
+              <small style="color: var(--lumat-muted);">{{ calendario.fecha_creacion|date:"H:i" }} hrs</small>
+            </div>
+          </div>
+          
+          {% if calendario.dias_habiles %}
+          <div class="cal-info-item">
+            <div class="cal-info-label">
+              <i class="ti ti-calendar-stats" aria-hidden="true"></i>
+              Días hábiles
+            </div>
+            <div class="cal-info-value">
+              {{ calendario.dias_habiles }} días
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if calendario.periodo_extraordinario %}
+          <div class="cal-info-item">
+            <div class="cal-info-label">
+              <i class="ti ti-alert-circle" aria-hidden="true"></i>
+              Periodo extraordinario
+            </div>
+            <div class="cal-info-value">
+              {{ calendario.periodo_extraordinario }}
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if calendario.periodo_tesis %}
+          <div class="cal-info-item">
+            <div class="cal-info-label">
+              <i class="ti ti-book" aria-hidden="true"></i>
+              Periodo tesis
+            </div>
+            <div class="cal-info-value">
+              {{ calendario.periodo_tesis }}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </aside>
+      
+      {# PANEL PRINCIPAL - Visor PDF #}
+      <main class="cal-main">
+        <div class="cal-pdf-toolbar">
+          <span>
+            <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
+            {{ calendario.nombre }} - Documento oficial
+          </span>
+          <div class="cal-pdf-actions">
+            <a href="{{ calendario.archivo_pdf.url }}" target="_blank" class="cal-pdf-btn">
+              <i class="ti ti-external-link" aria-hidden="true"></i> Abrir
+            </a>
+            <a href="{{ calendario.archivo_pdf.url }}" download class="cal-pdf-btn">
+              <i class="ti ti-download" aria-hidden="true"></i> Descargar
+            </a>
+          </div>
+        </div>
+        <iframe
+          src="{{ calendario.archivo_pdf.url }}#toolbar=0&navpanes=0"
+          class="cal-pdf-frame"
+          title="Calendario académico {{ calendario.nombre }}"
+          loading="lazy">
+        </iframe>
+      </main>
+      
+    </div>
+
+  {% else %}
+
+    {# Estado vacío #}
+    <div class="cal-empty" id="cal-empty">
+      <i class="ti ti-calendar-off" aria-hidden="true"></i>
+      <p>Aún no hay un calendario publicado por la coordinación.</p>
+      <p style="font-size: 13px; margin-top: 12px;">Consulta más tarde o contacta con la coordinación académica.</p>
+    </div>
+
+  {% endif %}
+
+</div>
+
+<script>
+  // Script opcional para manejar errores de carga del PDF
+  document.getElementById('cal-iframe')?.addEventListener('error', function() {
+    console.warn('El PDF no pudo cargarse correctamente');
+  });
+</script>
+{% endblock %}

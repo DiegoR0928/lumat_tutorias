@@ -2,8 +2,10 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
 from django.http import HttpResponse, Http404
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
-from .models import Seminario, FormularioComite
+from .models import CalendarioGenerado, Docente, Seminario, FormularioComite
 from .utils_pdf_comite import generar_pdf_comite
 import io
 import zipfile
@@ -13,6 +15,7 @@ from django.db.models import Q
 from datetime import date
 import os
 from .forms import (
+    DocenteForm,
     FirmaCalificacionForm,
     FormularioComiteForm,
 )
@@ -21,6 +24,53 @@ from .forms import (
 def es_docente(user):
     return user.groups.filter(name='Docente').exists()
 
+@login_required
+def editar_perfil_docente(request):
+    try:
+        docente = request.user.docente
+    except Docente.DoesNotExist:
+        messages.error(request, "No tienes un perfil de docente asignado.")
+        return redirect('docente_seminarios')
+
+    # Detectar el modo de edición según los parámetros que maneja tu diseño
+    editando = request.GET.get('modo', None)
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion')
+
+        if accion == 'perfil':
+            docente_form = DocenteForm(request.POST, request.FILES, instance=docente)
+            if docente_form.is_valid():
+                docente_form.save()
+                messages.success(request, "Información personal actualizada correctamente.")
+                return redirect('lumat_app:perfil_docente')
+            else:
+                editando = 'perfil'  # Mantiene el modo edición si hay errores
+        
+        elif accion == 'password':
+            password_form = PasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, "Contraseña actualizada con éxito.")
+                return redirect('lumat_app:perfil_docente')
+            else:
+                editando = 'password'
+    else:
+        docente_form = DocenteForm(instance=docente)
+        password_form = PasswordChangeForm(request.user)
+        
+        # Inyectar la clase CSS a los campos de contraseña nativos de Django
+        for field in password_form.fields.values():
+            field.widget.attrs.update({'class': 'alumno-input'})
+
+    context = {
+        'docente': docente,
+        'docente_form': docente_form,
+        'password_form': password_form,
+        'editando': editando,
+    }
+    return render(request, 'docente_perfil.html', context)
 
 def _obtener_universo_seminarios(docente):
     """Filtra y devuelve los queries base optimizados como tutor y miembro."""
@@ -148,6 +198,7 @@ def docente_seminarios(request):
         'docente': docente,
         'seminarios': seminarios,
         'proximos_seminarios': _obtener_proximos_seminarios(docente),
+        'ultimo_calendario': CalendarioGenerado.objects.first(),
         'rol_activo': rol,
         'estado_activo': estado,
         'query_busqueda': query_busqueda,

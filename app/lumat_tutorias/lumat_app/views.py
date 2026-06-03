@@ -490,7 +490,15 @@ def _guardar_perfil(request, alumno):
     password_form = PasswordChangeCustomForm(user=request.user)
 
     if alumno_form.is_valid():
-        alumno_form.save()
+        # 1. Guardamos los datos del alumno en la base de datos
+        alumno_actualizado = alumno_form.save()
+        
+        # 2. Sincronizamos el email del modelo User de Django
+        usuario = request.user
+        if usuario.email != alumno_actualizado.correo:
+            usuario.email = alumno_actualizado.correo
+            usuario.save(update_fields=['email']) # update_fields por buena práctica y rendimiento
+
         messages.success(request, 'Perfil actualizado exitosamente')
         return redirect('lumat_app:perfil_alumno')
 
@@ -498,7 +506,7 @@ def _guardar_perfil(request, alumno):
         request, 'Datos inválidos, por favor verifica la información')
     return _render_perfil(
         request, alumno, editando='perfil',
-        alumno_form=alumno_form,
+        _alumno_form=alumno_form,
         password_form=password_form,
     )
 
@@ -520,6 +528,14 @@ def _cambiar_password(request, alumno):
         alumno_form=alumno_form,
         password_form=password_form,
     )
+
+@login_required
+def calendario(request):
+    ultimo = CalendarioGenerado.objects.first()  # ya ordenado por -fecha_creacion
+    return render(request, 'alumno_calendario.html', {
+        'calendario': ultimo,
+    })
+
 
 # ADMINISTRACION
 

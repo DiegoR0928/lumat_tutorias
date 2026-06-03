@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/docente_perfil.css' %}">
+
+<style>
+    /* Contenedor principal alineado al centro */
+    .content-max-width {
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Botón volver alineado a la extrema izquierda */
+    .btn-back-container {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Estructura de dos paneles con alturas idénticas */
+    .panels-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        align-items: stretch; /* Fuerza a que ambos paneles midan lo mismo de alto */
+    }
+
+    /* Forzar que las tarjetas y formularios ocupen el 100% de la altura de la fila */
+    .panels-container .form-card {
+        margin-bottom: 0; 
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .panels-container form {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1; /* Hace que el formulario se estire */
+    }
+
+    .panels-container .form-card-body {
+        flex-grow: 1; /* Empuja el footer hacia abajo uniformemente */
+    }
+
+    /* Ajuste responsivo para pantallas medianas o pequeñas */
+    @media (max-width: 1024px) {
+        .panels-container {
+            grid-template-columns: 1fr;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="page-wrap">
+
+    <div class="content-max-width">
+        <div class="btn-back-container">
+            <a href="{% url 'lumat_app:docente_seminarios' %}" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                ← Volver
+            </a>
+        </div>
+
+        {% if messages %}
+            <div style="margin-bottom: 1.5rem;">
+                {% for message in messages %}
+                    <div {% if message.tags == 'error' %}class="alert-err"{% else %}class="alert-ok"{% endif %} style="margin-bottom: 0.5rem;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="panels-container">
+
+            <div class="form-card">
+                <div class="form-card-header">
+                    <div>
+                        <p class="eyebrow">Mi Cuenta</p>
+                        <h5>Información del Docente</h5>
+                    </div>
+                    {% if editando == 'perfil' %}
+                        <span class="edit-badge">Modo edición</span>
+                    {% else %}
+                        <a href="?modo=perfil" class="btn-edit" id="btn_editar_datos">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            Editar Datos
+                        </a>
+                    {% endif %}
+                </div>
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="perfil">
+
+                    <div class="form-card-body">
+                        <p class="section-divider">Nombre Completo</p>
+                        <div class="form-grid-3">
+                            <div class="field-group">
+                                <span class="field-label">Nombre(s)</span>
+                                {% if editando == 'perfil' %}
+                                    {{ docente_form.nombre }}
+                                    <div class="field-error">{{ docente_form.nombre.errors }}</div>
+                                {% else %}
+                                    <div class="field-value">{{ docente.nombre|default:"—" }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="field-group">
+                                <span class="field-label">Apellido Paterno</span>
+                                {% if editando == 'perfil' %}
+                                    {{ docente_form.apellido_paterno }}
+                                    <div class="field-error">{{ docente_form.apellido_paterno.errors }}</div>
+                                {% else %}
+                                    <div class="field-value">{{ docente.apellido_paterno|default:"—" }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="field-group">
+                                <span class="field-label">Apellido Materno</span>
+                                {% if editando == 'perfil' %}
+                                    {{ docente_form.apellido_materno }}
+                                    <div class="field-error">{{ docente_form.apellido_materno.errors }}</div>
+                                {% else %}
+                                    <div class="field-value">{{ docente.apellido_materno|default:"—" }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <p class="section-divider" style="margin-top: 24px;">Contacto y Formalización</p>
+                        <div class="form-grid-2">
+                            <div class="field-group">
+                                <span class="field-label">Correo Electrónico</span>
+                                {% if editando == 'perfil' %}
+                                    {{ docente_form.correo }}
+                                    <div class="field-error">{{ docente_form.correo.errors }}</div>
+                                {% else %}
+                                    <div class="field-value">{{ docente.correo|default:"—" }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="field-group">
+                                <span class="field-label">Firma Digital (Imagen)</span>
+                                {% if editando == 'perfil' %}
+                                    {{ docente_form.firma }}
+                                    <div class="field-error">{{ docente_form.firma.errors }}</div>
+                                {% else %}
+                                    <div class="field-value">
+                                        {% if docente.firma %}
+                                            <span style="color: #4a7c7a; font-weight: bold;">✓ Archivo registrado</span>
+                                        {% else %}
+                                            — Sin firma cargada —
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if not editando and docente.firma %}
+                            <div style="margin-top: 10px; background: #faf8f4; padding: 12px; border: 1px dashed #c8b89a; border-radius: 6px; text-align: center;">
+                                <span class="field-label" style="margin-bottom: 8px;">Visualización de la firma</span>
+                                <img src="{{ docente.firma.url }}" alt="Firma docente" style="max-height: 70px; mix-blend-mode: multiply;">
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-card-footer">
+                        {% if editando == 'perfil' %}
+                            <a href="{% url 'lumat_app:perfil_docente' %}" class="btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn-primary">Guardar cambios</button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            <div class="form-card">
+                <div class="form-card-header">
+                    <div>
+                        <p class="eyebrow">Seguridad</p>
+                        <h5>Acceso y Contraseña</h5>
+                    </div>
+                    {% if editando == 'password' %}
+                        <span class="edit-badge">Modo edición</span>
+                    {% else %}
+                        <a href="?modo=password" class="btn-edit">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            Modificar
+                        </a>
+                    {% endif %}
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="password">
+
+                    <div class="form-card-body">
+                        <p class="section-divider">Identificación de Usuario</p>
+                        <div class="form-grid-2">
+                            <div class="field-group">
+                                <span class="field-label">Nombre de Usuario</span>
+                                <div class="field-value">{{ request.user.username }}</div>
+                            </div>
+
+                            <div class="field-group">
+                                <span class="field-label">Último Inicio de Sesión</span>
+                                <div class="field-value">{{ request.user.last_login|date:"d/m/Y H:i"|default:"—" }}</div>
+                            </div>
+                        </div>
+
+                        <p class="section-divider" style="margin-top: 24px;">Credenciales de Seguridad</p>
+                        
+                        {% if editando == 'password' %}
+                            {% for field in password_form %}
+                                <div class="field-group">
+                                    <span class="field-label">{{ field.label }}</span>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="field-error">{{ field.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="form-grid-2">
+                                <div class="field-group">
+                                    <span class="field-label">Contraseña de acceso</span>
+                                    <div class="field-value">••••••••••••••••</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-card-footer">
+                        {% if editando == 'password' %}
+                            <a href="{% url 'lumat_app:perfil_docente' %}" class="btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn-primary">Actualizar contraseña</button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+        </div> </div> </div>
+
+{% endblock %}

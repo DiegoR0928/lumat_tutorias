@@ -100,17 +100,17 @@
                         </div>
                     </div>
 
-                    <!-- ✅ NUEVO: Enlace a perfil -->
                     <div style="padding: 6px 6px 0 6px;">
-                        <a href="{% url 'lumat_app:perfil_alumno' %}" style="
-                            display: flex; align-items: center; gap: 8px;
-                            width: 100%; padding: 11px 16px;
-                            font-size: 0.84rem;
-                            color: #4a3f32; font-family: 'Georgia', serif;
-                            text-decoration: none;
-                            border-radius: 6px;
-                            transition: background 0.15s;
-                        " onmouseover="this.style.background='#e3d9cb'" onmouseout="this.style.background='transparent'">
+                        {% if user.docente %}
+                        <a href="{% url 'lumat_app:perfil_docente' %}" style="
+            display: flex; align-items: center; gap: 8px;
+            width: 100%; padding: 11px 16px;
+            font-size: 0.84rem;
+            color: #4a3f32; font-family: 'Georgia', serif;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.15s;
+        " onmouseover="this.style.background='#e3d9cb'" onmouseout="this.style.background='transparent'">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -118,6 +118,24 @@
                             </svg>
                             Mi perfil
                         </a>
+                        {% else %}
+                        <a href="{% url 'lumat_app:perfil_alumno' %}" style="
+            display: flex; align-items: center; gap: 8px;
+            width: 100%; padding: 11px 16px;
+            font-size: 0.84rem;
+            color: #4a3f32; font-family: 'Georgia', serif;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.15s;
+        " onmouseover="this.style.background='#e3d9cb'" onmouseout="this.style.background='transparent'">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            Mi perfil
+                        </a>
+                        {% endif %}
                     </div>
 
                     <!-- Separador -->

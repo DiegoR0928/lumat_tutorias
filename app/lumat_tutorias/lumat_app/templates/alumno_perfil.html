@@ -3,459 +3,213 @@
 
 {% block content %}
 
-<style>
-    .page-wrap {
-        background: #ede9e0;
-        min-height: 90vh;
-        padding: 2.5rem 1rem;
-    }
-
-    .form-card {
-        background: #f7f4ef;
-        border: 1px solid #c8b89a;
-        border-top: 3px solid #4a7c7a;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 8px 28px rgba(74, 63, 50, 0.12);
-        max-width: 860px;
-        margin: 0 auto 2rem;
-    }
-
-    .form-card-header {
-        background: #eee8de;
-        border-bottom: 1px solid #c8b89a;
-        padding: 18px 28px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .form-card-header .eyebrow {
-        font-family: Arial, sans-serif;
-        font-size: 0.68rem;
-        text-transform: uppercase;
-        letter-spacing: 0.18em;
-        color: #4a7c7a;
-        font-weight: bold;
-        margin: 0 0 3px;
-    }
-
-    .form-card-header h5 {
-        font-family: 'Georgia', serif;
-        font-size: 1.1rem;
-        color: #4a3f32;
-        font-weight: normal;
-        margin: 0;
-    }
-
-    .form-card-body { padding: 28px; }
-
-    .form-card-footer {
-        background: #eee8de;
-        border-top: 1px solid #e3d9cb;
-        padding: 14px 28px;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        min-height: 56px;
-    }
-
-    .section-divider {
-        font-family: Arial, sans-serif;
-        font-size: 0.68rem;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        color: #a89880;
-        border-bottom: 1px solid #e3d9cb;
-        padding-bottom: 8px;
-        margin: 0 0 20px;
-    }
-
-    .form-grid-2 {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0 20px;
-    }
-
-    .form-grid-3 {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0 20px;
-    }
-
-    @media (max-width: 640px) {
-        .form-grid-2,
-        .form-grid-3 { grid-template-columns: 1fr; }
-    }
-
-    .field-group { margin-bottom: 18px; }
-
-    .field-label {
-        display: block;
-        font-family: Arial, sans-serif;
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #8a7560;
-        margin-bottom: 6px;
-    }
-
-    /* Valor de solo lectura estilo texto plano */
-    .field-value {
-        font-family: Arial, sans-serif;
-        font-size: 0.9rem;
-        color: #4a3f32;
-        padding: 9px 0;
-        border-bottom: 1px solid #e3d9cb;
-        min-height: 38px;
-    }
-
-    /* Input editable */
-    .alumno-input {
-        width: 100%;
-        padding: 9px 12px;
-        background: #faf8f4;
-        border: 1px solid #c8b89a;
-        border-radius: 6px;
-        font-family: Arial, sans-serif;
-        font-size: 0.88rem;
-        color: #4a3f32;
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        box-sizing: border-box;
-    }
-
-    .alumno-input:focus {
-        border-color: #4a7c7a;
-        box-shadow: 0 0 0 3px rgba(74, 124, 122, 0.12);
-    }
-
-    .field-error {
-        font-family: Arial, sans-serif;
-        font-size: 0.75rem;
-        color: #8a3a2a;
-        margin-top: 4px;
-    }
-
-    /* Badges */
-    .edit-badge {
-        font-family: Arial, sans-serif;
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        background: #eaf3f0;
-        color: #4a7c7a;
-        border: 1px solid #a0c8c4;
-        border-radius: 4px;
-        padding: 4px 12px;
-    }
-
-    /* Botones */
-    .btn-primary {
-        background: #4a7c7a;
-        border: none;
-        border-radius: 6px;
-        padding: 9px 24px;
-        font-family: 'Georgia', serif;
-        font-size: 0.88rem;
-        letter-spacing: 0.06em;
-        color: #f7f4ef;
-        cursor: pointer;
-        transition: background 0.2s;
-        text-decoration: none;
-        display: inline-block;
-    }
-    .btn-primary:hover { background: #3a6260; color: #f7f4ef; }
-
-    .btn-secondary {
-        background: transparent;
-        border: 1px solid #c8b89a;
-        border-radius: 6px;
-        padding: 9px 24px;
-        font-family: 'Georgia', serif;
-        font-size: 0.88rem;
-        letter-spacing: 0.06em;
-        color: #8a7560;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-decoration: none;
-        display: inline-block;
-    }
-    .btn-secondary:hover {
-        background: #eee8de;
-        border-color: #8a7560;
-        color: #4a3f32;
-    }
-
-    .btn-edit {
-        background: transparent;
-        border: 1px solid #c8b89a;
-        border-radius: 6px;
-        padding: 7px 18px;
-        font-family: Arial, sans-serif;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #4a7c7a;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border: 1px solid #c8b89a;
-    }
-    .btn-edit:hover {
-        background: #eaf3f0;
-        border-color: #4a7c7a;
-        color: #4a7c7a;
-    }
-
-    /* Alertas */
-    .alert-ok {
-        background: #eaf3f0;
-        border: 1px solid #a0c8c4;
-        border-left: 3px solid #4a7c7a;
-        border-radius: 6px;
-        padding: 10px 16px;
-        margin-bottom: 1.5rem;
-        font-family: Arial, sans-serif;
-        font-size: 0.84rem;
-        color: #2e5e5c;
-        max-width: 860px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .alert-err {
-        background: #faeae6;
-        border: 1px solid #e0b8ae;
-        border-left: 3px solid #8a3a2a;
-        border-radius: 6px;
-        padding: 10px 16px;
-        margin-bottom: 1.5rem;
-        font-family: Arial, sans-serif;
-        font-size: 0.84rem;
-        color: #8a3a2a;
-        max-width: 860px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/alumno_perfil.css' %}">
 
 <div class="page-wrap">
 
-    {% for message in messages %}
-        <div 
-            {% if message.tags == 'error' %}
-                id="error_message"
-                class="alert-err"
-            {% else %}
-                id="success_message"
-                class="alert-ok"
-            {% endif %}
-        >
-            {{ message }}
-        </div>
-    {% endfor %}
+    <!-- ── Botón Ir Atrás ── -->
+    <div class="nav-header">
+        <a href="{% url 'lumat_app:seminario_detalle' num=alumno.semestre|add:'0' %}" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px; font-size: 0.8rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Volver al Seminario
+        </a>
+    </div>
 
-    <!-- ── Tarjeta 1: Información personal ── -->
-    <div class="form-card">
-
-        <div class="form-card-header">
-            <div>
-                <p class="eyebrow">Mi cuenta</p>
-                <h5>Información personal</h5>
-            </div>
-            {% if editando == 'perfil' %}
-                <span class="edit-badge">Modo edición</span>
-            {% else %}
-                <a href="?modo=perfil" class="btn-edit" id="btn_editar_datos">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                    Editar
-                </a>
-            {% endif %}
-        </div>
-
-        <form method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="accion" value="perfil">
-
-            <div class="form-card-body">
-
-                <p class="section-divider">Datos académicos</p>
-                <div class="form-grid-3">
-
-                    <div class="field-group">
-                        <span class="field-label">Matrícula</span>
-                        {% if editando == 'perfil' %}
-                            {{ alumno_form.matricula }}
-                            <div class="field-error">{{ alumno_form.matricula.errors }}</div>
-                        {% else %}
-                            <div class="field-value">{{ alumno.matricula|default:"—" }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="field-group">
-                        <span class="field-label">Semestre</span>
-                        <!-- Semestre: siempre solo lectura -->
-                        <div class="field-value">{{ alumno.semestre|default:"—" }}</div>
-                    </div>
-
-                    <div class="field-group">
-                        <span class="field-label">Correo</span>
-                        {% if editando == 'perfil' %}
-                            {{ alumno_form.correo }}
-                            <div class="field-error">{{ alumno_form.correo.errors }}</div>
-                        {% else %}
-                            <div class="field-value">{{ alumno.correo|default:"—" }}</div>
-                        {% endif %}
-                    </div>
-
+    <!-- ── Mensajes de Alerta ── -->
+    {% if messages %}
+        <div class="alerts-container">
+            {% for message in messages %}
+                <div {% if message.tags == 'error' %}id="error_message" class="alert-err"{% else %}id="success_message" class="alert-ok"{% endif %}>
+                    {{ message }}
                 </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
-                <p class="section-divider" style="margin-top: 24px;">Datos personales</p>
-                <div class="form-grid-3">
+    <!-- ── Contenedor de Dos Paneles ── -->
+    <div class="panels-container">
 
-                    <div class="field-group">
-                        <span class="field-label">Nombre</span>
-                        {% if editando == 'perfil' %}
-                            {{ alumno_form.nombre }}
-                            <div class="field-error">{{ alumno_form.nombre.errors }}</div>
-                        {% else %}
-                            <div class="field-value">{{ alumno.nombre|default:"—" }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="field-group">
-                        <span class="field-label">Apellido paterno</span>
-                        {% if editando == 'perfil' %}
-                            {{ alumno_form.apellido_paterno }}
-                            <div class="field-error">{{ alumno_form.apellido_paterno.errors }}</div>
-                        {% else %}
-                            <div class="field-value">{{ alumno.apellido_paterno|default:"—" }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="field-group">
-                        <span class="field-label">Apellido materno</span>
-                        {% if editando == 'perfil' %}
-                            {{ alumno_form.apellido_materno }}
-                            <div class="field-error">{{ alumno_form.apellido_materno.errors }}</div>
-                        {% else %}
-                            <div class="field-value">{{ alumno.apellido_materno|default:"—" }}</div>
-                        {% endif %}
-                    </div>
-
+        <!-- Panel 1: Información personal -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <div>
+                    <p class="eyebrow">Mi cuenta</p>
+                    <h5>Información personal</h5>
                 </div>
-            </div>
-
-            <div class="form-card-footer">
                 {% if editando == 'perfil' %}
-                    <a id="btn_cancelar" href="{% url 'lumat_app:perfil_alumno' %}" class="btn-secondary">Cancelar</a>
-                    <button id="btn_guardar_1" type="submit" class="btn-primary">Guardar cambios</button>
+                    <span class="edit-badge">Modo edición</span>
+                {% else %}
+                    <a href="?modo=perfil" class="btn-edit" id="btn_editar_datos">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        Editar
+                    </a>
                 {% endif %}
             </div>
 
-        </form>
-    </div>
+            <form method="POST" style="display: flex; flex-direction: column; height: 100%;">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="perfil">
 
-    <!-- ── Tarjeta 2: Cuenta y contraseña ── -->
-    <div class="form-card">
+                <div class="form-card-body">
+                    <p class="section-divider">Datos académicos</p>
+                    <div class="form-grid-3">
+                        <div class="field-group">
+                            <span class="field-label">Matrícula</span>
+                            {% if editando == 'perfil' %}
+                                {{ alumno_form.matricula }}
+                                <div class="field-error">{{ alumno_form.matricula.errors }}</div>
+                            {% else %}
+                                <div class="field-value">{{ alumno.matricula|default:"—" }}</div>
+                            {% endif %}
+                        </div>
 
-        <div class="form-card-header">
-            <div>
-                <p class="eyebrow">Seguridad</p>
-                <h5>Cuenta y contraseña</h5>
-            </div>
-            {% if editando == 'password' %}
-                <span class="edit-badge">Modo edición</span>
-            {% else %}
-                <a href="?modo=password" class="btn-edit">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                    Editar
-                </a>
-            {% endif %}
+                        <div class="field-group">
+                            <span class="field-label">Semestre</span>
+                            <div class="field-value">{{ alumno.semestre|default:"—" }}</div>
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-label">Correo</span>
+                            {% if editando == 'perfil' %}
+                                {{ alumno_form.correo }}
+                                <div class="field-error">{{ alumno_form.correo.errors }}</div>
+                            {% else %}
+                                <div class="field-value">{{ alumno.correo|default:"—" }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <p class="section-divider" style="margin-top: 24px;">Datos personales</p>
+                    <div class="form-grid-3">
+                        <div class="field-group">
+                            <span class="field-label">Nombre</span>
+                            {% if editando == 'perfil' %}
+                                {{ alumno_form.nombre }}
+                                <div class="field-error">{{ alumno_form.nombre.errors }}</div>
+                            {% else %}
+                                <div class="field-value">{{ alumno.nombre|default:"—" }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-label">Apellido paterno</span>
+                            {% if editando == 'perfil' %}
+                                {{ alumno_form.apellido_paterno }}
+                                <div class="field-error">{{ alumno_form.apellido_paterno.errors }}</div>
+                            {% else %}
+                                <div class="field-value">{{ alumno.apellido_paterno|default:"—" }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-label">Apellido materno</span>
+                            {% if editando == 'perfil' %}
+                                {{ alumno_form.apellido_materno }}
+                                <div class="field-error">{{ alumno_form.apellido_materno.errors }}</div>
+                            {% else %}
+                                <div class="field-value">{{ alumno.apellido_materno|default:"—" }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card-footer">
+                    {% if editando == 'perfil' %}
+                        <a id="btn_cancelar" href="{% url 'lumat_app:perfil_alumno' %}" class="btn-secondary">Cancelar</a>
+                        <button id="btn_guardar_1" type="submit" class="btn-primary">Guardar cambios</button>
+                    {% endif %}
+                </div>
+            </form>
         </div>
 
-        <form method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="accion" value="password">
-
-            <div class="form-card-body">
-
-                <p class="section-divider">Datos de acceso</p>
-                <div class="form-grid-2">
-
-                    <div class="field-group">
-                        <span class="field-label">Usuario</span>
-                        <!-- Usuario: siempre solo lectura -->
-                        <div class="field-value">{{ request.user.username }}</div>
-                    </div>
-
-                    <div class="field-group">
-                        <span class="field-label">Correo de acceso</span>
-                        <div class="field-value">{{ request.user.email|default:"—" }}</div>
-                    </div>
-
+        <!-- Panel 2: Cuenta y contraseña -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <div>
+                    <p class="eyebrow">Seguridad</p>
+                    <h5>Cuenta y contraseña</h5>
                 </div>
-
-                <p class="section-divider" style="margin-top: 24px;">Cambiar contraseña</p>
-                <div class="form-grid-3">
-
-                    <div class="field-group">
-                        <span class="field-label">Contraseña actual</span>
-                        {% if editando == 'password' %}
-                            {{ password_form.old_password }}
-                            <div class="field-error">{{ password_form.old_password.errors }}</div>
-                        {% else %}
-                            <div class="field-value">••••••••</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="field-group">
-                        <span class="field-label">Nueva contraseña</span>
-                        {% if editando == 'password' %}
-                            {{ password_form.new_password1 }}
-                            <div class="field-error">{{ password_form.new_password1.errors }}</div>
-                        {% else %}
-                            <div class="field-value">••••••••</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="field-group">
-                        <span class="field-label">Confirmar contraseña</span>
-                        {% if editando == 'password' %}
-                            {{ password_form.new_password2 }}
-                            <div class="field-error">{{ password_form.new_password2.errors }}</div>
-                        {% else %}
-                            <div class="field-value">••••••••</div>
-                        {% endif %}
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="form-card-footer">
                 {% if editando == 'password' %}
-                    <a id="btn_cancelar" href="{% url 'lumat_app:perfil_alumno' %}" class="btn-secondary">Cancelar</a>
-                    <button id="btn_guardar_2" type="submit" class="btn-primary">Actualizar contraseña</button>
+                    <span class="edit-badge">Modo edición</span>
+                {% else %}
+                    <a href="?modo=password" class="btn-edit">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        Editar
+                    </a>
                 {% endif %}
             </div>
 
-        </form>
-    </div>
+            <form method="POST" style="display: flex; flex-direction: column; height: 100%;">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="password">
 
+                <div class="form-card-body">
+                    <p class="section-divider">Datos de acceso</p>
+                    <div class="form-grid-2">
+                        <div class="field-group">
+                            <span class="field-label">Usuario</span>
+                            <div class="field-value">{{ request.user.username }}</div>
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-label">Correo de acceso</span>
+                            <div class="field-value">{{ request.user.email|default:"—" }}</div>
+                        </div>
+                    </div>
+
+                    <p class="section-divider" style="margin-top: 24px;">Cambiar contraseña</p>
+                    <div class="form-grid-3">
+                        <div class="field-group">
+                            <span class="field-label">Contraseña actual</span>
+                            {% if editando == 'password' %}
+                                {{ password_form.old_password }}
+                                <div class="field-error">{{ password_form.old_password.errors }}</div>
+                            {% else %}
+                                <div class="field-value">••••••••</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-label">Nueva contraseña</span>
+                            {% if editando == 'password' %}
+                                {{ password_form.new_password1 }}
+                                <div class="field-error">{{ password_form.new_password1.errors }}</div>
+                            {% else %}
+                                <div class="field-value">••••••••</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="field-group">
+                            <span class="field-label">Confirmar contraseña</span>
+                            {% if editando == 'password' %}
+                                {{ password_form.new_password2 }}
+                                <div class="field-error">{{ password_form.new_password2.errors }}</div>
+                            {% else %}
+                                <div class="field-value">••••••••</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card-footer">
+                    {% if editando == 'password' %}
+                        <a id="btn_cancelar" href="{% url 'lumat_app:perfil_alumno' %}" class="btn-secondary">Cancelar</a>
+                        <button id="btn_guardar_2" type="submit" class="btn-primary">Actualizar contraseña</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+    </div>
 </div>
 
 {% endblock %}
