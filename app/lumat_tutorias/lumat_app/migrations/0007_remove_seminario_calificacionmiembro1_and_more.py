@@ -25,7 +25,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='formulariocomite',
             name='pdf_generado',
-            field=models.FileField(blank=True, null=True, upload_to='pdfs_comite/', verbose_name='PDF del informe del comité'),
+            field=models.FileField(
+                blank=True, null=True, upload_to='pdfs_comite/', verbose_name='PDF del informe del comité'),
         ),
         migrations.AddField(
             model_name='formulariocomite',

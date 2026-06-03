@@ -24,30 +24,36 @@ from .forms import (
 def es_docente(user):
     return user.groups.filter(name='Docente').exists()
 
+
 @login_required
 def editar_perfil_docente(request):
     try:
         docente = request.user.docente
     except Docente.DoesNotExist:
         messages.error(request, "No tienes un perfil de docente asignado.")
-        return redirect('docente_seminarios')
+        # <-- Ojo con el namespace aquí también
+        return redirect('lumat_app:docente_seminarios')
 
-    # Detectar el modo de edición según los parámetros que maneja tu diseño
     editando = request.GET.get('modo', None)
 
     if request.method == 'POST':
         accion = request.POST.get('accion')
 
         if accion == 'perfil':
-            docente_form = DocenteForm(request.POST, request.FILES, instance=docente)
+            docente_form = DocenteForm(
+                request.POST, request.FILES, instance=docente)
+            password_form = PasswordChangeForm(request.user)
+
             if docente_form.is_valid():
                 docente_form.save()
-                messages.success(request, "Información personal actualizada correctamente.")
+                messages.success(
+                    request, "Información personal actualizada correctamente.")
                 return redirect('lumat_app:perfil_docente')
             else:
-                editando = 'perfil'  # Mantiene el modo edición si hay errores
-        
+                editando = 'perfil'
+
         elif accion == 'password':
+            docente_form = DocenteForm(instance=docente)
             password_form = PasswordChangeForm(request.user, request.POST)
             if password_form.is_valid():
                 user = password_form.save()
@@ -59,8 +65,7 @@ def editar_perfil_docente(request):
     else:
         docente_form = DocenteForm(instance=docente)
         password_form = PasswordChangeForm(request.user)
-        
-        # Inyectar la clase CSS a los campos de contraseña nativos de Django
+
         for field in password_form.fields.values():
             field.widget.attrs.update({'class': 'alumno-input'})
 
@@ -71,6 +76,7 @@ def editar_perfil_docente(request):
         'editando': editando,
     }
     return render(request, 'docente_perfil.html', context)
+
 
 def _obtener_universo_seminarios(docente):
     """Filtra y devuelve los queries base optimizados como tutor y miembro."""
@@ -150,7 +156,8 @@ def _obtener_proximos_seminarios(docente):
     """Genera de forma limpia el panel de recordatorios independientes."""
     hoy = date.today()
 
-    # Creamos la condición OR usando el conector nativo de Django, sin operadores lógicos sueltos
+    # Creamos la condición OR usando el conector nativo de Django,
+    # sin operadores lógicos sueltos
     condicion_docente = (
         Q(comite__tutor=docente) |
         Q(comite__miembro1=docente) |

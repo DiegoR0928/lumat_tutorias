@@ -12,11 +12,11 @@ from reportlab.platypus import (
 
 
 # ── Paleta ──────────────────────────────────────────────────
-AZUL      = colors.HexColor("#2C5F8A")
+AZUL = colors.HexColor("#4a7c7a")
 GRIS_BORDE = colors.HexColor("#C8C0B4")
-GRIS_BG   = colors.HexColor("#F7F4EF")
-NEGRO     = colors.black
-BLANCO    = colors.white
+GRIS_BG = colors.HexColor("#F7F4EF")
+NEGRO = colors.black
+BLANCO = colors.white
 
 
 def generar_acta_alumno(seminario, alumno, comite, datos_form):
@@ -99,9 +99,12 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
 
     # ── Encabezado ───────────────────────────────────────────
     story.append(Paragraph("INFORME SEMESTRAL", titulo))
-    semestre_label = seminario.fecha.strftime("%Y") + f"-{seminario.fecha.month // 7 + 1}"
-    story.append(Paragraph(f"Seminario {seminario.numero} &nbsp;·&nbsp; Semestre {semestre_label}", subtitulo))
-    story.append(HRFlowable(width="100%", thickness=1.5, color=AZUL, spaceAfter=8))
+    semestre_label = seminario.fecha.strftime(
+        "%Y") + f"-{seminario.fecha.month // 7 + 1}"
+    story.append(Paragraph(
+        f"Seminario {seminario.numero} &nbsp;·&nbsp; Semestre {semestre_label}", subtitulo))
+    story.append(HRFlowable(width="100%", thickness=1.5,
+                 color=AZUL, spaceAfter=8))
 
     # ── Datos del alumno ────────────────────────────────────
     story.append(Paragraph("Alumno/a:", seccion))
@@ -179,7 +182,8 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
     story.append(t_comite)
 
     # ── Actividad principal ──────────────────────────────────
-    story.append(Paragraph("Actividad principal durante el semestre:", seccion))
+    story.append(
+        Paragraph("Actividad principal durante el semestre:", seccion))
     story.append(_caja(d.get("actividad_principal", "—"), normal))
 
     # ── Cursos ───────────────────────────────────────────────
@@ -188,14 +192,18 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
 
     # ── Artículos ────────────────────────────────────────────
     story.append(Paragraph("Artículos enviados/publicados:", seccion))
-    story.append(_caja(d.get("articulos", "No tengo artículos enviados o publicados."), normal))
+    story.append(
+        _caja(d.get("articulos", "No tengo artículos enviados o publicados."), normal))
 
     # ── Eventos ─────────────────────────────────────────────
-    story.append(Paragraph("Asistencia a Eventos Académicos / Estancias:", seccion))
-    story.append(_caja(d.get("eventos", "No asistí a ningún evento ni realicé alguna estancia."), normal))
+    story.append(
+        Paragraph("Asistencia a Eventos Académicos / Estancias:", seccion))
+    story.append(_caja(d.get(
+        "eventos", "No asistí a ningún evento ni realicé alguna estancia."), normal))
 
     # ── Plan siguiente semestre ──────────────────────────────
-    story.append(Paragraph("Plan de Actividades para el siguiente semestre:", seccion))
+    story.append(
+        Paragraph("Plan de Actividades para el siguiente semestre:", seccion))
     story.append(_caja(d.get("plan_siguiente", "—"), normal))
 
     # ── Comentarios ─────────────────────────────────────────
@@ -204,16 +212,20 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
 
     # ── Espacio para firmas ──────────────────────────────────
     story.append(Spacer(1, 0.6 * cm))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=GRIS_BORDE, spaceAfter=10))
+    story.append(HRFlowable(width="100%", thickness=0.5,
+                 color=GRIS_BORDE, spaceAfter=10))
     story.append(Paragraph("<b>Visto Bueno</b>", ParagraphStyle(
         "vb", parent=normal, alignment=1, spaceBefore=4, spaceAfter=12,
     )))
 
     firmas = [
         [
-            Paragraph(f"Dr./Dra. {comite.tutor.nombre} {comite.tutor.apellido_paterno}", normal),
-            Paragraph(f"Dr./Dra. {comite.miembro1.nombre} {comite.miembro1.apellido_paterno}", normal),
-            Paragraph(f"Dr./Dra. {comite.miembro2.nombre} {comite.miembro2.apellido_paterno}", normal),
+            Paragraph(
+                f"Dr./Dra. {comite.tutor.nombre} {comite.tutor.apellido_paterno}", normal),
+            Paragraph(
+                f"Dr./Dra. {comite.miembro1.nombre} {comite.miembro1.apellido_paterno}", normal),
+            Paragraph(
+                f"Dr./Dra. {comite.miembro2.nombre} {comite.miembro2.apellido_paterno}", normal),
         ],
         [
             Paragraph("_______________________", normal),
@@ -221,9 +233,12 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
             Paragraph("_______________________", normal),
         ],
         [
-            Paragraph("Tutor Principal", ParagraphStyle("rol", parent=normal, textColor=colors.HexColor("#6B6560"))),
-            Paragraph("Miembro Tutor 1", ParagraphStyle("rol", parent=normal, textColor=colors.HexColor("#6B6560"))),
-            Paragraph("Miembro Tutor 2", ParagraphStyle("rol", parent=normal, textColor=colors.HexColor("#6B6560"))),
+            Paragraph("Tutor Principal", ParagraphStyle(
+                "rol", parent=normal, textColor=colors.HexColor("#6B6560"))),
+            Paragraph("Miembro Tutor 1", ParagraphStyle(
+                "rol", parent=normal, textColor=colors.HexColor("#6B6560"))),
+            Paragraph("Miembro Tutor 2", ParagraphStyle(
+                "rol", parent=normal, textColor=colors.HexColor("#6B6560"))),
         ],
     ]
     t_firmas = Table(firmas, colWidths=["33%", "34%", "33%"])
@@ -236,7 +251,8 @@ def generar_acta_alumno(seminario, alumno, comite, datos_form):
 
     # ── Pie de página ────────────────────────────────────────
     story.append(Spacer(1, 0.4 * cm))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=GRIS_BORDE, spaceAfter=4))
+    story.append(HRFlowable(width="100%", thickness=0.5,
+                 color=GRIS_BORDE, spaceAfter=4))
     story.append(Paragraph(
         "Sistema de Gestión Académica LUMAT &nbsp;·&nbsp; Informe generado automáticamente",
         pie,

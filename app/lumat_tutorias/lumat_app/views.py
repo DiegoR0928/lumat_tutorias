@@ -202,18 +202,19 @@ def seminario_detalle(request, num):
     formulario_comite = None
     acta_comite_url = None
     acta_existente = None
-    
+
     if seminario_obj:
         if seminario_obj.actaComite:
             acta_comite_url = seminario_obj.actaComite.url
-        
+
         try:
             formulario_comite = seminario_obj.formulario_comite
         except FormularioComite.DoesNotExist:
             pass
 
         # ¿Ya existe un acta de alumno guardada en la base de datos?
-        acta_existente = ActaAlumnoData.objects.filter(seminario=seminario_obj).first()
+        acta_existente = ActaAlumnoData.objects.filter(
+            seminario=seminario_obj).first()
 
     # Si ya existe, pre-rellenamos el formulario con los datos guardados (modo lectura)
     if acta_existente:
@@ -252,30 +253,33 @@ def seminario_detalle(request, num):
 @user_passes_test(es_alumno)
 def generar_acta_view(request, num):
     alumno = request.user.alumno
- 
+
     seminario = (
         Seminario.objects
         .filter(alumno=alumno, numero=num)
         .order_by('-periodo')
         .first()
     )
- 
+
     if not seminario:
-        messages.error(request, "No hay seminario registrado para este número.")
+        messages.error(
+            request, "No hay seminario registrado para este número.")
         return redirect("lumat_app:seminario_detalle", num=num)
- 
+
     if not seminario.calificacion:
-        messages.error(request, "Solo puedes generar el acta de un seminario completado.")
+        messages.error(
+            request, "Solo puedes generar el acta de un seminario completado.")
         return redirect("lumat_app:seminario_detalle", num=num)
- 
+
     comite = seminario.comite
     acta_existente = ActaAlumnoData.objects.filter(seminario=seminario).first()
- 
+
     if request.method == "POST":
         if acta_existente:
-            messages.warning(request, "Tu acta ya fue generada y no puede modificarse.")
+            messages.warning(
+                request, "Tu acta ya fue generada y no puede modificarse.")
             return redirect("lumat_app:seminario_detalle", num=num)
- 
+
         form = ActaAlumnoForm(request.POST)
         if form.is_valid():
             try:
@@ -284,7 +288,7 @@ def generar_acta_view(request, num):
                     seminario=seminario,
                     **form.cleaned_data
                 )
- 
+
                 # 2. Generar el PDF usando el buffer
                 pdf_buffer = generar_acta_alumno(
                     seminario=seminario,
@@ -292,7 +296,7 @@ def generar_acta_view(request, num):
                     comite=comite,
                     datos_form=acta_existente.to_dict(),
                 )
- 
+
                 # 3. Guardar el archivo PDF directamente en el modelo Seminario
                 nombre_archivo = f"acta_{num}_{alumno.matricula or alumno.id}.pdf"
                 seminario.actaAlumno.save(
@@ -300,26 +304,28 @@ def generar_acta_view(request, num):
                     ContentFile(pdf_buffer.read()),
                     save=True,
                 )
- 
-                messages.success(request, "Acta generada y guardada correctamente.")
+
+                messages.success(
+                    request, "Acta generada y guardada correctamente.")
                 return redirect("lumat_app:seminario_detalle", num=num)
- 
+
             except Exception as e:
                 # Si falla la renderización, borramos la data huérfana para permitir reintentos
                 ActaAlumnoData.objects.filter(seminario=seminario).delete()
-                messages.error(request, f"Error al generar el PDF técnico: {e}")
+                messages.error(
+                    request, f"Error al generar el PDF técnico: {e}")
                 return redirect("lumat_app:seminario_detalle", num=num)
         else:
             # Si el formulario tiene errores de validación, alertamos al usuario
-            messages.error(request, "Por favor corrige los campos marcados en rojo antes de guardar.")
+            messages.error(
+                request, "Por favor corrige los campos marcados en rojo antes de guardar.")
             # Guardamos temporalmente la data inválida en la sesión para no borrar lo que el alumno escribió
             request.session['failed_acta_form_data'] = request.POST
             return redirect("lumat_app:seminario_detalle", num=num)
 
     # Si intentan ingresar por GET de manera manual, los regresamos al panel principal
     return redirect("lumat_app:seminario_detalle", num=num)
- 
- 
+
 
 # ─────────────────────────────────────────────
 # Vista: subir evidencia
@@ -492,12 +498,13 @@ def _guardar_perfil(request, alumno):
     if alumno_form.is_valid():
         # 1. Guardamos los datos del alumno en la base de datos
         alumno_actualizado = alumno_form.save()
-        
+
         # 2. Sincronizamos el email del modelo User de Django
         usuario = request.user
         if usuario.email != alumno_actualizado.correo:
             usuario.email = alumno_actualizado.correo
-            usuario.save(update_fields=['email']) # update_fields por buena práctica y rendimiento
+            # update_fields por buena práctica y rendimiento
+            usuario.save(update_fields=['email'])
 
         messages.success(request, 'Perfil actualizado exitosamente')
         return redirect('lumat_app:perfil_alumno')
@@ -528,6 +535,7 @@ def _cambiar_password(request, alumno):
         alumno_form=alumno_form,
         password_form=password_form,
     )
+
 
 @login_required
 def calendario(request):

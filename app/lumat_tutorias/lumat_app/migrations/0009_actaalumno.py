@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ActaAlumno',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('nombre_completo', models.CharField(max_length=200)),
                 ('plan_estudios', models.CharField(max_length=50)),
                 ('no_cuenta', models.CharField(max_length=20)),
@@ -27,13 +28,17 @@ class Migration(migrations.Migration):
                 ('reuniones_tutor_principal', models.PositiveIntegerField(default=0)),
                 ('reuniones_comite_tutor', models.PositiveIntegerField(default=0)),
                 ('asistencia_coloquio', models.PositiveIntegerField(default=0)),
-                ('actividad_principal', models.CharField(choices=[('investigacion', 'Investigación'), ('docencia', 'Docencia'), ('ambos', 'Ambos'), ('otro', 'Otro')], max_length=100)),
-                ('actividad_principal_otro', models.CharField(blank=True, max_length=200)),
+                ('actividad_principal', models.CharField(choices=[('investigacion', 'Investigación'), (
+                    'docencia', 'Docencia'), ('ambos', 'Ambos'), ('otro', 'Otro')], max_length=100)),
+                ('actividad_principal_otro', models.CharField(
+                    blank=True, max_length=200)),
                 ('cursos_pcf', models.BooleanField(default=False)),
-                ('cursos_descripcion', models.TextField(blank=True, help_text='Lista de cursos inscritos')),
+                ('cursos_descripcion', models.TextField(
+                    blank=True, help_text='Lista de cursos inscritos')),
                 ('examenes_predoctorales', models.BooleanField(default=False)),
                 ('examenes_descripcion', models.TextField(blank=True)),
-                ('articulos', models.TextField(blank=True, help_text='Lista de artículos enviados/publicados')),
+                ('articulos', models.TextField(blank=True,
+                 help_text='Lista de artículos enviados/publicados')),
                 ('eventos_asistio', models.BooleanField(default=False)),
                 ('eventos_descripcion', models.TextField(blank=True)),
                 ('examen_candidatura', models.BooleanField(default=False)),
@@ -43,7 +48,8 @@ class Migration(migrations.Migration):
                 ('comentarios_adicionales', models.TextField(blank=True)),
                 ('fecha_creacion', models.DateTimeField(auto_now_add=True)),
                 ('fecha_actualizacion', models.DateTimeField(auto_now=True)),
-                ('seminario', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='acta_alumno', to='lumat_app.seminario')),
+                ('seminario', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
+                 related_name='acta_alumno', to='lumat_app.seminario')),
             ],
             options={
                 'verbose_name': 'Acta del Alumno',

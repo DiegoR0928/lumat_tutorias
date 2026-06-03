@@ -307,30 +307,32 @@ class FormularioComite(models.Model):
         y lo guarda en el campo actaComite del Seminario asociado.
         """
         from .utils_pdf_comite import generar_pdf_comite
-        
+
         try:
             # Generar el PDF en bytes
             pdf_bytes = generar_pdf_comite(self)
-            
+
             # Crear nombre del archivo
             sem_num = self.seminario.numero
             periodo = self.seminario.periodo
             alumno_nombre = self.seminario.alumno.nombre.replace(' ', '_')
             filename = f'acta_comite_sem{sem_num}_p{periodo}_{alumno_nombre}_{self.seminario.alumno.id}.pdf'
-            
+
             # Eliminar el archivo anterior si existe
             if self.seminario.actaComite:
                 self.seminario.actaComite.delete(save=False)
-            
+
             # Guardar el PDF en el campo actaComite del seminario
-            self.seminario.actaComite.save(filename, ContentFile(pdf_bytes), save=False)
+            self.seminario.actaComite.save(
+                filename, ContentFile(pdf_bytes), save=False)
             self.seminario.save(update_fields=['actaComite'])
-            
+
             return True
-            
+
         except Exception as e:
             # Loggear el error si es necesario
-            print(f"Error generando PDF para seminario {self.seminario_id}: {str(e)}")
+            print(
+                f"Error generando PDF para seminario {self.seminario_id}: {str(e)}")
             return False
 
     def save(self, *args, **kwargs):
@@ -338,8 +340,10 @@ class FormularioComite(models.Model):
         if self.pk:
             try:
                 old_instance = FormularioComite.objects.get(pk=self.pk)
-                old_firmas = (old_instance.firma_tutor, old_instance.firma_miembro1, old_instance.firma_miembro2)
-                new_firmas = (self.firma_tutor, self.firma_miembro1, self.firma_miembro2)
+                old_firmas = (old_instance.firma_tutor,
+                              old_instance.firma_miembro1, old_instance.firma_miembro2)
+                new_firmas = (self.firma_tutor,
+                              self.firma_miembro1, self.firma_miembro2)
                 firmas_cambiaron = old_firmas != new_firmas
             except FormularioComite.DoesNotExist:
                 firmas_cambiaron = True
@@ -350,7 +354,7 @@ class FormularioComite(models.Model):
         self.calificacion_final = self.calcular_calificacion_final()
         estaba_completo = self.estado_general == "completo" if self.pk else False
         self.estado_general = 'completo' if self.todos_firmaron else 'pendiente'
-        
+
         # Detectar si ACABAMOS de completar el formulario (transición a completo)
         se_completo_ahora = not estaba_completo and self.estado_general == "completo"
 
@@ -367,10 +371,10 @@ class FormularioComite(models.Model):
         #    a) Acabamos de completar el formulario (transición a completo) O
         #    b) Ya estaba completo pero cambiaron las firmas (por si acaso)
         #    c) No existe el actaComite y ya está completo
-        if (se_completo_ahora or 
+        if (se_completo_ahora or
             (self.estado_general == "completo" and not self.seminario.actaComite) or
-            (self.estado_general == "completo" and firmas_cambiaron)):
-            
+                (self.estado_general == "completo" and firmas_cambiaron)):
+
             # Generar y guardar el PDF en el seminario
             self.generar_y_guardar_pdf()
 
@@ -380,7 +384,8 @@ class FormularioComite(models.Model):
 
             # Convertir semestre a entero para comparación
             try:
-                semestre_actual = int(alumno.semestre) if alumno.semestre else 0
+                semestre_actual = int(
+                    alumno.semestre) if alumno.semestre else 0
             except ValueError:
                 semestre_actual = 0
 
@@ -396,7 +401,7 @@ class FormularioComite(models.Model):
     def __str__(self):
         pdf_status = "✓ PDF" if self.seminario.actaComite else "✗ PDF"
         return f"Formulario Comité — Seminario {self.seminario_id} ({self.estado_general}) {pdf_status}"
-    
+
 
 class ActaAlumnoData(models.Model):
     """
@@ -408,36 +413,35 @@ class ActaAlumnoData(models.Model):
         on_delete=models.CASCADE,
         related_name='acta_data'
     )
- 
+
     actividad_principal = models.CharField(max_length=200)
-    reuniones_tutor     = models.PositiveSmallIntegerField(default=0)
-    reuniones_comite    = models.PositiveSmallIntegerField(default=0)
-    coloquios           = models.PositiveSmallIntegerField(default=0)
-    cursos              = models.TextField(blank=True)
-    articulos           = models.TextField(blank=True)
-    eventos             = models.TextField(blank=True)
-    plan_siguiente      = models.TextField()
-    comentarios         = models.TextField(blank=True)
- 
+    reuniones_tutor = models.PositiveSmallIntegerField(default=0)
+    reuniones_comite = models.PositiveSmallIntegerField(default=0)
+    coloquios = models.PositiveSmallIntegerField(default=0)
+    cursos = models.TextField(blank=True)
+    articulos = models.TextField(blank=True)
+    eventos = models.TextField(blank=True)
+    plan_siguiente = models.TextField()
+    comentarios = models.TextField(blank=True)
+
     generado_en = models.DateTimeField(auto_now_add=True)
- 
+
     class Meta:
         verbose_name = "Datos de acta del alumno"
- 
+
     def __str__(self):
         return f"Acta — {self.seminario}"
- 
+
     def to_dict(self):
         """Devuelve los datos como dict compatible con generar_acta_alumno."""
         return {
             'actividad_principal': self.actividad_principal,
-            'reuniones_tutor':     self.reuniones_tutor,
-            'reuniones_comite':    self.reuniones_comite,
-            'coloquios':           self.coloquios,
-            'cursos':              self.cursos,
-            'articulos':           self.articulos,
-            'eventos':             self.eventos,
-            'plan_siguiente':      self.plan_siguiente,
-            'comentarios':         self.comentarios,
+            'reuniones_tutor': self.reuniones_tutor,
+            'reuniones_comite': self.reuniones_comite,
+            'coloquios': self.coloquios,
+            'cursos': self.cursos,
+            'articulos': self.articulos,
+            'eventos': self.eventos,
+            'plan_siguiente': self.plan_siguiente,
+            'comentarios': self.comentarios,
         }
- 

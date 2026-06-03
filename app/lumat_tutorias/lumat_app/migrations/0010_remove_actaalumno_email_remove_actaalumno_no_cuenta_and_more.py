@@ -25,7 +25,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='actaalumno',
             name='actividad_principal',
-            field=models.CharField(choices=[('investigacion', 'Investigación'), ('docencia', 'Docencia'), ('ambos', 'Ambos'), ('otro', 'Otro')], default='investigacion', max_length=50),
+            field=models.CharField(choices=[('investigacion', 'Investigación'), ('docencia', 'Docencia'), (
+                'ambos', 'Ambos'), ('otro', 'Otro')], default='investigacion', max_length=50),
         ),
         migrations.AlterField(
             model_name='actaalumno',

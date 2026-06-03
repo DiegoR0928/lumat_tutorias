@@ -28,10 +28,11 @@ class FormularioComiteModelTest(TestCase):
         # Usuarios y docentes (3)
         users_data = [
             ('tutor_test', 'tutor@test.com', 'Carlos', 'Lopez', 'Garcia'),
-            ('miembro1_test', 'miembro1@test.com', 'Maria', 'Martinez', 'Rodriguez'),
+            ('miembro1_test', 'miembro1@test.com',
+             'Maria', 'Martinez', 'Rodriguez'),
             ('miembro2_test', 'miembro2@test.com', 'Jose', 'Sanchez', 'Perez')
         ]
-        
+
         users = {}
         for username, email, nombre, apellido_p, apellido_m in users_data:
             user = User.objects.create_user(
@@ -40,7 +41,7 @@ class FormularioComiteModelTest(TestCase):
                 email=email
             )
             users[username] = user
-        
+
         self.tutor = Docente.objects.create(
             user=users['tutor_test'],
             nombre="Carlos",
@@ -104,8 +105,8 @@ class FormularioComiteModelTest(TestCase):
 
     def test_creacion_formulario(self):
         self.assertEqual(self.formulario.seminario, self.seminario)
-        self.assertEqual(self.formulario.el_comite_encuentra, 
-                        "El alumno demostró buen conocimiento")
+        self.assertEqual(self.formulario.el_comite_encuentra,
+                         "El alumno demostró buen conocimiento")
         self.assertEqual(self.formulario.estado_general, "pendiente")
 
     def test_str_method(self):
@@ -130,13 +131,13 @@ class FormularioComiteModelTest(TestCase):
 
     def test_todos_firmaron_property(self):
         self.assertFalse(self.formulario.todos_firmaron)
-        
+
         self.formulario.firma_tutor = True
         self.assertFalse(self.formulario.todos_firmaron)
-        
+
         self.formulario.firma_miembro1 = True
         self.assertFalse(self.formulario.todos_firmaron)
-        
+
         self.formulario.firma_miembro2 = True
         self.assertTrue(self.formulario.todos_firmaron)
 
@@ -144,14 +145,16 @@ class FormularioComiteModelTest(TestCase):
         self.formulario.calificacion_tutor = Decimal("8.5")
         self.formulario.calificacion_miembro1 = Decimal("9.0")
         self.formulario.calificacion_miembro2 = Decimal("7.5")
-        self.assertEqual(self.formulario.calcular_calificacion_final(), Decimal("8.33"))
+        self.assertEqual(
+            self.formulario.calcular_calificacion_final(), Decimal("8.33"))
 
     def test_calcular_calificacion_sin_datos(self):
         self.assertIsNone(self.formulario.calcular_calificacion_final())
 
     def test_calcular_con_una_calificacion(self):
         self.formulario.calificacion_tutor = Decimal("9.5")
-        self.assertEqual(self.formulario.calcular_calificacion_final(), Decimal("9.50"))
+        self.assertEqual(
+            self.formulario.calcular_calificacion_final(), Decimal("9.50"))
 
     def test_save_actualiza_estado_completo(self):
         self._firmar_todos()
@@ -163,7 +166,7 @@ class FormularioComiteModelTest(TestCase):
         self.formulario.calificacion_miembro1 = Decimal("8.5")
         self.formulario.calificacion_miembro2 = Decimal("9.5")
         self.formulario.save()
-        
+
         self.seminario.refresh_from_db()
         self.assertEqual(self.seminario.calificacion, Decimal("9.00"))
 
@@ -175,16 +178,16 @@ class FormularioComiteModelTest(TestCase):
     #     semestre_original = int(self.alumno.semestre)
     #     self.seminario.numero = semestre_original
     #     self.seminario.save()
-        
+
     #     self._firmar_todos()
     #     self._asignar_calificaciones(8.0)
     #     self.formulario.save()
-        
+
     #     self.formulario.refresh_from_db()
     #     self.assertEqual(self.formulario.estado_general, 'completo')
     #     self.assertIsNotNone(self.formulario.calificacion_final)
     #     self.assertGreaterEqual(self.formulario.calificacion_final, Decimal("6.0"))
-        
+
     #     self.alumno.refresh_from_db()
     #     if semestre_original < 8:
     #         self.assertEqual(int(self.alumno.semestre), semestre_original + 1)
@@ -194,7 +197,7 @@ class FormularioComiteModelTest(TestCase):
         self.formulario.calificacion_tutor = Decimal("8.5")
         self.formulario.calificacion_miembro1 = Decimal("9.0")
         self.formulario.save()
-        
+
         self.formulario.refresh_from_db()
         self.assertEqual(self.formulario.calificacion_final, Decimal("8.75"))
 
@@ -238,7 +241,7 @@ class FormularioComiteModelTest(TestCase):
         self.seminario.numero = 5
         self.seminario.save()
         semestre_original = self.alumno.semestre
-        
+
         self._firmar_todos()
         self._asignar_calificaciones(8.0)
         self.formulario.save()
@@ -250,7 +253,7 @@ class FormularioComiteModelTest(TestCase):
         self.seminario.numero = 8
         self.seminario.save()
         semestre_original = self.alumno.semestre
-        
+
         self._firmar_todos()
         self._asignar_calificaciones(8.0)
         self.formulario.save()
@@ -285,7 +288,7 @@ class FormularioComiteModelTest(TestCase):
         self.seminario.numero = 3
         self.seminario.save()
         semestre_original = self.alumno.semestre
-        
+
         self._firmar_todos()
         self._asignar_calificaciones(9.0)
         self.formulario.save()
@@ -308,6 +311,6 @@ class FormularioComiteModelTest(TestCase):
     #     self._firmar_todos()
     #     self._asignar_calificaciones(8.0)
     #     self.formulario.save()
-        
+
     #     self.alumno.refresh_from_db()
     #     self.assertEqual(int(self.alumno.semestre), semestre_original + 1)

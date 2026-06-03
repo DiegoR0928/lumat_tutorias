@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
-from .models import Alumno, FormularioComite, Docente 
+from .models import Alumno, FormularioComite, Docente
 from .models import ActaAlumnoData
 
 
@@ -53,7 +53,8 @@ class PasswordChangeCustomForm(PasswordChangeForm):
 class DocenteForm(forms.ModelForm):
     class Meta:
         model = Docente
-        fields = ['nombre', 'apellido_paterno', 'apellido_materno', 'correo', 'firma']
+        fields = ['nombre', 'apellido_paterno',
+                  'apellido_materno', 'correo', 'firma']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'apellido_paterno': forms.TextInput(attrs={'class': 'form-control'}),
@@ -61,6 +62,7 @@ class DocenteForm(forms.ModelForm):
             'correo': forms.EmailInput(attrs={'class': 'form-control'}),
             'firma': forms.FileInput(attrs={'class': 'form-control-file'}),
         }
+
 
 class FormularioComiteForm(forms.ModelForm):
     """Sólo el tutor llena el contenido del informe."""
@@ -99,6 +101,7 @@ class FirmaCalificacionForm(forms.Form):
         label='Confirmo mi firma y calificación',
         required=True,
     )
+
 
 class ActaAlumnoForm(forms.Form):
     """Formulario para que el alumno llene su informe semestral."""
