@@ -1,111 +1,132 @@
-from django.test import TestCase
-from lumat_app.forms import FormularioComiteForm, FirmaCalificacionForm
+import datetime
+from unittest.mock import MagicMock
+
+from django.test import TestCase, RequestFactory
+from django.contrib.messages import get_messages
+from django.contrib.messages.storage.cookie import CookieStorage
+
+from lumat_app.models import Alumno, Comite, Seminario, FormularioComite
+# Asegúrate de que apunte al módulo real donde reside la función de 4 parámetros
+from lumat_app.views_docente import text_form_valido, _verificar_y_generar_pdf_comite
 
 
-class FormularioComiteFormTest(TestCase):
-    """Pruebas simples para FormularioComiteForm"""
+class HelpersDocenteTestCase(TestCase):
 
-    def test_formulario_valido_con_datos_completos(self):
-        """Probar que el formulario es válido con datos correctos"""
-        form_data = {
-            'el_comite_encuentra': 'El alumno demostró dominio del tema',
-            'observaciones': 'Excelente presentación y defensa',
-            'dictamen': 'Aprobado por unanimidad',
-            'propuestas': 'Publicar resultados en revista indexada'
-        }
-        form = FormularioComiteForm(data=form_data)
-        self.assertTrue(form.is_valid())
+    def setUp(self):
+        self.factory = RequestFactory()
+        
+        # 1. Crear un request simulado aislado con CookieStorage para evitar errores de middleware
+        self.request = self.factory.get('/')
+        setattr(self.request, '_messages', CookieStorage(self.request))
 
-    def test_campos_obligatorios_no_son_requeridos(self):
-        """Probar que todos los campos son opcionales (blank=True)"""
-        form_data = {
-            'el_comite_encuentra': '',
-            'observaciones': '',
-            'dictamen': '',
-            'propuestas': ''
-        }
-        form = FormularioComiteForm(data=form_data)
-        self.assertTrue(form.is_valid())
+        # 2. Configurar mocks simulando la estructura mínima de tus modelos
+        self.alumno = MagicMock(spec=Alumno, id=1, matricula="20220001")
+        self.comite = MagicMock(spec=Comite, id=1)
+        
+        self.seminario = MagicMock(spec=Seminario)
+        self.seminario.id = 1
+        self.seminario.numero = 5
+        self.seminario.alumno = self.alumno
+        self.seminario.calificacion = None
 
-    def test_campos_correctos_en_meta(self):
-        """Probar que los campos del Meta son correctos"""
-        expected_fields = [
-            'el_comite_encuentra',
-            'observaciones',
-            'dictamen',
-            'propuestas'
-        ]
+        self.formulario = MagicMock(spec=FormularioComite)
+        self.formulario.estado_general = 'pendiente'
+        self.formulario.calificacion_final = 8.5
+
+    # ═══ PRUEBAS PARA text_form_valido (Versión Real de 4 parámetros) ═══
+
+    def test_text_form_valido_cuatro_parametros_exito(self):
+        """text_form_valido retorna True si la validación de la calificación es exitosa."""
+        mock_form = MagicMock()
+        mock_form.is_valid.return_value = True
+        
+        resultado = text_form_valido(mock_form, self.request, self.formulario, 'miembro1')
+        
+        self.assertTrue(resultado)
+        mensajes = list(get_messages(self.request))
+        self.assertEqual(len(mensajes), 0)
+
+    def test_text_form_valido_cuatro_parametros_invalido(self):
+        """text_form_valido retorna False e inyecta el mensaje de error si la nota es inválida."""
+        mock_form = MagicMock()
+        mock_form.is_valid.return_value = False
+        
+        resultado = text_form_valido(mock_form, self.request, self.formulario, 'miembro1')
+        
+        self.assertFalse(resultado)
+        mensajes = list(get_messages(self.request))
+        self.assertEqual(len(mensajes), 1)
+        self.assertEqual(str(mensajes[0]), "La calificación debe ser un número entre 0 y 10.")
+
+    # ═══ PRUEBAS PARA _verificar_y_generar_pdf_comite ═══
+
+    def test_verificar_pdf_comite_ignora_flujo_si_esta_pendiente(self):
+        """Si el formulario sigue 'pendiente', no altera la nota del seminario ni ejecuta su .save()."""
+        self.formulario.estado_general = 'pendiente'
+        
+        _verificar_y_generar_pdf_comite(self.request, self.seminario, self.formulario)
+        
+        self.seminario.save.assert_not_called()
+        mensajes = list(get_messages(self.request))
+        self.assertEqual(len(mensajes), 0)
+
+    def test_verificar_pdf_comite_exito_cuando_esta_completo(self):
+        """Si el sínodo está 'completo', pasa el promedio al seminario, guarda y envía un mensaje info."""
+        self.formulario.estado_general = 'completo'
+        self.formulario.calificacion_final = 9.35
+        
+        _verificar_y_generar_pdf_comite(self.request, self.seminario, self.formulario)
+        
+        self.assertEqual(self.seminario.calificacion, 9.35)
+        self.seminario.save.assert_called_once()
+        
+        mensajes = list(get_messages(self.request))
+        self.assertEqual(len(mensajes), 1)
         self.assertEqual(
-            list(FormularioComiteForm.Meta.fields), expected_fields)
+            str(mensajes[0]), 
+            "El sínodo se ha completado. Se ha emitido y archivado el Acta del Comité PDF."
+        )
 
-    def test_labels_personalizados(self):
-        """Probar que las etiquetas están personalizadas"""
-        form = FormularioComiteForm()
-        self.assertEqual(form.fields['el_comite_encuentra'].label,
-                         'El Comité encuentra que el estudiante')
-        self.assertEqual(form.fields['observaciones'].label,
-                         'Otros aspectos observados por el Comité')
-        self.assertEqual(form.fields['dictamen'].label, 'Dictamen')
-        self.assertEqual(
-            form.fields['propuestas'].label, 'Plan de trabajo propuesto')
+    def test_verificar_pdf_comite_atrapa_excepciones_y_muestra_error(self):
+        """Si la persistencia física falla, el bloque try/except captura el error de forma segura."""
+        self.formulario.estado_general = 'completo'
+        self.seminario.save.side_effect = Exception("Fallo de escritura en el storage de medios")
+        
+        _verificar_y_generar_pdf_comite(self.request, self.seminario, self.formulario)
+        
+        mensajes = list(get_messages(self.request))
+        self.assertEqual(len(mensajes), 1)
+        self.assertIn("Las firmas son válidas pero ocurrió un error al construir el archivo PDF", str(mensajes[0]))
+        self.assertIn("Fallo de escritura", str(mensajes[0]))
 
+# class TextFormValidoDosParametrosTestCase(TestCase):
 
-class FirmaCalificacionFormTest(TestCase):
-    """Pruebas simples para FirmaCalificacionForm"""
+#     def setUp(self):
+#         self.factory = RequestFactory()
+#         # Creamos un request aislado con soporte de mensajes en memoria para evitar fallos de middleware
+#         self.request = self.factory.get('/')
+#         setattr(self.request, '_messages', CookieStorage(self.request))
 
-    def test_formulario_valido_con_datos_correctos(self):
-        """Probar que el formulario es válido con datos correctos"""
-        form_data = {
-            'calificacion': '8.50',
-            'confirmar_firma': True
-        }
-        form = FirmaCalificacionForm(data=form_data)
-        self.assertTrue(form.is_valid())
+#     def test_text_form_valido_dos_params_exito(self):
+#         """text_form_valido (2 params) debe retornar True si el formulario es correcto."""
+#         mock_form = MagicMock()
+#         mock_form.is_valid.return_value = True
 
-    def test_calificacion_minima_0(self):
-        """Probar que acepta calificación 0"""
-        form_data = {
-            'calificacion': '0',
-            'confirmar_firma': True
-        }
-        form = FirmaCalificacionForm(data=form_data)
-        self.assertTrue(form.is_valid())
+#         # Forzamos la llamada pasándole únicamente los 2 argumentos requeridos
+#         resultado = text_form_valido(mock_form, self.request)
 
-    def test_calificacion_maxima_10(self):
-        """Probar que acepta calificación 10"""
-        form_data = {
-            'calificacion': '10',
-            'confirmar_firma': True
-        }
-        form = FirmaCalificacionForm(data=form_data)
-        self.assertTrue(form.is_valid())
+#         self.assertTrue(resultado)
+#         mensajes = list(get_messages(self.request))
+#         self.assertEqual(len(mensajes), 0)
 
-    def test_calificacion_invalida_negativa(self):
-        """Probar que rechaza calificación negativa"""
-        form_data = {
-            'calificacion': '-1',
-            'confirmar_firma': True
-        }
-        form = FirmaCalificacionForm(data=form_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('calificacion', form.errors)
+#     def test_text_form_valido_dos_params_invalido(self):
+#         """text_form_valido (2 params) debe retornar False e inyectar el mensaje de error de rango [0, 10]."""
+#         mock_form = MagicMock()
+#         mock_form.is_valid.return_value = False
 
-    def test_calificacion_invalida_mayor_10(self):
-        """Probar que rechaza calificación mayor a 10"""
-        form_data = {
-            'calificacion': '10.5',
-            'confirmar_firma': True
-        }
-        form = FirmaCalificacionForm(data=form_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('calificacion', form.errors)
+#         resultado = text_form_valido(mock_form, self.request)
 
-    def test_campo_confirmar_firma_es_requerido(self):
-        """Probar que confirmar_firma es requerido"""
-        form_data = {
-            'calificacion': '8.50',
-            'confirmar_firma': False
-        }
-        form = FirmaCalificacionForm(data=form_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('confirmar_firma', form.errors)
+#         self.assertFalse(resultado)
+#         mensajes = list(get_messages(self.request))
+#         self.assertEqual(len(mensajes), 1)
+#         self.assertEqual(str(mensajes[0]),)

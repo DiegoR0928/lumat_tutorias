@@ -8,6 +8,7 @@ app_name = 'lumat_app'
 
 
 urlpatterns = [
+    path('', CustomLoginView.as_view(), name='lumat_app_home'),
     path('registro/', views.registro, name='registro'),
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', CustomLogoutView.as_view(), name='logout'),

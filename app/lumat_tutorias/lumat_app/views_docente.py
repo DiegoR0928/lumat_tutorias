@@ -277,12 +277,12 @@ def docente_seminario_detalle(request, seminario_id):
     })
 
 
-def text_form_valido(form, request):
-    if form.is_valid():
-        return True
-    messages.error(
-        request, "La calificación debe ser un número válido entre 0 y 10.")
-    return False
+# def text_form_valido(form, request):
+#     if form.is_valid():
+#         return True
+#     messages.error(
+#         request, "La calificación debe ser un número válido entre 0 y 10.")
+#     return False
 
 
 def _verificar_y_generar_pdf_comite(request, seminario, formulario):
