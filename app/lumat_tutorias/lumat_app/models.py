@@ -98,14 +98,14 @@ class Seminario(models.Model):
         )
 
 
-class CalifSeminario(models.Model):
-    seminario = models.ForeignKey(Seminario, on_delete=models.CASCADE)
-    docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
-    calificacion = models.DecimalField(max_digits=4, decimal_places=2)
+# class CalifSeminario(models.Model):
+#     seminario = models.ForeignKey(Seminario, on_delete=models.CASCADE)
+#     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
+#     calificacion = models.DecimalField(max_digits=4, decimal_places=2)
 
-    def __str__(self):
-        return f"Calificación de {self.docente.__str__()} para \
-        {self.seminario.__str__()}"
+#     def __str__(self):
+#         return f"Calificación de {self.docente.__str__()} para \
+#         {self.seminario.__str__()}"
 
 
 class CalendarioGenerado(models.Model):
@@ -126,7 +126,6 @@ class CalendarioGenerado(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.fecha_creacion.strftime('%d/%m/%Y')})"
-
 
 
 # ─────────────────────────────────────────────

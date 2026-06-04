@@ -11,18 +11,19 @@ def step_impl(context):
     u_d2 = User.objects.create_user(username='vocal1')
     u_d3 = User.objects.create_user(username='vocal2')
     u_d4 = User.objects.create_user(username='elegible_new')
-    
-    d1 = Docente.objects.create(user=u_d1, nombre="Tutor", apellido_paterno="Viejo")
+
+    d1 = Docente.objects.create(
+        user=u_d1, nombre="Tutor", apellido_paterno="Viejo")
     d2 = Docente.objects.create(user=u_d2, nombre="V1", apellido_paterno="X")
     d3 = Docente.objects.create(user=u_d3, nombre="V2", apellido_paterno="Y")
     context.doc_elegible = Docente.objects.create(
         user=u_d4, nombre="Docente", apellido_paterno="Elegible"
     )
-    
+
     comite = Comite.objects.create(tutor=d1, miembro1=d2, miembro2=d3)
     u_a = User.objects.create_user(username='alumno_cambio')
     al = Alumno.objects.create(matricula="20269999", user=u_a)
-    
+
     Seminario.objects.create(
         alumno=al, comite=comite, fecha=date(2026, 6, 2),
         hora=time(10, 0), numero=1
@@ -59,7 +60,8 @@ def step_impl(context):
 
 @when('presiono el boton rechazar cambio de tutor')
 def step_impl(context):
-    context.driver.find_element(By.XPATH, "//button[@value='rechazar']").click()
+    context.driver.find_element(
+        By.XPATH, "//button[@value='rechazar']").click()
 
 
 @then('la solicitud cambia a estado rechazada')

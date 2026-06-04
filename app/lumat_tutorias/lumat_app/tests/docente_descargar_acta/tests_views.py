@@ -16,14 +16,17 @@ class DocenteDescargarActaViewTest(TestCase):
         self.grupo_docente, _ = Group.objects.get_or_create(name='Docente')
 
         # 2. Crear alumnos y usuarios base
-        self.user_alumno = User.objects.create_user(username='alumno_sga', password='123')
+        self.user_alumno = User.objects.create_user(
+            username='alumno_sga', password='123')
         self.alumno = Alumno.objects.create(
             user=self.user_alumno, nombre="Luis", apellido_paterno="Vega", correo="l@edu"
         )
 
         # 3. Crear los docentes y agregarlos al grupo de seguridad
-        self.user_docente_autorizado = User.objects.create_user(username='docente_comite', password='123')
-        self.user_docente_no_autorizado = User.objects.create_user(username='docente_ajeno', password='123')
+        self.user_docente_autorizado = User.objects.create_user(
+            username='docente_comite', password='123')
+        self.user_docente_no_autorizado = User.objects.create_user(
+            username='docente_ajeno', password='123')
 
         self.user_docente_autorizado.groups.add(self.grupo_docente)
         self.user_docente_no_autorizado.groups.add(self.grupo_docente)
@@ -44,13 +47,14 @@ class DocenteDescargarActaViewTest(TestCase):
         d2 = Docente.objects.create(user=u2, nombre="M2", apellido_paterno="B")
 
         # 4. Construir Comité y Seminario
-        self.comite = Comite.objects.create(tutor=self.docente_autorizado, miembro1=d1, miembro2=d2)
+        self.comite = Comite.objects.create(
+            tutor=self.docente_autorizado, miembro1=d1, miembro2=d2)
 
         # 5. Crear el Formulario del Comité aplicando parches a los métodos colaterales del save()
         with patch.object(FormularioComite, '_firmas_cambiaron', create=True, return_value=False), \
-             patch.object(FormularioComite, '_sincronizar_calificacion', create=True, return_value=None), \
-             patch.object(FormularioComite, '_debe_generar_pdf', create=True, return_value=False), \
-             patch.object(FormularioComite, '_promover_alumno_si_corresponde', create=True, return_value=None):
+                patch.object(FormularioComite, '_sincronizar_calificacion', create=True, return_value=None), \
+                patch.object(FormularioComite, '_debe_generar_pdf', create=True, return_value=False), \
+                patch.object(FormularioComite, '_promover_alumno_si_corresponde', create=True, return_value=None):
 
             self.seminario = Seminario.objects.create(
                 alumno=self.alumno, comite=self.comite, numero=1, periodo=1,
@@ -84,7 +88,8 @@ class DocenteDescargarActaViewTest(TestCase):
 
         nombre_esperado = 'attachment; filename="acta_seminario_1_periodo_1_Vega.pdf"'
         self.assertEqual(response['Content-Disposition'], nombre_esperado)
-        self.assertEqual(response.content, b"%PDF-1.4 contenido_falso_del_acta")
+        self.assertEqual(response.content,
+                         b"%PDF-1.4 contenido_falso_del_acta")
 
     # ── CASO 2: SEGURIDAD / AISLAMIENTO DE DATOS (HTTP 404) ──
     def test_docente_no_perteneciente_al_comite_da_error_404(self):
@@ -99,7 +104,8 @@ class DocenteDescargarActaViewTest(TestCase):
         """Si el seminario_id no existe en el sistema, get_object_or_404 arroja un 404 directo."""
         self.client.force_login(self.user_docente_autorizado)
 
-        url_falsa = reverse('lumat_app:docente_descargar_acta', kwargs={'seminario_id': 9999})
+        url_falsa = reverse('lumat_app:docente_descargar_acta',
+                            kwargs={'seminario_id': 9999})
         response = self.client.get(url_falsa)
 
         self.assertEqual(response.status_code, 404)

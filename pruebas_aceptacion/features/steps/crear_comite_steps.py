@@ -33,10 +33,10 @@ def step_impl(context):
 def step_impl(context):
     sel_tutor = Select(context.driver.find_element(By.NAME, 'tutor'))
     sel_tutor.select_by_visible_text('America Blanco')
-    
+
     sel_m1 = Select(context.driver.find_element(By.NAME, 'miembro1'))
     sel_m1.select_by_visible_text('Diego Gomez')
-    
+
     sel_m2 = Select(context.driver.find_element(By.NAME, 'miembro2'))
     sel_m2.select_by_visible_text('Montserrat Marquez')
 
@@ -49,7 +49,8 @@ def step_impl(context):
 @then(u'debería ver el mensaje de éxito en la pantalla')
 def step_impl(context):
     wait = WebDriverWait(context.driver, 10)
-    msg = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "bg-green-100")))
+    msg = wait.until(EC.visibility_of_element_located(
+        (By.CLASS_NAME, "bg-green-100")))
     assert "se agregó correctamente" in msg.text.lower()
 
 
@@ -72,7 +73,8 @@ def step_impl(context):
     assert "add" in context.driver.current_url
     try:
         wait = WebDriverWait(context.driver, 3)
-        err_note = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "errornote")))
+        err_note = wait.until(EC.presence_of_element_located(
+            (By.CLASS_NAME, "errornote")))
         campo_err = context.driver.find_element(By.CSS_SELECTOR, ".errors")
         assert err_note.is_displayed()
         assert campo_err.is_displayed()

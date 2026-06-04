@@ -4,7 +4,9 @@
 {% block extra_css %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link
+  href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
+  rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/seminario.css' %}">
 <style>
   /* Estilos para la subdivisión del Panel Central */
@@ -14,6 +16,7 @@
     margin-bottom: 15px;
     border-bottom: 2px solid var(--lumat-border, #e8e8e8);
   }
+
   .tab-btn {
     padding: 10px 20px;
     font-size: 14px;
@@ -25,19 +28,24 @@
     border-bottom: 3px solid transparent;
     transition: all 0.2s ease;
   }
+
   .tab-btn:hover {
     color: #2C5F8A;
   }
+
   .tab-btn.active {
     color: #2C5F8A;
     border-bottom-color: #2C5F8A;
   }
+
   .tab-content {
     display: none;
   }
+
   .tab-content.active {
     display: block;
   }
+
   /* Estilos del Formulario embebido */
   .acta-form-card {
     background: #ffffff;
@@ -45,24 +53,29 @@
     border-radius: 12px;
     padding: 24px;
   }
+
   .acta-grid-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
     margin-bottom: 16px;
   }
+
   .acta-field-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
     margin-bottom: 16px;
   }
+
   .acta-field-group label {
     font-size: 13px;
     font-weight: 600;
     color: #2C5F8A;
   }
-  .acta-input, .acta-textarea {
+
+  .acta-input,
+  .acta-textarea {
     width: 100%;
     padding: 10px;
     border: 1px solid #C8C0B4;
@@ -70,15 +83,19 @@
     font-size: 13px;
     background-color: #F7F4EF;
   }
-  .acta-input:focus, .acta-textarea:focus {
+
+  .acta-input:focus,
+  .acta-textarea:focus {
     outline: none;
     border-color: #2C5F8A;
     background-color: #fff;
   }
+
   .acta-submit-container {
     text-align: center;
     margin-top: 20px;
   }
+
   .btn-submit-acta {
     display: inline-flex;
     align-items: center;
@@ -92,6 +109,7 @@
     border-radius: 6px;
     cursor: pointer;
   }
+
   .btn-submit-acta:disabled {
     background: #cccccc;
     cursor: not-allowed;
@@ -116,27 +134,25 @@
       <nav class="sem-nav-list" aria-label="Navegación de seminarios">
         {% for i in "12345678" %}
         {% with n=forloop.counter %}
-          {% if n <= semestre_int %}
-            <a href="{% url 'lumat_app:seminario_detalle' n %}"
-               class="sem-nav-item done {% if n == num %}active{% endif %}">
-              <span class="sem-status-dot" aria-hidden="true"></span>
-              Seminario {{ n }}
-            </a>
+        {% if n <= semestre_int %} <a href="{% url 'lumat_app:seminario_detalle' n %}"
+          class="sem-nav-item done {% if n == num %}active{% endif %}">
+          <span class="sem-status-dot" aria-hidden="true"></span>
+          Seminario {{ n }}
+          </a>
           {% elif n == semestre_int %}
-            <a href="{% url 'lumat_app:seminario_detalle' n %}"
-               class="sem-nav-item pending {% if n == num %}active{% endif %}">
-              <span class="sem-status-dot" aria-hidden="true"></span>
-              Seminario {{ n }}
-            </a>
+          <a href="{% url 'lumat_app:seminario_detalle' n %}"
+            class="sem-nav-item pending {% if n == num %}active{% endif %}">
+            <span class="sem-status-dot" aria-hidden="true"></span>
+            Seminario {{ n }}
+          </a>
           {% else %}
-            <button class="sem-nav-item locked" disabled
-                    title="Disponible en semestre {{ n }}">
-              <i class="ti ti-lock" style="font-size:12px;" aria-hidden="true"></i>
-              Seminario {{ n }}
-            </button>
+          <button class="sem-nav-item locked" disabled title="Disponible en semestre {{ n }}">
+            <i class="ti ti-lock" style="font-size:12px;" aria-hidden="true"></i>
+            Seminario {{ n }}
+          </button>
           {% endif %}
-        {% endwith %}
-        {% endfor %}
+          {% endwith %}
+          {% endfor %}
       </nav>
 
       {# ── Acciones rápidas ── #}
@@ -146,7 +162,8 @@
           <i class="ti ti-calendar-due" aria-hidden="true"></i>
           <div>
             <div class="alerta-label">Próximo seminario</div>
-            <div class="alerta-fecha">{{ proximo_seminario.fecha|date:"d/m/Y" }}<br>{{ proximo_seminario.hora|time:"H:i" }} hrs</div>
+            <div class="alerta-fecha">{{ proximo_seminario.fecha|date:"d/m/Y" }}<br>{{ proximo_seminario.hora|time:"H:i"
+              }} hrs</div>
           </div>
         </div>
         {% else %}
@@ -184,13 +201,13 @@
   {# ═══ CONTENIDO PRINCIPAL REFACTORIZADO ═══ #}
   <main class="sem-main">
 
-  <div class="tabs-container">
-    <button class="tab-btn active" onclick="switchTab('comite-tab')">Acta Comité</button>
-    <button class="tab-btn" onclick="switchTab('alumno-tab')">Acta Alumno</button>
-  </div>
+    <div class="tabs-container">
+      <button class="tab-btn active" onclick="switchTab('comite-tab')">Acta Comité</button>
+      <button class="tab-btn" onclick="switchTab('alumno-tab')">Acta Alumno</button>
+    </div>
 
-  <div id="comite-tab" class="tab-content active">
-    {% if acta_comite_url %}
+    <div id="comite-tab" class="tab-content active">
+      {% if acta_comite_url %}
       <div class="sem-pdf-card">
         <div class="sem-pdf-toolbar">
           <span>
@@ -206,41 +223,45 @@
             </a>
           </div>
         </div>
-        <iframe src="{{ acta_comite_url }}#toolbar=0&navpanes=0" class="sem-pdf-frame" title="Acta Comité" loading="lazy"></iframe>
+        <iframe src="{{ acta_comite_url }}#toolbar=0&navpanes=0" class="sem-pdf-frame" title="Acta Comité"
+          loading="lazy"></iframe>
       </div>
-    {% elif seminario and seminario.calificacion %}
+      {% elif seminario and seminario.calificacion %}
       <div class="sem-programado-card">
         <i class="ti ti-file-info big-icon" aria-hidden="true"></i>
         <p class="sem-programado-label">Seminario completado</p>
         <p>Calificación final: <strong>{{ seminario.calificacion }}</strong></p>
         <div class="sem-programado-divider"></div>
-        <p>El informe oficial del comité se renderizará aquí automáticamente una vez que todos los sinodales concluyan sus firmas.</p>
+        <p>El informe oficial del comité se renderizará aquí automáticamente una vez que todos los sinodales concluyan
+          sus firmas.</p>
         {% if formulario_comite %}
-          <p class="sem-programado-lugar" style="margin-top: 12px;">
-            <i class="ti ti-users" aria-hidden="true"></i> Estado de las firmas: 
-            <span style="color: #ffc107; font-weight: 500;">
-              ({{ formulario_comite.firma_tutor|yesno:"✓," }}{{ formulario_comite.firma_miembro1|yesno:"✓," }}{{ formulario_comite.firma_miembro2|yesno:"✓," }})
-            </span>
-          </p>
+        <p class="sem-programado-lugar" style="margin-top: 12px;">
+          <i class="ti ti-users" aria-hidden="true"></i> Estado de las firmas:
+          <span style="color: #ffc107; font-weight: 500;">
+            ({{ formulario_comite.firma_tutor|yesno:"✓," }}{{ formulario_comite.firma_miembro1|yesno:"✓," }}{{
+            formulario_comite.firma_miembro2|yesno:"✓," }})
+          </span>
+        </p>
         {% endif %}
       </div>
-    {% elif seminario and not seminario.calificacion %}
+      {% elif seminario and not seminario.calificacion %}
       <div class="sem-programado-card">
         <i class="ti ti-calendar-event big-icon" aria-hidden="true"></i>
         <p class="sem-programado-label">Programado para</p>
         <p class="sem-programado-fecha">{{ seminario.fecha|date:"d \d\e F, Y" }}</p>
-        <p class="sem-programado-hora"><i class="ti ti-clock" aria-hidden="true"></i> {{ seminario.hora|time:"H:i" }} hrs</p>
+        <p class="sem-programado-hora"><i class="ti ti-clock" aria-hidden="true"></i> {{ seminario.hora|time:"H:i" }}
+          hrs</p>
       </div>
-    {% else %}
+      {% else %}
       <div class="sem-sin-programar-card">
         <i class="ti ti-calendar-off" aria-hidden="true"></i>
         <p style="font-weight:500;">Aún no hay fecha asignada</p>
       </div>
-    {% endif %}
-  </div>
+      {% endif %}
+    </div>
 
-  <div id="alumno-tab" class="tab-content">
-    {% if seminario and seminario.actaAlumno %}
+    <div id="alumno-tab" class="tab-content">
+      {% if seminario and seminario.actaAlumno %}
       <div class="sem-pdf-card">
         <div class="sem-pdf-toolbar">
           <span>
@@ -256,19 +277,21 @@
             </a>
           </div>
         </div>
-        <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0" class="sem-pdf-frame" title="Acta Alumno" loading="lazy"></iframe>
+        <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0" class="sem-pdf-frame" title="Acta Alumno"
+          loading="lazy"></iframe>
       </div>
-      
-    {% elif seminario and seminario.calificacion %}
+
+      {% elif seminario and seminario.calificacion %}
       <div class="acta-form-card">
         <h3 style="color:#2C5F8A; margin-bottom: 8px; font-weight:600;">Llenar Informe Semestral del Alumno</h3>
         <p style="font-size:13px; color:#6b6560; margin-bottom: 20px;">
-          Ingresa las actividades desarrolladas en este ciclo académico. Al enviar, el sistema guardará de forma definitiva y bloqueará modificaciones.
+          Ingresa las actividades desarrolladas en este ciclo académico. Al enviar, el sistema guardará de forma
+          definitiva y bloqueará modificaciones.
         </p>
 
         <form method="post" action="{% url 'lumat_app:generar_acta' num=num %}" id="real-acta-form">
           {% csrf_token %}
-          
+
           <div class="acta-field-group">
             <label>{{ form_acta.actividad_principal.label }}</label>
             {{ form_acta.actividad_principal }}
@@ -321,16 +344,17 @@
           </div>
         </form>
       </div>
-    {% else %}
+      {% else %}
       <div class="sem-sin-programar-card">
         <i class="ti ti-lock" aria-hidden="true"></i>
         <p style="font-weight:500;">Opción no disponible</p>
-        <p>Podrás llenar y emitir tu informe semestral en cuanto tu comité asigne una calificación formal al seminario.</p>
+        <p>Podrás llenar y emitir tu informe semestral en cuanto tu comité asigne una calificación formal al seminario.
+        </p>
       </div>
-    {% endif %}
-  </div>
+      {% endif %}
+    </div>
 
-</main>
+  </main>
 
   {# ═══ PANEL DERECHO ═══ #}
   <aside class="sem-panel" aria-label="Información del seminario">
@@ -360,11 +384,11 @@
           <span class="det-label">Estado</span>
           <span>
             {% if seminario and seminario.calificacion %}
-              <span class="estado-pill aprobado">Aprobado</span>
+            <span class="estado-pill aprobado">Aprobado</span>
             {% elif seminario %}
-              <span class="estado-pill pendiente">Pendiente</span>
+            <span class="estado-pill pendiente">Pendiente</span>
             {% else %}
-              <span class="estado-pill sin-calificar">Sin programar</span>
+            <span class="estado-pill sin-calificar">Sin programar</span>
             {% endif %}
           </span>
         </div>
@@ -379,33 +403,33 @@
       </div>
       <div class="panel-card-body">
         {% if comite %}
-          {% with tutor=comite.tutor m1=comite.miembro1 m2=comite.miembro2 %}
-          <div class="comite-member">
-            <div class="comite-avatar">{{ tutor.nombre|slice:":1" }}{{ tutor.apellido_paterno|slice:":1" }}</div>
-            <div class="comite-info">
-              <p class="comite-nombre">{{ tutor.nombre }} {{ tutor.apellido_paterno }}</p>
-              <p class="comite-rol">Tutor</p>
-            </div>
+        {% with tutor=comite.tutor m1=comite.miembro1 m2=comite.miembro2 %}
+        <div class="comite-member">
+          <div class="comite-avatar">{{ tutor.nombre|slice:":1" }}{{ tutor.apellido_paterno|slice:":1" }}</div>
+          <div class="comite-info">
+            <p class="comite-nombre">{{ tutor.nombre }} {{ tutor.apellido_paterno }}</p>
+            <p class="comite-rol">Tutor</p>
           </div>
-          <div class="comite-member">
-            <div class="comite-avatar">{{ m1.nombre|slice:":1" }}{{ m1.apellido_paterno|slice:":1" }}</div>
-            <div class="comite-info">
-              <p class="comite-nombre">{{ m1.nombre }} {{ m1.apellido_paterno }}</p>
-              <p class="comite-rol">Miembro 1</p>
-            </div>
+        </div>
+        <div class="comite-member">
+          <div class="comite-avatar">{{ m1.nombre|slice:":1" }}{{ m1.apellido_paterno|slice:":1" }}</div>
+          <div class="comite-info">
+            <p class="comite-nombre">{{ m1.nombre }} {{ m1.apellido_paterno }}</p>
+            <p class="comite-rol">Miembro 1</p>
           </div>
-          <div class="comite-member">
-            <div class="comite-avatar">{{ m2.nombre|slice:":1" }}{{ m2.apellido_paterno|slice:":1" }}</div>
-            <div class="comite-info">
-              <p class="comite-nombre">{{ m2.nombre }} {{ m2.apellido_paterno }}</p>
-              <p class="comite-rol">Miembro 2</p>
-            </div>
+        </div>
+        <div class="comite-member">
+          <div class="comite-avatar">{{ m2.nombre|slice:":1" }}{{ m2.apellido_paterno|slice:":1" }}</div>
+          <div class="comite-info">
+            <p class="comite-nombre">{{ m2.nombre }} {{ m2.apellido_paterno }}</p>
+            <p class="comite-rol">Miembro 2</p>
           </div>
-          {% endwith %}
+        </div>
+        {% endwith %}
         {% else %}
-          <p style="font-size:13px; color:var(--lumat-muted); text-align:center; padding:12px 0;">
-            Sin comité asignado
-          </p>
+        <p style="font-size:13px; color:var(--lumat-muted); text-align:center; padding:12px 0;">
+          Sin comité asignado
+        </p>
         {% endif %}
       </div>
     </div>
@@ -418,35 +442,39 @@
       </div>
       <div class="panel-card-body">
         {% if evidencias %}
-          <div class="ev-list" id="ev-list">
-            {% for ev in evidencias %}
-            <div class="ev-item">
-              <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
-              <span class="ev-item-name" title="{{ ev.nombre }}">{{ ev.nombre }}</span>
-              <span class="ev-item-date">{{ ev.subido_en|date:"d/m/y" }}</span>
-            </div>
-            {% endfor %}
+        <div class="ev-list" id="ev-list">
+          {% for ev in evidencias %}
+          <div class="ev-item">
+            <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
+            <span class="ev-item-name" title="{{ ev.nombre }}">{{ ev.nombre }}</span>
+            <span class="ev-item-date">{{ ev.subido_en|date:"d/m/y" }}</span>
           </div>
+          {% endfor %}
+        </div>
         {% else %}
-          <p class="ev-empty">Sin actividades cargadas aún.</p>
+        <p class="ev-empty">Sin actividades cargadas aún.</p>
         {% endif %}
 
         {% if seminario and not seminario.calificacion %}
         <hr class="ev-form-divider">
-        <label class="ev-form-label">Cargar actividad</label>
-        <form method="post" action="{% url 'lumat_app:subir_evidencia' seminario.id %}" enctype="multipart/form-data" id="ev-form" novalidate>
+
+        <label for="ev-nombre" class="ev-form-label">Cargar actividad</label>
+
+        <form method="post" action="{% url 'lumat_app:subir_evidencia' seminario.id %}" enctype="multipart/form-data" id="ev-form">
           {% csrf_token %}
-          <input type="text" id="ev-nombre" name="nombre" class="ev-input" placeholder="Nombre de la actividad" maxlength="200" autocomplete="off">
-          <p class="ev-error-msg" id="err-nombre">Ingresa un nombre para la actividad.</p>
+
+          <input type="text" id="ev-nombre" name="nombre" class="ev-input" placeholder="Nombre de la actividad"
+            maxlength="200" autocomplete="off" required>
+          <p class="ev-error-msg" id="err-nombre" style="display: none;">Ingresa un nombre para la actividad.</p>
 
           <input type="file" id="ev-archivo" name="archivo" class="ev-file-input" accept="application/pdf">
           <label for="ev-archivo" class="ev-file-label" id="ev-file-label">
             <i class="ti ti-upload" aria-hidden="true"></i>
             <span id="ev-file-text">Seleccionar PDF…</span>
           </label>
-          <p class="ev-error-msg" id="err-archivo">Solo se permiten archivos PDF (máx. 10 MB).</p>
+          <p class="ev-error-msg" id="err-archivo" style="display: none;">Solo se permiten archivos PDF (máx. 10 MB).</p>
 
-          <button type="submit" class="ev-submit-btn" id="ev-submit" disabled>Cargar actividad</button>
+          <button type="submit" class="ev-submit-btn" id="ev-submit">Cargar actividad</button>
         </form>
         {% endif %}
       </div>
@@ -457,19 +485,33 @@
 
 {% endwith %}
 
-{# Script vanilla JS para alternar paneles de Actas #}
+{# CORREGIDO: Scripts totalmente independientes y asíncronos #}
 <script>
+  // 1. Manejo independiente del cambio de pestañas de actas
   function switchTab(tabId) {
-    // Desactivar todos los botones y contenidos
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    
-    // Activar el correspondiente
+
     const targetContent = document.getElementById(tabId);
-    if(targetContent) targetContent.classList.add('active');
-    
-    // Marcar botón activo analizando el evento
-    event.currentTarget.classList.add('active');
+    if (targetContent) targetContent.classList.add('active');
+
+    if (window.event && window.event.currentTarget) {
+      window.event.currentTarget.classList.add('active');
+    }
   }
+
+  // 2. CORRECCIÓN CRÍTICA: Enlace inmediato del input de archivos en cuanto el DOM está listo
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('ev-archivo');
+    if (fileInput) {
+      fileInput.addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : "Seleccionar PDF…";
+        const textSpan = document.getElementById('ev-file-text');
+        if (textSpan) {
+          textSpan.textContent = fileName;
+        }
+      });
+    }
+  });
 </script>
 {% endblock %}

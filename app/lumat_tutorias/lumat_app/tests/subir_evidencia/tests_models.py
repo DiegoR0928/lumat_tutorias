@@ -13,12 +13,12 @@ Estrategia para evitar BD:
 
 import os
 from types import SimpleNamespace
-
+import datetime
 from django.db.models import CASCADE, ForeignKey
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-
-from lumat_app.models import Evidencia
+from django.contrib.auth.models import User
+from lumat_app.models import Alumno, Docente, Comite, Seminario, Evidencia
 
 
 # ─────────────────────────────────────────────────────────────
@@ -283,3 +283,89 @@ class EvidenciaStrTests(TestCase):
 
     def test_contiene_tipo(self):
         self.assertIn('pdf', self._str('pdf', 1))
+
+
+class EvidenciaModelTestCase(TestCase):
+
+    def setUp(self):
+        u_a = User.objects.create_user(
+            username='alumno_ev_test', password='pwd')
+        u_t = User.objects.create_user(
+            username='tutor_ev_test', password='pwd')
+        u_m1 = User.objects.create_user(username='m1_ev_test', password='pwd')
+        u_m2 = User.objects.create_user(username='m2_ev_test', password='pwd')
+
+        firma_mock = SimpleUploadedFile(
+            name="firma.png",
+            content=b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x3b",
+            content_type="image/png"
+        )
+
+        self.alumno = Alumno.objects.create(
+            user=u_a, nombre="Luis", apellido_paterno="Vega", matricula="EVID02")
+        tutor = Docente.objects.create(
+            user=u_t, nombre="Carlos", apellido_paterno="Lopez", firma=firma_mock)
+        m1 = Docente.objects.create(
+            user=u_m1, nombre="Maria", apellido_paterno="Gomez", firma=firma_mock)
+        m2 = Docente.objects.create(
+            user=u_m2, nombre="Jose", apellido_paterno="Sanz", firma=firma_mock)
+
+        comite = Comite.objects.create(tutor=tutor, miembro1=m1, miembro2=m2)
+
+        self.seminario = Seminario.objects.create(
+            alumno=self.alumno, comite=comite, numero=1, periodo=1,
+            fecha=datetime.date.today(), hora=datetime.time(10, 0)
+        )
+
+    def test_evidencia_save_extrae_nombre_del_archivo_automaticamente(self):
+        """
+        CUBRE LÍNEA PARCIAL 177 ↛ 178: Si el campo nombre se pasa en blanco,
+        el modelo entra al bloque if y toma el nombre del archivo físico.
+        """
+        archivo_pdf = SimpleUploadedFile(
+            "reporte_mensual.pdf", b"contenido_dummy")
+        evidencia = Evidencia.objects.create(
+            seminario=self.seminario,
+            archivo=archivo_pdf,
+            nombre=""  # Forzar extracción automática de la línea 178
+        )
+        self.assertEqual(evidencia.tipo, 'pdf')
+        self.assertEqual(evidencia.nombre, 'reporte_mensual.pdf')
+        self.assertEqual(
+            str(evidencia), f"Evidencia [pdf] — Seminario {self.seminario.id}")
+
+    def test_evidencia_save_sin_archivo(self):
+        """
+        CUBRE LÍNEA PARCIAL 166 ↛ 180: Si la evidencia no contiene archivo físico,
+        el 'if self.archivo' evalúa False, cubriendo la rama vacía.
+        """
+        evidencia_vacia = Evidencia(
+            seminario=self.seminario,
+            archivo=None,
+            nombre="Enlace Externo sin documento",
+            tipo='otro'
+        )
+        evidencia_vacia.save()
+        self.assertFalse(bool(evidencia_vacia.archivo))
+        self.assertEqual(evidencia_vacia.tipo, 'otro')
+
+    def test_evidencia_save_clasificacion_imagenes(self):
+        """Valida que extensiones de imagen mapeen correctamente el tipo a 'imagen'."""
+        archivo_img = SimpleUploadedFile(
+            "grafica_tesis.png", b"datos_binarios")
+        evidencia = Evidencia.objects.create(
+            seminario=self.seminario,
+            archivo=archivo_img,
+            nombre="Gráfica de resultados"
+        )
+        self.assertEqual(evidencia.tipo, 'imagen')
+
+    def test_evidencia_save_clasificacion_otros_formatos(self):
+        """Valida que extensiones desconocidas mapeen correctamente el tipo a 'otro'."""
+        archivo_txt = SimpleUploadedFile("notas.txt", b"datos_texto")
+        evidencia = Evidencia.objects.create(
+            seminario=self.seminario,
+            archivo=archivo_txt,
+            nombre="Notas Crudas"
+        )
+        self.assertEqual(evidencia.tipo, 'otro')
