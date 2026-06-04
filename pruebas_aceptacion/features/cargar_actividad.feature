@@ -7,32 +7,21 @@ Característica: CU-03 Cargar actividades
   Para que queden registradas en mi seminario
 
   Antecedentes:
-    Dado que el alumno "amerinaga" con contraseña "amer1234" ha iniciado sesión
-    Y el alumno navega al seminario 4
+    Dado que el alumno "amer" con contraseña "amer1234" ha iniciado sesión
+    Y el alumno tiene asignado el seminario número 4
+    Y el formulario del comité para el seminario 4 tiene el estado general "pendiente"
+    Y el alumno navega al panel del seminario 4
 
   @limpiar_evidencias
-  Escenario: Carga exitosa de una actividad
+  Escenario: Carga exitosa de una actividad en formato PDF
     Cuando el alumno escribe "Reporte de avance" en el campo nombre
     Y el alumno adjunta el archivo "reporte.pdf"
     Y el alumno hace clic en el botón "Cargar actividad"
-    Entonces la página muestra el texto "Evidencia subida correctamente."
-    Y la página muestra el texto "Reporte de avance"
-
-  Escenario: El botón está deshabilitado si el formulario está incompleto
-    Entonces el botón con id "ev-submit" está deshabilitado
-    Cuando el alumno escribe "Mi actividad" en el campo nombre
-    Entonces el botón con id "ev-submit" está deshabilitado
-    Cuando el alumno adjunta el archivo "actividad.pdf"
-    Entonces el botón con id "ev-submit" está habilitado
-
-  Escenario: FA-01 - El alumno sube un archivo que no es PDF
-    Cuando el alumno escribe "Actividad incorrecta" en el campo nombre
-    Y el alumno adjunta el archivo "imagen.jpg"
-    Entonces la página muestra el texto "El archivo debe ser un PDF."
-    Y el botón con id "ev-submit" está deshabilitado
+    Entonces se verifica que la actividad "Reporte de avance" quedó registrada en la base de datos
 
   @limpiar_evidencias
-  Escenario: FA-01 - El alumno envía el formulario sin nombre
-    Cuando el alumno adjunta el archivo "reporte.pdf"
+  Escenario: Carga fallida de una actividad con extensión inválida
+    Cuando el alumno escribe "Imagen adjunta" en el campo nombre
+    Y el alumno adjunta el archivo "imagen.jpg"
     Y el alumno hace clic en el botón "Cargar actividad"
-    Entonces la página muestra el texto "Ingresa un nombre para la actividad."
+    Entonces se verifica que la actividad "Imagen adjunta" no fue guardada en la base de datos

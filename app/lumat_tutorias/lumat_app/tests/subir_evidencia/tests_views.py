@@ -58,7 +58,7 @@ class BaseAuthTests(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='alumno_ev', password='pass1234')
-        
+
         # Crear el perfil relacional obligatorio de Alumno
         self.alumno = Alumno.objects.create(
             user=self.user,
@@ -176,20 +176,19 @@ class SubirEvidenciaValidacionesTests(BaseAuthTests):
         self.client.post(self.url, data={'archivo': make_pdf()})
         mock_ev.objects.create.assert_called_once()
 
-    # CORREGIDO: Se pasa el payload completo 'nombre' para evitar fallos del subscript en el call_args de mocks parciales
     @patch('lumat_app.views.Evidencia')
     @patch('lumat_app.views.get_object_or_404', return_value=seminario_mock())
     def test_create_recibe_seminario_y_archivo(self, mock_g404, mock_ev):
         sem = seminario_mock()
         mock_g404.return_value = sem
         archivo = make_pdf('doc.pdf')
-        
+
         payload = {
             'nombre': 'doc.pdf',
             'archivo': archivo
         }
         self.client.post(self.url, data=payload)
-        
+
         # Validamos llamada segura
         mock_ev.objects.create.assert_called_once()
         kwargs = mock_ev.objects.create.call_args[1]

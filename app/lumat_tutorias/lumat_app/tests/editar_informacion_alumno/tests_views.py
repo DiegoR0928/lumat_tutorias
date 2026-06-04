@@ -9,7 +9,7 @@ class TestViewsPerfilAlumno(TestCase):
         self.user = User.objects.create_user(
             username='prueba',
             password='amer1234',
-            email='juan@test.com' 
+            email='juan@test.com'
         )
 
         self.group = Group.objects.create(name='Alumno')
@@ -54,7 +54,7 @@ class TestViewsPerfilAlumno(TestCase):
         self.alumno.refresh_from_db()
         self.assertEqual(self.alumno.nombre, 'Carlos')
         self.assertEqual(self.alumno.matricula, '999')
-        
+
         # El User de Django debió sincronizarse con el nuevo correo
         self.user.refresh_from_db()
         self.assertEqual(self.user.email, 'carlos@test.com')
@@ -72,7 +72,7 @@ class TestViewsPerfilAlumno(TestCase):
         }
 
         response = self.client.post('/alumno/perfil/', data=data)
-        
+
         # Al ser un envío válido, debe redirigir (HTTP 302)
         self.assertEqual(response.status_code, 302)
 
