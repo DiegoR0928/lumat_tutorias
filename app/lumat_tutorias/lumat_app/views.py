@@ -750,13 +750,13 @@ def admin_cambio_tutor_view(request):
                 comite.save()
 
             solicitud.estado = "aprobada"
-            solicitud.resuelta_en = datetime.now()
+            solicitud.resuelta_en = timezone.now()
             solicitud.save()
             messages.success(request, "Solicitud aprobada con éxito.")
 
         elif accion == "rechazar":
             solicitud.estado = "rechazada"
-            solicitud.resuelta_en = datetime.now()
+            solicitud.resuelta_en = timezone.now()
             solicitud.save()
             messages.error(request, "Solicitud rechazada.")
         return redirect('/admin/cambio-tutor/')
