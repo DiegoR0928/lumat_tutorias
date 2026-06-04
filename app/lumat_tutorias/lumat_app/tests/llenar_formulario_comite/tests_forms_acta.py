@@ -1,13 +1,10 @@
 import datetime
 from unittest.mock import patch, MagicMock
-
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User, Group
 from django.contrib.messages import get_messages
-
 from lumat_app.models import Alumno, Docente, Comite, Seminario, FormularioComite
-from lumat_app.forms import FormularioComiteForm
 
 
 class DocenteGuardarInformePostTestCase(TestCase):
@@ -45,7 +42,6 @@ class DocenteGuardarInformePostTestCase(TestCase):
             fecha=datetime.date.today(), hora=datetime.time(10, 0)
         )
 
-        # Mockear el save del modelo para instanciar el FormularioComite base sin detonar errores de atributos faltantes
         with patch.object(FormularioComite, 'save', return_value=None):
             self.formulario = FormularioComite(
                 seminario=self.seminario,
@@ -81,12 +77,10 @@ class DocenteGuardarInformePostTestCase(TestCase):
             'propuestas': 'Continuar con las pruebas unitarias en Docker.'
         }
 
-        # Interceptamos el save del modelo en el hilo para blindar el redirect automático por follow=True
         with patch.object(FormularioComite, 'save', return_value=None):
             response = self.client.post(
                 self.url_detalle, data=payload, follow=True)
 
-        # 1. Comprueba que el flujo redirigió a la misma página y que el destino final resolvió exitosamente (200 OK)
         self.assertEqual(response.status_code, 200)
         self.assertRedirects(response, self.url_detalle,
                              status_code=302, target_status_code=200)
@@ -104,7 +98,8 @@ class DocenteGuardarInformePostTestCase(TestCase):
     def test_tutor_envia_informe_invalido_post_no_guarda_y_renderiza(self, mock_form_class):
         """
         Si el tutor envía un POST pero los datos no superan las validaciones del formulario,
-        no ejecuta el método save(), no redirige (retorna un 200 directo) y vuelve a pintar la página mostrando los errores.
+        no ejecuta el método save(), no redirige (retorna un 200 directo) y vuelve a pintar
+        la página mostrando los errores.
         """
         mock_form_instance = MagicMock()
         mock_form_instance.is_valid.return_value = False
@@ -117,7 +112,6 @@ class DocenteGuardarInformePostTestCase(TestCase):
         with patch.object(FormularioComite, 'save', return_value=None):
             response = self.client.post(self.url_detalle, data=payload)
 
-        # 1. Comprobar que no hay redirección (Código 200 directo porque vuelve a renderizar el template con errores)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'docente_seminario_detalle.html')
 

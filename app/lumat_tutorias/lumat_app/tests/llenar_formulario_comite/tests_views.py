@@ -4,7 +4,8 @@ from django.contrib.auth.models import User, Group
 from datetime import date, time, timedelta
 from unittest.mock import MagicMock, patch
 from lumat_app.views_docente import _filtrar_por_rol_y_estado, _obtener_estado_formulario
-from lumat_app.models import Docente, Comite, Seminario, Alumno, FormularioComite, CalendarioGenerado
+from lumat_app.models import Docente, Comite, Seminario, Alumno
+from lumat_app.models import FormularioComite, CalendarioGenerado
 
 
 class ViewsTests(TestCase):
@@ -14,7 +15,6 @@ class ViewsTests(TestCase):
         self.user_docente = User.objects.create_user(
             username='docente', password='123')
 
-        # Agregamos el usuario a ambas variantes de grupo comunes para mitigar typos en el decorador
         for nombre_grupo in ['Docentes', 'Docente']:
             grupo, _ = Group.objects.get_or_create(name=nombre_grupo)
             self.user_docente.groups.add(grupo)
@@ -54,11 +54,32 @@ class ViewsTests(TestCase):
             fecha_fin=date.today() + timedelta(days=30)
         )
 
-        # 5. Parche múltiple para aislar los métodos colaterales del save() de tu FormularioComite
-        with patch.object(FormularioComite, '_firmas_cambiaron', create=True, return_value=False), \
-                patch.object(FormularioComite, '_sincronizar_calificacion', create=True, return_value=None), \
-                patch.object(FormularioComite, '_debe_generar_pdf', create=True, return_value=False), \
-                patch.object(FormularioComite, '_promover_alumno_si_corresponde', create=True, return_value=None):
+        with (
+            patch.object(
+                FormularioComite,
+                '_firmas_cambiaron',
+                create=True,
+                return_value=False,
+            ),
+            patch.object(
+                FormularioComite,
+                '_sincronizar_calificacion',
+                create=True,
+                return_value=None,
+            ),
+            patch.object(
+                FormularioComite,
+                '_debe_generar_pdf',
+                create=True,
+                return_value=False,
+            ),
+            patch.object(
+                FormularioComite,
+                '_promover_alumno_si_corresponde',
+                create=True,
+                return_value=None,
+            ),
+        ):
 
             self.sem_tutor = Seminario.objects.create(
                 alumno=self.alumno1, comite=self.comite_tutor, fecha=date.today() +
@@ -76,7 +97,6 @@ class ViewsTests(TestCase):
             self.form_miembro = FormularioComite.objects.create(
                 seminario=self.sem_miembro, estado_general='completo')
 
-        # === CORRECCIÓN CLAVE: Forzar estados reales en la BD saltándonos el método save() ===
         FormularioComite.objects.filter(
             id=self.form_tutor.id).update(estado_general='pendiente')
         FormularioComite.objects.filter(
@@ -115,7 +135,8 @@ class ViewsTests(TestCase):
         """Filtros (Flujo B): Dropdowns de control en la pantalla."""
         self.client.login(username='docente', password='123')
 
-        # Caso 1: Rol = miembro, Estado = completados (Debe encontrar sem_miembro ya que es 'completo')
+        # Caso 1: Rol = miembro, Estado = completados
+        # (Debe encontrar sem_miembro ya que es 'completo')
         response = self.client.get(
             self.url, {'rol': 'miembro', 'estado': 'completados'})
         seminarios_retornados = [item['seminario']
@@ -123,7 +144,8 @@ class ViewsTests(TestCase):
         self.assertIn(self.sem_miembro, seminarios_retornados)
         self.assertNotIn(self.sem_tutor, seminarios_retornados)
 
-        # Caso 2: Rol = tutor, Estado = pendientes (Debe encontrar sem_tutor ya que es 'pendiente')
+        # Caso 2: Rol = tutor, Estado = pendientes
+        # (Debe encontrar sem_tutor ya que es 'pendiente')
         response = self.client.get(
             self.url, {'rol': 'tutor', 'estado': 'pendientes'})
         seminarios_retornados = [item['seminario']
@@ -132,13 +154,34 @@ class ViewsTests(TestCase):
         self.assertNotIn(self.sem_miembro, seminarios_retornados)
 
     def test_proximos_seminarios_excluye_completados_y_pasados(self):
-        """Seguridad/Lógica: Próximos seminarios solo incluye fechas >= hoy y estado 'pendiente'."""
         self.client.login(username='docente', password='123')
 
-        with patch.object(FormularioComite, '_firmas_cambiaron', create=True, return_value=False), \
-                patch.object(FormularioComite, '_sincronizar_calificacion', create=True, return_value=None), \
-                patch.object(FormularioComite, '_debe_generar_pdf', create=True, return_value=False), \
-                patch.object(FormularioComite, '_promover_alumno_si_corresponde', create=True, return_value=None):
+        with (
+            patch.object(
+                FormularioComite,
+                '_firmas_cambiaron',
+                create=True,
+                return_value=False,
+            ),
+            patch.object(
+                FormularioComite,
+                '_sincronizar_calificacion',
+                create=True,
+                return_value=None,
+            ),
+            patch.object(
+                FormularioComite,
+                '_debe_generar_pdf',
+                create=True,
+                return_value=False,
+            ),
+            patch.object(
+                FormularioComite,
+                '_promover_alumno_si_corresponde',
+                create=True,
+                return_value=None,
+            ),
+        ):
 
             seminario_pasado = Seminario.objects.create(
                 alumno=self.alumno1, comite=self.comite_tutor, fecha=date.today() -
@@ -177,7 +220,6 @@ class FiltradoYEstadoFormularioHelpersTestCase(TestCase):
         else:
             self.seminario_sin_form.formulario_comite = None
 
-    # ── PATH A: CUBRE LA LÍNEA 'return pendiente' Y EL SALTO PARCIAL 124 ↛ 126 ──
     def test_obtener_estado_formulario_sin_formulario_retorna_pendiente(self):
         """
         Si el seminario carece de formulario_comite, debe entrar al else/bifurcación
@@ -193,7 +235,6 @@ class FiltradoYEstadoFormularioHelpersTestCase(TestCase):
         estado = _obtener_estado_formulario(self.seminario_con_form)
         self.assertEqual(estado, 'completo')
 
-    # ── PATH B: CUBRE LAS LÍNEAS DE RESULTADO.APPEND Y EL SALTO PARCIAL 149 ↛ 150 ──
     def test_filtrar_por_rol_y_estado_todos_agrega_items_al_resultado(self):
         """
         Al enviar estado='todos', se evalúa la línea 149 y se ejecuta la 150
@@ -216,7 +257,6 @@ class FiltradoYEstadoFormularioHelpersTestCase(TestCase):
         self.assertEqual(resultado[0]['seminario'], self.seminario_con_form)
 
     def test_filtrar_por_rol_y_estado_completados_y_pendientes(self):
-        """Cubre los bloques elif restantes de la función de filtrado para asegurar consistencia."""
         como_tutor = [self.seminario_con_form]
         como_miembro = [self.seminario_sin_form]
 

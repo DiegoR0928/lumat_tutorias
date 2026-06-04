@@ -1,10 +1,7 @@
-import datetime
 from unittest.mock import MagicMock
-
 from django.test import TestCase, RequestFactory
 from django.contrib.messages import get_messages
 from django.contrib.messages.storage.cookie import CookieStorage
-
 from lumat_app.models import Alumno, Comite, Seminario, FormularioComite
 # Asegúrate de que apunte al módulo real donde reside la función de 4 parámetros
 from lumat_app.views_docente import text_form_valido, _verificar_y_generar_pdf_comite
@@ -15,11 +12,9 @@ class HelpersDocenteTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
-        # 1. Crear un request simulado aislado con CookieStorage para evitar errores de middleware
         self.request = self.factory.get('/')
         setattr(self.request, '_messages', CookieStorage(self.request))
 
-        # 2. Configurar mocks simulando la estructura mínima de tus modelos
         self.alumno = MagicMock(spec=Alumno, id=1, matricula="20220001")
         self.comite = MagicMock(spec=Comite, id=1)
 
@@ -36,7 +31,6 @@ class HelpersDocenteTestCase(TestCase):
     # ═══ PRUEBAS PARA text_form_valido (Versión Real de 4 parámetros) ═══
 
     def test_text_form_valido_cuatro_parametros_exito(self):
-        """text_form_valido retorna True si la validación de la calificación es exitosa."""
         mock_form = MagicMock()
         mock_form.is_valid.return_value = True
 
@@ -48,7 +42,6 @@ class HelpersDocenteTestCase(TestCase):
         self.assertEqual(len(mensajes), 0)
 
     def test_text_form_valido_cuatro_parametros_invalido(self):
-        """text_form_valido retorna False e inyecta el mensaje de error si la nota es inválida."""
         mock_form = MagicMock()
         mock_form.is_valid.return_value = False
 
@@ -64,7 +57,7 @@ class HelpersDocenteTestCase(TestCase):
     # ═══ PRUEBAS PARA _verificar_y_generar_pdf_comite ═══
 
     def test_verificar_pdf_comite_ignora_flujo_si_esta_pendiente(self):
-        """Si el formulario sigue 'pendiente', no altera la nota del seminario ni ejecuta su .save()."""
+
         self.formulario.estado_general = 'pendiente'
 
         _verificar_y_generar_pdf_comite(
@@ -75,7 +68,6 @@ class HelpersDocenteTestCase(TestCase):
         self.assertEqual(len(mensajes), 0)
 
     def test_verificar_pdf_comite_exito_cuando_esta_completo(self):
-        """Si el sínodo está 'completo', pasa el promedio al seminario, guarda y envía un mensaje info."""
         self.formulario.estado_general = 'completo'
         self.formulario.calificacion_final = 9.35
 
@@ -93,7 +85,6 @@ class HelpersDocenteTestCase(TestCase):
         )
 
     def test_verificar_pdf_comite_atrapa_excepciones_y_muestra_error(self):
-        """Si la persistencia física falla, el bloque try/except captura el error de forma segura."""
         self.formulario.estado_general = 'completo'
         self.seminario.save.side_effect = Exception(
             "Fallo de escritura en el storage de medios")
@@ -104,37 +95,7 @@ class HelpersDocenteTestCase(TestCase):
         mensajes = list(get_messages(self.request))
         self.assertEqual(len(mensajes), 1)
         self.assertIn(
-            "Las firmas son válidas pero ocurrió un error al construir el archivo PDF", str(mensajes[0]))
+            "Las firmas son válidas pero ocurrió un error al construir el archivo PDF",
+            str(mensajes[0])
+        )
         self.assertIn("Fallo de escritura", str(mensajes[0]))
-
-# class TextFormValidoDosParametrosTestCase(TestCase):
-
-#     def setUp(self):
-#         self.factory = RequestFactory()
-#         # Creamos un request aislado con soporte de mensajes en memoria para evitar fallos de middleware
-#         self.request = self.factory.get('/')
-#         setattr(self.request, '_messages', CookieStorage(self.request))
-
-#     def test_text_form_valido_dos_params_exito(self):
-#         """text_form_valido (2 params) debe retornar True si el formulario es correcto."""
-#         mock_form = MagicMock()
-#         mock_form.is_valid.return_value = True
-
-#         # Forzamos la llamada pasándole únicamente los 2 argumentos requeridos
-#         resultado = text_form_valido(mock_form, self.request)
-
-#         self.assertTrue(resultado)
-#         mensajes = list(get_messages(self.request))
-#         self.assertEqual(len(mensajes), 0)
-
-#     def test_text_form_valido_dos_params_invalido(self):
-#         """text_form_valido (2 params) debe retornar False e inyectar el mensaje de error de rango [0, 10]."""
-#         mock_form = MagicMock()
-#         mock_form.is_valid.return_value = False
-
-#         resultado = text_form_valido(mock_form, self.request)
-
-#         self.assertFalse(resultado)
-#         mensajes = list(get_messages(self.request))
-#         self.assertEqual(len(mensajes), 1)
-#         self.assertEqual(str(mensajes[0]),)

@@ -33,7 +33,6 @@ class GenerarActaViewTestCase(TestCase):
             correo="luis@lumat.edu"
         )
 
-        # 2. Crear una imagen falsa transparente para cumplir con el ImageField obligatorio de Docente
         self.imagen_firma = SimpleUploadedFile(
             name="firma_dummie.png",
             content=(
@@ -51,11 +50,28 @@ class GenerarActaViewTestCase(TestCase):
         u_m2 = User.objects.create_user(username='u_m2_a', password='pwd')
 
         self.doc_t = Docente.objects.create(
-            user=u_t, nombre="Tutor", apellido_paterno="A", correo="t@uaz.mx", firma=self.imagen_firma)
+            user=u_t,
+            nombre="Tutor",
+            apellido_paterno="A",
+            correo="t@uaz.mx",
+            firma=self.imagen_firma,
+        )
+
         self.doc_m1 = Docente.objects.create(
-            user=u_m1, nombre="Miembro1", apellido_paterno="B", correo="m1@uaz.mx", firma=self.imagen_firma)
+            user=u_m1,
+            nombre="Miembro1",
+            apellido_paterno="B",
+            correo="m1@uaz.mx",
+            firma=self.imagen_firma,
+        )
+
         self.doc_m2 = Docente.objects.create(
-            user=u_m2, nombre="Miembro2", apellido_paterno="C", correo="m2@uaz.mx", firma=self.imagen_firma)
+            user=u_m2,
+            nombre="Miembro2",
+            apellido_paterno="C",
+            correo="m2@uaz.mx",
+            firma=self.imagen_firma,
+        )
 
         self.comite = Comite.objects.create(
             tutor=self.doc_t, miembro1=self.doc_m1, miembro2=self.doc_m2)
@@ -93,13 +109,11 @@ class GenerarActaViewTestCase(TestCase):
 
     # ── PATH 1: CORREGIDO PARA REDIRECCIONES EN CADENA MULTIPLE (num=9) ──
     def test_generar_acta_seminario_inexistente_error_y_redirige(self):
-        """Si el alumno solicita un número de seminario no registrado (ej. 9), muestra error y redirige."""
         url = reverse('lumat_app:generar_acta', kwargs={'num': 9})
         response = self.client.get(url)
 
         # Validamos el código de redirección inicial de forma directa
         self.assertEqual(response.status_code, 302)
-        # CORRECCIÓN: Indicamos target_status_code=302 porque el destino final 'seminario_detalle' también redirige
         self.assertRedirects(response, reverse('lumat_app:seminario_detalle', kwargs={
                              'num': 9}), status_code=302, target_status_code=302)
 
@@ -125,7 +139,6 @@ class GenerarActaViewTestCase(TestCase):
 
     # ── PATH 3: INTENTO DE ACCESO POR MÉTODO GET MANUAL ──
     def test_generar_acta_peticion_get_manual_redirige_a_detalle(self):
-        """Si el seminario es apto pero se accede por método GET manual, redirige de vuelta al detalle."""
         url = reverse('lumat_app:generar_acta', kwargs={'num': 1})
         response = self.client.get(url)
 
@@ -135,7 +148,6 @@ class GenerarActaViewTestCase(TestCase):
 
     # ── PATH 4: POST RECHAZADO POR ACTA YA EXISTENTE ANTERIORMENTE ──
     def test_post_generar_acta_ya_existente_warning_y_redirige(self):
-        """Si el acta ya fue generada previamente, rechaza procesar el POST usando los campos reales del modelo."""
         ActaAlumnoData.objects.create(
             seminario=self.seminario_calificado,
             actividad_principal="Simulador educativo de Física Cuántica",
@@ -157,14 +169,12 @@ class GenerarActaViewTestCase(TestCase):
     # ── PATH 5: CORREGIDO PARA LA SESIÓN DIRECTA EN EL REQUEST DE DJANGO ──
     @patch('lumat_app.views.ActaAlumnoForm')
     def test_post_generar_acta_formulario_invalido_guarda_en_sesion(self, mock_form_class):
-        """Si el formulario no es válido, levanta una alerta y almacena la data en request.session."""
         mock_form_instance = mock_form_class.return_value
         mock_form_instance.is_valid.return_value = False
 
         url = reverse('lumat_app:generar_acta', kwargs={'num': 1})
         payload = {'actividad_principal': 'Contenido Incompleto'}
 
-        # CORRECCIÓN: Despachamos usando la request de respuesta directa para extraer la sesión mutada en caliente
         response = self.client.post(url, data=payload)
 
         self.assertEqual(response.status_code, 302)
@@ -174,7 +184,11 @@ class GenerarActaViewTestCase(TestCase):
         # Validamos directamente contra el objeto session del request que procesó la vista
         self.assertIn('failed_acta_form_data', response.wsgi_request.session)
         self.assertEqual(
-            response.wsgi_request.session['failed_acta_form_data']['actividad_principal'], 'Contenido Incompleto')
+            response.wsgi_request.session['failed_acta_form_data'][
+                'actividad_principal'
+            ],
+            'Contenido Incompleto',
+        )
 
         mensajes = list(get_messages(response.wsgi_request))
         self.assertEqual(str(
@@ -183,8 +197,11 @@ class GenerarActaViewTestCase(TestCase):
     # ── PATH 6: POST EXCEPCIÓN AL RENDERIZAR EL PDF (CON DETECCIÓN DE DATA HUÉRFANA) ──
     @patch('lumat_app.views.generar_acta_alumno')
     @patch('lumat_app.views.ActaAlumnoForm')
-    def test_post_generar_acta_falla_renderizador_pdf_elimina_data_y_redirige(self, mock_form_class, mock_generar_pdf):
-        """Si la compilación de ReportLab falla, elimina el registro ActaAlumnoData para evitar duplicidad."""
+    def test_post_generar_acta_falla_renderizador_pdf_elimina_data_y_redirige(
+        self,
+        mock_form_class,
+        mock_generar_pdf,
+    ):
         mock_form_instance = mock_form_class.return_value
         mock_form_instance.is_valid.return_value = True
         mock_form_instance.cleaned_data = {
@@ -205,13 +222,19 @@ class GenerarActaViewTestCase(TestCase):
 
         mensajes = list(get_messages(response.wsgi_request))
         self.assertIn(
-            "Error al generar el PDF técnico: Falta de memoria RAM en el servidor", str(mensajes[0]))
+            "Error al generar el PDF técnico: "
+            "Falta de memoria RAM en el servidor",
+            str(mensajes[0]),
+        )
 
     # ── PATH 7: POST PROCESAMIENTO TOTALMENTE EXITOSO ──
     @patch('lumat_app.views.generar_acta_alumno')
     @patch('lumat_app.views.ActaAlumnoForm')
-    def test_post_generar_acta_exito_total_guarda_archivo(self, mock_form_class, mock_generar_pdf):
-        """Si todo es correcto, guarda los registros y monta el archivo binario sobre el modelo Seminario."""
+    def test_post_generar_acta_exito_total_guarda_archivo(
+        self,
+        mock_form_class,
+        mock_generar_pdf,
+    ):
         mock_form_instance = mock_form_class.return_value
         mock_form_instance.is_valid.return_value = True
         mock_form_instance.cleaned_data = {
@@ -242,5 +265,10 @@ class GenerarActaViewTestCase(TestCase):
         self.assertEqual(
             str(mensajes[0]), "Acta generada y guardada correctamente.")
 
-        if self.seminario_calificado.actaAlumno and os.path.exists(self.seminario_calificado.actaAlumno.path):
+        if (
+            self.seminario_calificado.actaAlumno
+            and os.path.exists(
+                self.seminario_calificado.actaAlumno.path
+            )
+        ):
             os.remove(self.seminario_calificado.actaAlumno.path)

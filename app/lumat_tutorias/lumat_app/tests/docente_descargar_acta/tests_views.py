@@ -51,10 +51,32 @@ class DocenteDescargarActaViewTest(TestCase):
             tutor=self.docente_autorizado, miembro1=d1, miembro2=d2)
 
         # 5. Crear el Formulario del Comité aplicando parches a los métodos colaterales del save()
-        with patch.object(FormularioComite, '_firmas_cambiaron', create=True, return_value=False), \
-                patch.object(FormularioComite, '_sincronizar_calificacion', create=True, return_value=None), \
-                patch.object(FormularioComite, '_debe_generar_pdf', create=True, return_value=False), \
-                patch.object(FormularioComite, '_promover_alumno_si_corresponde', create=True, return_value=None):
+        with (
+            patch.object(
+                FormularioComite,
+                '_firmas_cambiaron',
+                create=True,
+                return_value=False,
+            ),
+            patch.object(
+                FormularioComite,
+                '_sincronizar_calificacion',
+                create=True,
+                return_value=None,
+            ),
+            patch.object(
+                FormularioComite,
+                '_debe_generar_pdf',
+                create=True,
+                return_value=False,
+            ),
+            patch.object(
+                FormularioComite,
+                '_promover_alumno_si_corresponde',
+                create=True,
+                return_value=None,
+            ),
+        ):
 
             self.seminario = Seminario.objects.create(
                 alumno=self.alumno, comite=self.comite, numero=1, periodo=1,
@@ -91,17 +113,13 @@ class DocenteDescargarActaViewTest(TestCase):
         self.assertEqual(response.content,
                          b"%PDF-1.4 contenido_falso_del_acta")
 
-    # ── CASO 2: SEGURIDAD / AISLAMIENTO DE DATOS (HTTP 404) ──
     def test_docente_no_perteneciente_al_comite_da_error_404(self):
-        """Si un docente intenta descargar el acta de un alumno que no es suyo, lanza Http404."""
         self.client.force_login(self.user_docente_no_autorizado)
 
         response = self.client.get(self.url_descarga)
         self.assertEqual(response.status_code, 404)
 
-    # ── CASO 3: ID INEXISTENTE (HTTP 404) ──
     def test_seminario_inexistente_da_error_404(self):
-        """Si el seminario_id no existe en el sistema, get_object_or_404 arroja un 404 directo."""
         self.client.force_login(self.user_docente_autorizado)
 
         url_falsa = reverse('lumat_app:docente_descargar_acta',

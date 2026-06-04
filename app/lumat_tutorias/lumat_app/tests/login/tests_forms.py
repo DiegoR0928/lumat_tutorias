@@ -121,7 +121,7 @@ class TestLoginForm(TestCase):
             'username': 'sin_grupo',
             'password': 'testpass123'
         })
-        self.assertRedirects(response, '/', target_status_code=404)
+        self.assertRedirects(response, '/', target_status_code=200)
 
     # --- Casos negativos ---
 

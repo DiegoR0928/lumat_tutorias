@@ -154,22 +154,6 @@ def _proximo_seminario(alumno):
     )
 
 
-# ─────────────────────────────────────────────
-# Vista: listado / hub de seminarios
-# ─────────────────────────────────────────────
-
-# @login_required
-# def seminario(request):
-#     """Redirige al seminario activo (el más reciente desbloqueado)."""
-#     alumno = request.user.alumno
-#     semestre = int(alumno.semestre)
-#     return redirect('lumat_app:seminario_detalle', num=semestre)
-
-
-# ─────────────────────────────────────────────
-# Vista: detalle de un seminario
-# ─────────────────────────────────────────────
-
 @login_required
 @user_passes_test(es_alumno)
 def seminario_detalle(request, num):
@@ -445,20 +429,13 @@ def cambio_tutor(request):
 
 
 @login_required
+@user_passes_test(es_alumno)
 def perfil_alumno(request):
     """
     Vista principal del perfil del alumno.
     Maneja la visualización y las acciones de edición.
     """
-    try:
-        # Intenta obtener la relación OneToOne.
-        # Si el usuario es admin o docente, esto fallará de forma segura.
-        alumno = request.user.alumno
-    except (Alumno.DoesNotExist, AttributeError):
-        messages.error(
-            request,
-            "Este usuario no cuenta con un perfil de alumno asociado.")
-        return redirect('lumat_app:login')
+    alumno = request.user.alumno
 
     editando = request.GET.get('modo')  # 'perfil' | 'password' | None
 
@@ -515,7 +492,7 @@ def _guardar_perfil(request, alumno):
         request, 'Datos inválidos, por favor verifica la información')
     return _render_perfil(
         request, alumno, editando='perfil',
-        _alumno_form=alumno_form,
+        alumno_form=alumno_form,
         password_form=password_form,
     )
 
@@ -541,7 +518,7 @@ def _cambiar_password(request, alumno):
 
 @login_required
 def calendario(request):
-    ultimo = CalendarioGenerado.objects.first()  # ya ordenado por -fecha_creacion
+    ultimo = CalendarioGenerado.objects.first()
     return render(request, 'alumno_calendario.html', {
         'calendario': ultimo,
     })

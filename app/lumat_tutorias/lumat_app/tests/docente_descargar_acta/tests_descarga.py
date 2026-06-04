@@ -52,7 +52,7 @@ class DescargarEvidenciasZipTestCase(TestCase):
             fecha=datetime.date.today(), hora=datetime.time(10, 0)
         )
 
-        with patch.object(FormularioComite, 'save', autospec=True) as mock_save:
+        with patch.object(FormularioComite, 'save', autospec=True):
             self.formulario = FormularioComite(
                 seminario=self.seminario,
                 firma_tutor=False,

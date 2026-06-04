@@ -6,23 +6,23 @@ from lumat_app.models import Alumno
 class TestViewsPerfilAlumno(TestCase):
 
     def setUp(self):
-        # Crear usuario y grupo
         self.user = User.objects.create_user(
             username='prueba',
-            password='amer1234'
+            password='amer1234',
+            email='juan@test.com' 
         )
 
         self.group = Group.objects.create(name='Alumno')
         self.user.groups.add(self.group)
 
-        # Crear alumno asociado
+        # Crear alumno asociado con el mismo correo inicial
         self.alumno = Alumno.objects.create(
             user=self.user,
             nombre='Juan',
             apellido_paterno='Perez',
             apellido_materno='Lopez',
             matricula='123',
-            correo='juan@test.com'
+            correo='juan@test.com'  # Mismo correo
         )
 
     def test_perfil_alumno_get(self):
@@ -54,6 +54,30 @@ class TestViewsPerfilAlumno(TestCase):
         self.alumno.refresh_from_db()
         self.assertEqual(self.alumno.nombre, 'Carlos')
         self.assertEqual(self.alumno.matricula, '999')
+        
+        # El User de Django debió sincronizarse con el nuevo correo
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'carlos@test.com')
+
+    def test_actualizar_perfil_mismo_correo(self):
+        self.client.login(username='prueba', password='amer1234')
+
+        data = {
+            'accion': 'perfil',
+            'nombre': 'Juan Modificado',
+            'apellido_paterno': 'Perez',
+            'apellido_materno': 'Lopez',
+            'matricula': '123',
+            'correo': 'juan@test.com'
+        }
+
+        response = self.client.post('/alumno/perfil/', data=data)
+        
+        # Al ser un envío válido, debe redirigir (HTTP 302)
+        self.assertEqual(response.status_code, 302)
+
+        self.alumno.refresh_from_db()
+        self.assertEqual(self.alumno.nombre, 'Juan Modificado')
 
     def test_actualizar_perfil_invalido(self):
         self.client.login(username='prueba', password='amer1234')
@@ -68,7 +92,7 @@ class TestViewsPerfilAlumno(TestCase):
 
         response = self.client.post('/alumno/perfil/', data=data)
 
-        self.assertEqual(response.status_code, 200)  # no redirige
+        self.assertEqual(response.status_code, 200)
 
     def test_cambiar_password(self):
         self.client.login(username='prueba', password='amer1234')

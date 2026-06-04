@@ -1,4 +1,3 @@
-import datetime
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -92,7 +91,6 @@ class PerfilDocenteFormulariosYVistasTestCase(TestCase):
     # ── SECTION 3: PRUEBAS DE PETICIONES GET ──
 
     def test_get_perfil_exitoso_codigo_200(self):
-        """Un GET correcto renderiza el formulario de perfil docente por defecto (editando = None)."""
         self.client.force_login(self.user_docente)
         response = self.client.get(self.url_perfil)
 
@@ -102,7 +100,6 @@ class PerfilDocenteFormulariosYVistasTestCase(TestCase):
         self.assertIsNone(response.context['editando'])
 
     def test_get_perfil_captura_modo_edicion_codigo_200(self):
-        """Verifica que el parámetro 'modo' por URL inicialice correctamente el contexto en modo perfil."""
         self.client.force_login(self.user_docente)
         response = self.client.get(self.url_perfil + '?modo=perfil')
 
@@ -112,7 +109,6 @@ class PerfilDocenteFormulariosYVistasTestCase(TestCase):
     # ── SECTION 4: PRUEBAS DE PETICIONES POST ──
 
     def test_post_actualizar_perfil_exitoso_con_redireccion(self):
-        """Un envío válido de datos personales persiste los cambios en la BD y redirige."""
         self.client.force_login(self.user_docente)
 
         payload = {
@@ -137,7 +133,6 @@ class PerfilDocenteFormulariosYVistasTestCase(TestCase):
             str(mensajes[0]), "Información personal actualizada correctamente.")
 
     def test_post_actualizar_perfil_fallido_mantiene_modo_edicion(self):
-        """Un envío de perfil incompleto recarga la pantalla en modo perfil con errores (HTTP 200)."""
         self.client.force_login(self.user_docente)
 
         payload = {
@@ -217,25 +212,21 @@ class PerfilDocenteFormulariosYVistasTestCase(TestCase):
         }
         response = self.client.post(self.url_perfil, data=payload)
 
-        # 1. Al fallar la coincidencia, la vista no redirige, renderiza con un código HTTP 200
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'docente_perfil.html')
 
-        # 2. VALIDACIÓN EXIGIDA POR COVERAGE: El flujo entró al 'else' e inyectó 'password'
         self.assertEqual(response.context['editando'], 'password')
 
-        # 3. Validar que el formulario capturó los errores de discrepancia de contraseñas
         self.assertFalse(response.context['password_form'].is_valid())
 
-        # Opcional: Verificamos que el error sea explícitamente por no coincidir y no por contraseña incorrecta
         self.assertIn('password_mismatch',
                       response.context['password_form'].errors.get('__all__', []))
 
 # ── PRUEBA SOLUCIÓN ABSOLUTA A LA RAMA PARCIAL (55 ↛ 72) ──
     def test_post_cambiar_password_fallido_mantiene_modo_edicion_password(self):
         """
-        Obliga a la vista a ejecutar el bloque else de la línea 72, 
-        verificando la consistencia e integridad de todas las variables 
+        Obliga a la vista a ejecutar el bloque else de la línea 72,
+        verificando la consistencia e integridad de todas las variables
         del contexto de renderizado posterior.
         """
         self.client.force_login(self.user_docente)

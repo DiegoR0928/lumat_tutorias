@@ -50,7 +50,6 @@ class ActaAlumnoDataModelTestCase(TestCase):
         )
 
     def test_acta_alumno_data_str_retorna_formato_correcto(self):
-        """Verifica que el método __str__ ensamble correctamente el prefijo junto al string del seminario."""
         acta_data = ActaAlumnoData.objects.create(
             seminario=self.seminario,
             actividad_principal="Desarrollo de un Simulador Interactivo de Física",

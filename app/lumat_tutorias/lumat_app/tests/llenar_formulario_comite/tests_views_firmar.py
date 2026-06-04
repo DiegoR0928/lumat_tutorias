@@ -98,9 +98,7 @@ class DocenteFirmarSeminarioTestCase(TestCase):
         mensajes = list(get_messages(response.wsgi_request))
         self.assertEqual(str(mensajes[0]), 'Ya habías firmado este seminario.')
 
-    # ── PATH 3: FORMULARIO INVÁLIDO (DATOS INCORRECTOS O FUERA DE RANGO) ──
     def test_formulario_firma_invalido_agrega_mensaje_error(self):
-        """Si la calificación es incorrecta (p. ej. vacía o fuera de rango), genera un mensaje de error."""
         self.client.force_login(self.user_tutor)
 
         # 15.0 está fuera del rango [0, 10]
@@ -114,14 +112,11 @@ class DocenteFirmarSeminarioTestCase(TestCase):
         self.assertEqual(
             str(mensajes[0]), 'Datos inválidos. Verifica la calificación.')
 
-    # ── PATH 4: FLUJO EXITOSO — ROL TUTOR ──
     def test_firma_exitosa_como_tutor_persiste_y_redirige(self):
-        """El tutor asienta su calificación y firma correctamente, redirigiendo a detalle con éxito (200)."""
         self.client.force_login(self.user_tutor)
 
         payload = {'calificacion': 9.5, 'confirmar_firma': True}
 
-        # Interceptamos el método save para evitar que truene la base de datos de pruebas
         with patch.object(FormularioComite, 'save', autospec=True) as mock_save:
             response = self.client.post(
                 self.url_firmar, data=payload, follow=True)

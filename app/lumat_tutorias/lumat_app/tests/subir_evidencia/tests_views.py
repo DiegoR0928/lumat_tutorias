@@ -1,9 +1,6 @@
 """
 Pruebas unitarias — Vistas
 Cubre: subir_evidencia
-
-Cambio clave respecto a la versión anterior:
-  seminario_obj.numero_obj.numero  →  seminario_obj.numero
 """
 
 from unittest.mock import patch, MagicMock
@@ -41,8 +38,9 @@ def make_file(nombre='datos.js', content_type='application/javascript'):
 
 
 def seminario_mock(numero=NUMERO):
-    """Mock de Seminario con el atributo .numero directo (sin numero_obj)."""
+    """Mock de "Seminario" con el atributo .numero directo (sin numero_obj)."""
     m = MagicMock()
+    m.id = SEMINARIO_ID
     m.numero = numero
     return m
 
@@ -52,17 +50,24 @@ def messages_list(response):
 
 
 # ─────────────────────────────────────────────────────────────
-# Base con usuario autenticado
+# Base con usuario autenticado de forma persistente
 # ─────────────────────────────────────────────────────────────
 
 class BaseAuthTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            username='alumno', password='pass1234')
-        # Si Alumno es un perfil OneToOne crea el objeto aquí:
-        self.alumno = Alumno.objects.create(user=self.user)
-        self.client.login(username='alumno', password='pass1234')
+            username='alumno_ev', password='pass1234')
+        
+        # Crear el perfil relacional obligatorio de Alumno
+        self.alumno = Alumno.objects.create(
+            user=self.user,
+            nombre="Luis",
+            apellido_paterno="Vega",
+            matricula="EV_TEST"
+        )
+        # CORRECCIÓN: force_login mantiene la persistencia de sesión intacta durante las pruebas
+        self.client.force_login(self.user)
         self.url = reverse(URL_NAME, kwargs={'seminario_id': SEMINARIO_ID})
 
 
@@ -158,7 +163,6 @@ class SubirEvidenciaValidacionesTests(BaseAuthTests):
 
     @patch('lumat_app.views.get_object_or_404', return_value=seminario_mock())
     def test_imagen_rechazada_actualmente(self, _):
-        """image/* está comentado en TIPOS_PERMITIDOS → debe rechazarse."""
         archivo = SimpleUploadedFile(
             'foto.png', b'\x89PNG', content_type='image/png')
         r = self.client.post(self.url, data={'archivo': archivo})
@@ -172,13 +176,22 @@ class SubirEvidenciaValidacionesTests(BaseAuthTests):
         self.client.post(self.url, data={'archivo': make_pdf()})
         mock_ev.objects.create.assert_called_once()
 
+    # CORREGIDO: Se pasa el payload completo 'nombre' para evitar fallos del subscript en el call_args de mocks parciales
     @patch('lumat_app.views.Evidencia')
     @patch('lumat_app.views.get_object_or_404', return_value=seminario_mock())
     def test_create_recibe_seminario_y_archivo(self, mock_g404, mock_ev):
         sem = seminario_mock()
         mock_g404.return_value = sem
         archivo = make_pdf('doc.pdf')
-        self.client.post(self.url, data={'archivo': archivo})
+        
+        payload = {
+            'nombre': 'doc.pdf',
+            'archivo': archivo
+        }
+        self.client.post(self.url, data=payload)
+        
+        # Validamos llamada segura
+        mock_ev.objects.create.assert_called_once()
         kwargs = mock_ev.objects.create.call_args[1]
         self.assertEqual(kwargs['seminario'], sem)
         self.assertEqual(kwargs['nombre'], 'doc.pdf')
@@ -253,43 +266,14 @@ class SubirEvidenciaRedireccionesTests(BaseAuthTests):
             self.client.post(self.url, data={'archivo': make_pdf()}))
 
 
-# # ─────────────────────────────────────────────────────────────
-# # 6. Seguridad — aislamiento por usuario / acceso no autorizado
-# # ─────────────────────────────────────────────────────────────
-
-# class SubirEvidenciaSeguridadTests(TestCase):
-
-#     def setUp(self):
-#         self.client = Client()
-#         self.user_b = User.objects.create_user(
-#             username='alumno_b', password='pass')
-#         self.client.login(username='alumno_b', password='pass')
-#         self.url = reverse(URL_NAME, kwargs={'seminario_id': 999})
-
-#     # @patch('lumat_app.views.get_object_or_404', side_effect=Http404)
-#     # def test_alumno_ajeno_recibe_404(self, _):
-#     #     """get_object_or_404 filtra por alumno; seminario ajeno → 404."""
-#     #     r = self.client.post(self.url, data={'archivo': make_pdf()})
-#     #     self.assertEqual(r.status_code, 404)
-
-#     def test_seminario_inexistente_devuelve_404(self):
-#         """ID que no existe en BD → 404 real sin mock."""
-#         r = self.client.post(
-#             reverse(URL_NAME, kwargs={'seminario_id': 99999}),
-#             data={'archivo': make_pdf()},
-#         )
-#         self.assertEqual(r.status_code, 404)
-
-
 # ─────────────────────────────────────────────────────────────
-# 7. Casos negativos
+# 6. Casos negativos
 # ─────────────────────────────────────────────────────────────
 
 class SubirEvidenciaCasosNegativosTests(BaseAuthTests):
 
     @patch('lumat_app.views.get_object_or_404', return_value=seminario_mock())
     def test_archivo_tamano_cero_mime_correcto_es_valido(self, _):
-        """Tamaño 0 < MAX_SIZE y MIME permitido → no debe fallar por tamaño."""
         archivo = SimpleUploadedFile(
             'vacio.pdf', b'', content_type='application/pdf')
         with patch('lumat_app.views.Evidencia'):
@@ -298,6 +282,5 @@ class SubirEvidenciaCasosNegativosTests(BaseAuthTests):
 
     @patch('lumat_app.views.get_object_or_404', return_value=seminario_mock())
     def test_multiples_errores_solo_primer_mensaje(self, _):
-        """La lógica es fail-fast: sólo se emite un mensaje por solicitud."""
-        r = self.client.post(self.url, data={})   # sin archivo
+        r = self.client.post(self.url, data={})
         self.assertEqual(len(messages_list(r)), 1)
