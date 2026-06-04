@@ -8,13 +8,13 @@ Característica: Registro de alumno
   @limpiar_usuarios @limpiar_alumnos
   Escenario: Registro exitoso de un alumno con datos válidos
     Dado que estoy en la página de registro de alumno
-    Cuando ingreso "juan12345" en el campo "usuario"
+    Cuando ingreso "juan1234567" en el campo "usuario"
     Y ingreso "juan12345@escuela.mx" en el campo "email"
     Y ingreso "Segura#2025" en el campo "contraseña"
     Y ingreso "Juan" en el campo "nombre"
     Y ingreso "Pérez" en el campo "apellido paterno"
     Y ingreso "García" en el campo "apellido materno"
-    Y hago clic en el botón "Guardar"
+    Y hago clic en el botón Guardarr
     Entonces debo ser redirigido al login
 
   @limpiar_usuarios @limpiar_alumnos
@@ -27,6 +27,6 @@ Característica: Registro de alumno
     Y ingreso "Pedro" en el campo "nombre"
     Y ingreso "López" en el campo "apellido paterno"
     Y ingreso "Martínez" en el campo "apellido materno"
-    Y hago clic en el botón "Guardar"
+    Y hago clic en el botón Guardarr
     Entonces no debo ver el mensaje "Alumno registrado con éxito"
     Y debo ver un error en el campo "usuario"

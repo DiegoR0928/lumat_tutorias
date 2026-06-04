@@ -88,9 +88,23 @@ def step_impl(context, valor):
     campo.send_keys(valor)
 
 
-@when(u'hago clic en el botón "Guardar"')
+@when(u'hago clic en el botón Guardarr')
 def step_impl(context):
-    context.driver.find_element(By.CSS_SELECTOR, '.btn-guardar').click()
+    boton = WebDriverWait(context.driver, 10).until(
+        EC.presence_of_element_located(
+            (By.CSS_SELECTOR, '.btn-guardar')
+        )
+    )
+
+    context.driver.execute_script(
+        "arguments[0].scrollIntoView({block:'center'});",
+        boton
+    )
+
+    context.driver.execute_script(
+        "arguments[0].click();",
+        boton
+    )
 
 
 # ---------------------------------------------------------------------------
