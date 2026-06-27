@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from decimal import Decimal, ROUND_HALF_UP
 from django.core.files.base import ContentFile
+from django.core.validators import FileExtensionValidator
 
 
 class Alumno(models.Model):
@@ -15,10 +16,51 @@ class Alumno(models.Model):
     apellido_materno = models.CharField(max_length=100)
     semestre = models.CharField(max_length=50, default=1)
     correo = models.EmailField()
+    posgrado = models.CharField(max_length=50, choices=[('maestria', 'Maestría'), ('doctorado', 'Doctorado')])
+    periodo_inicio_estudios = models.CharField(max_length=50)
+    periodo_fin_estudios = models.CharField(max_length=50)
+    acta_examen_titulacion = models.FileField(upload_to='actas_examen_titulacion/', blank=True, null=True
+                                               , validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
+                                                  verbose_name="Acta de Examen de Titulación")
+    linea_investigacion = models.CharField(max_length=100, choices=[('Materia condensada y energía', 'Materia condensada y energía'), ('Óptica y fotónica', 'Óptica y fotónica'), ('Agua y su manejo sostenible', 'Agua y su manejo sostenible')])
+    nacionalidad = models.CharField(max_length=50)
+    posgrado_o_universidad_anterior = models.CharField(max_length=100)
+    proyecto_investigacion = models.CharField(max_length=200)
+    estado = models.CharField(max_length=50, choices=[('activo', 'Activo'), ('egresado', 'Egresado'), ('dado de baja', 'Dado de baja'), ('baja temporal', 'Baja Temporal')], default='activo')
 
     def __str__(self):
         return f"{self.nombre} {self.apellido_paterno} ({self.matricula})"
 
+
+class RetribucionSocial(models.Model):
+    alumno = models.ForeignKey(
+        'Alumno', 
+        on_delete=models.CASCADE, 
+        related_name='retribuciones_sociales',
+        verbose_name="Estudiante"
+    )
+    archivo = models.FileField(
+        upload_to='retribucion_social/', 
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
+        verbose_name="Archivo PDF"
+    )
+    descripcion = models.CharField(
+        max_length=200, 
+        blank=True, 
+        verbose_name="Descripción del documento"
+    )
+    subido_en = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name="Fecha de carga"
+    )
+
+    class Meta:
+        verbose_name = "Retribución Social"
+        verbose_name_plural = "Retribuciones Sociales"
+        ordering = ['-subido_en']
+
+    def __str__(self):
+        return f"Retribución - {self.alumno.matricula} ({self.subido_en.strftime('%Y-%m-%d')})"
 
 class Docente(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -27,6 +69,14 @@ class Docente(models.Model):
     apellido_materno = models.CharField(max_length=100)
     correo = models.EmailField()
     firma = models.ImageField(upload_to='firmas/', )
+    telefono = models.CharField(max_length=20)
+    red_social_investigacion = models.URLField(max_length=200)
+    ultimo_grado_estudio = models.CharField(max_length=100)
+    universidad_o_centro = models.CharField(max_length=100)
+    facultad_o_instituto = models.CharField(max_length=100)
+    nombramiento_sni = models.FileField(upload_to='nombramientos_sni/', blank=True, null=True
+                                         , validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
+                                         verbose_name="Nombramiento SNI")
 
     def __str__(self):
         return f"{self.nombre} {self.apellido_paterno}"
@@ -34,24 +84,30 @@ class Docente(models.Model):
 
 class Comite(models.Model):
     tutor = models.ForeignKey(Docente, on_delete=models.CASCADE)
-    miembro1 = models.ForeignKey(
+    director = models.ForeignKey(
         Docente,
         on_delete=models.CASCADE,
-        related_name="miembro1",
-        verbose_name="Primer miembro",
+        related_name="director",
+        verbose_name="director de tesis",
     )
-    miembro2 = models.ForeignKey(
+    coodirector = models.ForeignKey(
         Docente,
         on_delete=models.CASCADE,
-        related_name="miembro2",
-        verbose_name="Segundo miembro",
+        related_name="coodirector",
+        verbose_name="coodirector de tesis",
+    )
+    asesor = models.ForeignKey(
+        Docente,
+        on_delete=models.CASCADE,
+        related_name="asesor",
+        verbose_name="asesor de tesis",
     )
 
     def clean(self):
-        docentes = [self.tutor_id, self.miembro1_id, self.miembro2_id]
-        if len(set(docentes)) != 3:
+        docentes = [self.tutor_id, self.director_id, self.coodirector_id, self.asesor_id]
+        if len(set(docentes)) != 4:
             raise ValidationError(
-                "Los tres docentes del comité deben ser distintos.")
+                "Los cuatro docentes del comité deben ser distintos.")
 
     def save(self, *args, **kwargs):
         self.clean()

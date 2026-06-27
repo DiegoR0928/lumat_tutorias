@@ -242,7 +242,7 @@ class DocenteAdmin(ModelAdmin):
 
 @admin.register(Comite)
 class ComiteAdmin(ModelAdmin):
-    list_display = ('id', 'tutor', 'miembro1', 'miembro2')
+    list_display = ('id', 'tutor', 'director', 'coodirector', 'asesor')
     search_fields = ('tutor__nombre', 'tutor__apellido_paterno')
 
 

@@ -57,8 +57,8 @@
     <div class="custom-card p-6 rounded-lg border shadow-sm transition-colors duration-200">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-zinc-100 mb-2">{{ title }}</h1>
         <p class="text-gray-600 dark:text-zinc-400 mb-6 text-sm">
-            El sistema distribuirá los seminarios consecutivamente por horas (8:00 AM a 3:00 PM) 
-            omitiendo fines de semana.
+            El sistema distribuirá los seminarios consecutivamente en bloques de 1.5 horas (8:00 AM a 5:00 PM), 
+            priorizando automáticamente a los estudiantes de los semestres más avanzados y omitiendo fines de semana.
         </p>
 
         {% if messages %}
@@ -170,6 +170,7 @@
 </div>
 
 <script>
+    // Sincronización dinámica de temas claro/oscuro con el Core de Unfold
     function syncTheme() {
         const theme = localStorage.getItem('theme');
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -182,6 +183,7 @@
     window.addEventListener('storage', function(e) { if (e.key === 'theme') { syncTheme(); } });
     document.addEventListener('themeChanged', function() { syncTheme(); });
     
+    // Función interactiva para inyectar la URL del archivo de medios al visor
     function verPdf(url) {
         const embed = document.getElementById('visor-pdf');
         const placeholder = document.getElementById('visor-placeholder');

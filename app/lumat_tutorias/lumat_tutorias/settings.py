@@ -201,7 +201,7 @@ UNFOLD = {
                         "link": "/admin/estadisticas/",
                     },
                     {
-                        "title": "Cambio de tutor",
+                        "title": "Cambio de miembros de comité",
                         "icon": "manage_accounts",
                         "link": "/admin/cambio-tutor/",
                     },

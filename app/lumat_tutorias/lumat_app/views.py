@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import Group
 from django.contrib.auth import update_session_auth_hash
@@ -11,6 +13,7 @@ from weasyprint import HTML
 from datetime import datetime, timedelta, time
 import random
 from django.core.files.base import ContentFile
+from django.db.models import Count, Q
 
 from .models import ActaAlumnoData, Alumno, Docente, FormularioComite
 from .models import Seminario, CalendarioGenerado, Comite
@@ -117,27 +120,20 @@ def registro(request):
 # Helpers
 # ─────────────────────────────────────────────
 
-def _get_seminario_para_alumno(alumno, numero):
+def _get_seminario_para_alumno(alumno, num):
     """
-    Devuelve el último intento (periodo más alto)
-    del seminario indicado para el alumno.
+    Busca el seminario correspondiente para el alumno cargando el comité 
+    con sus nuevos campos correspondientes (director, coodirector, asesor).
     """
-
-    return (
-        Seminario.objects
-        .select_related(
-            'comite',
-            'comite__tutor',
-            'comite__miembro1',
-            'comite__miembro2',
-        )
-        .filter(
-            alumno=alumno,
-            numero=numero
-        )
-        .order_by('-periodo')
-        .first()
-    )
+    return Seminario.objects.filter(
+        alumno=alumno, 
+        numero=num
+    ).select_related(
+        'comite__tutor', 
+        'comite__director',    
+        'comite__coodirector', 
+        'comite__asesor'        
+    ).first()
 
 
 def _proximo_seminario(alumno):
@@ -526,12 +522,11 @@ def calendario(request):
 
 # ADMINISTRACION
 
-
 def admin_calendario_formulario_view(request):
-    """Renderiza el nuevo formulario simplificado de fechas."""
+    """Renderiza el formulario administrativo para la gestión de fechas."""
     from django.contrib import admin
 
-    calendarios_guardados = CalendarioGenerado.objects.all()
+    calendarios_guardados = CalendarioGenerado.objects.all().order_by('-fecha_creacion')
 
     context = {
         **admin.site.each_context(request),
@@ -566,7 +561,9 @@ def _validar_rango_calendario(fecha_inicio, fecha_fin, total_seminarios):
         return "La fecha inicial no puede ser posterior a la fecha final."
 
     dias_habiles = _calcular_dias_habiles(fecha_inicio, fecha_fin)
-    total_slots = dias_habiles * 8  # 8 espacios diarios por hora (8am a 3pm)
+    
+    # Regla técnica: 6 bloques diarios de 1.5 horas de 8:00 AM a 5:00 PM
+    total_slots = dias_habiles * 6  
 
     if total_seminarios > total_slots:
         return (
@@ -579,8 +576,8 @@ def _validar_rango_calendario(fecha_inicio, fecha_fin, total_seminarios):
 
 def admin_calendario_generar_pdf_view(request):
     """
-    Asigna fechas y horas consecutivas (8am a 3pm) omitiendo fines de semana,
-    mezclando aleatoriamente a las personas y guardándolas en la base de datos.
+    Asigna fechas y horas consecutivas en bloques de 1.5 horas (8am a 5pm),
+    priorizando semestres avanzados y manteniendo aleatoriedad interna.
     """
     if request.method != "POST":
         return redirect('calendar_form')
@@ -595,34 +592,58 @@ def admin_calendario_generar_pdf_view(request):
     fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
     fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
 
-    seminarios_db = list(Seminario.objects.all())
+    # Optimizamos la lectura de alumnos evitando el problema de consultas N+1
+    seminarios_db = list(Seminario.objects.select_related('alumno').all())
     if not seminarios_db:
-        messages.error(
-            request, "No hay seminarios registrados en la base de datos.")
+        messages.error(request, "No hay seminarios registrados en la base de datos.")
         return redirect('calendar_form')
 
-    error_msg = _validar_rango_calendario(
-        fecha_inicio, fecha_fin, len(seminarios_db))
+    error_msg = _validar_rango_calendario(fecha_inicio, fecha_fin, len(seminarios_db))
     if error_msg:
         messages.error(request, error_msg)
         return redirect('calendar_form')
 
-    random.shuffle(seminarios_db)
+    # Agrupar a los alumnos por número de semestre
+    sem_groups = defaultdict(list)
+    for sem in seminarios_db:
+        try:
+            num_semestre = int(sem.alumno.semestre)
+        except (ValueError, TypeError):
+            num_semestre = 1
+        sem_groups[num_semestre].append(sem)
+
+    # Mezclar de forma aleatoria a los alumnos del mismo semestre
+    for num_semestre in sem_groups:
+        random.shuffle(sem_groups[num_semestre])
+
+    # Unir la lista priorizando semestres más altos primero (Descendente)
+    seminarios_ordenados = []
+    for num_semestre in sorted(sem_groups.keys(), reverse=True):
+        seminarios_ordenados.extend(sem_groups[num_semestre])
 
     agenda_sorteada = []
     fecha_actual = fecha_inicio
-    horas_disponibles = list(range(8, 16))
-    hora_idx = 0
+    
+    # Configuración de los 6 bloques horarios de hora y media
+    slots_horarios = [
+        time(8, 0),    # 08:00 - 09:30
+        time(9, 30),   # 09:30 - 11:00
+        time(11, 0),   # 11:00 - 12:30
+        time(12, 30),  # 12:30 - 14:00
+        time(14, 0),   # 14:00 - 15:30
+        time(15, 30),  # 15:30 - 17:00
+    ]
+    slot_idx = 0
 
-    for seminario in seminarios_db:
+    for seminario in seminarios_ordenados:
+        # Omitir fines de semana saltando directo al siguiente lunes
         while fecha_actual.weekday() >= 5:
             fecha_actual += timedelta(days=1)
-            hora_idx = 0
+            slot_idx = 0
 
-        # Calcular hora asignada
-        actual_time = time(horas_disponibles[hora_idx], 0)
+        actual_time = slots_horarios[slot_idx]
 
-        # 🌟 PERSISTENCIA EN BD: Actualiza y guarda la asignación de cada registro
+        # Guardar la planificación física en cada registro del modelo
         seminario.fecha = fecha_actual
         seminario.hora = actual_time
         seminario.save()
@@ -633,13 +654,12 @@ def admin_calendario_generar_pdf_view(request):
             "nombre": str(seminario)
         })
 
-        # Control de flujo horario secuencial
-        hora_idx += 1
-        if hora_idx >= len(horas_disponibles):
-            hora_idx = 0
+        # Avanzar al siguiente bloque de tiempo o al día de mañana
+        slot_idx += 1
+        if slot_idx >= len(slots_horarios):
+            slot_idx = 0
             fecha_actual += timedelta(days=1)
 
-    # Compilar la estructura del contexto para la generación del PDF
     context_pdf = {
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,
@@ -647,8 +667,7 @@ def admin_calendario_generar_pdf_view(request):
         "total_seminarios": len(agenda_sorteada)
     }
 
-    html_string = render_to_string(
-        "pdf/calendario_pdf_template.html", context_pdf)
+    html_string = render_to_string("pdf/calendario_pdf_template.html", context_pdf)
     pdf_file = HTML(string=html_string).write_pdf()
 
     mes_inicio = fecha_inicio.strftime("%B")
@@ -662,38 +681,150 @@ def admin_calendario_generar_pdf_view(request):
     nuevo_calendario.archivo_pdf.save(nombre_archivo, ContentFile(pdf_file))
     nuevo_calendario.save()
 
-    mensaje_exito = (
-        f"¡Éxito! El {nombre_periodo} ha sido generado, "
-        f"filtrado por días y horas hábiles y guardado localmente."
-    )
-    messages.success(request, mensaje_exito)
+    messages.success(request, f"¡Éxito! El {nombre_periodo} ha sido generado correctamente.")
     return redirect('calendar_form')
 
+def _parsear_periodo_a_fecha(periodo_str, es_fin=False):
+    """
+    Helper para aproximar texto de periodo (ej. '2022-1', '2023-2' o '2022') a un objeto date.
+    Útil para calcular tiempos estimados si se guardan como strings.
+    """
+    try:
+        if '-' in periodo_str:
+            año, ciclo = periodo_str.split('-')
+            año = int(año)
+            # Ciclo 1 suele ser Enero, Ciclo 2 es Agosto
+            mes = 1 if '1' in ciclo else 8
+            return datetime(año, mes, 1).date()
+        else:
+            año = int(''.join(filter(str.isdigit, periodo_str)))
+            mes = 12 if es_fin else 1
+            return datetime(año, mes, 1).date()
+    except Exception:
+        return datetime.now().date()
 
 def admin_estadisticas_view(request):
     """
-    Calcula métricas del sistema y renderiza el
-    Dashboard de estadísticas.
+    Calcula métricas analíticas complejas y genera las estructuras 
+    para las tablas del Dashboard de indicadores LUMAT.
     """
-    from django.contrib import admin
+    hoy = datetime.now().date()
 
-    total_alumnos = Alumno.objects.count()
-    total_docentes = Docente.objects.count()
-    total_seminarios = Seminario.objects.count()
+    # ─────────────────────────────────────────────────────────
+    # 1. TABLA: RELACIÓN ALUMNOS - PROFESORES (DIRECCIÓN ≤ 6)
+    # ─────────────────────────────────────────────────────────
+    docentes_query = Docente.objects.all()
+    tabla_direcciones = []
+    
+    for docente in docentes_query:
+        # Contamos cuántas veces funge como director o coodirector en comités activos
+        num_director = Comite.objects.filter(director=docente).count()
+        num_coodirector = Comite.objects.filter(coodirector=docente).count()
+        total_tesis = num_director + num_coodirector
+        
+        tabla_direcciones.append({
+            "docente": docente,
+            "director": num_director,
+            "coodirector": num_coodirector,
+            "total": total_tesis,
+            "excede_limite": total_tesis > 6,
+            "alerta": total_tesis == 6
+        })
 
-    promedio_seminarios = round(
-        total_seminarios / total_alumnos, 1) if total_alumnos > 0 else 0
+    # ─────────────────────────────────────────────────────────
+    # 2. TABLA: TIEMPO DE TITULACIÓN Y ATRASOS
+    # ─────────────────────────────────────────────────────────
+    alumnos_query = Alumno.objects.filter(estado__in=['activo', 'baja temporal']).order_by('apellido_paterno')
+    tabla_titulacion = []
+    
+    for alumno in alumnos_query:
+        fecha_inicio = _parsear_periodo_a_fecha(alumno.periodo_inicio_estudios, es_fin=False)
+        
+        # El doctorado dura 4 años (48 meses), la maestría 2 años (24 meses)
+        años_limite = 4 if alumno.posgrado == 'doctorado' else 2
+        
+        try:
+            # Intentamos calcular en base a la fecha de inicio estimada
+            fecha_estimada_fin = fecha_inicio.replace(year=fecha_inicio.year + años_limite)
+        except ValueError:
+            # Manejo de años bisiestos
+            fecha_estimada_fin = fecha_inicio + (datetime(fecha_inicio.year + años_limite, 3, 1).date() - datetime(fecha_inicio.year, 3, 1).date())
+
+        # Calcular atraso si ya pasó la fecha estimada de fin
+        atraso_meses = 0
+        tiene_atraso = False
+        
+        if hoy > fecha_estimada_fin:
+            tiene_atraso = True
+            # Cálculo aproximado de meses de desfase
+            desfase = hoy - fecha_estimada_fin
+            atraso_meses = round(desfase.days / 30.4)
+
+        tabla_titulacion.append({
+            "alumno": alumno,
+            "posgrado": alumno.get_posgrado_display(),
+            "inicio": alumno.periodo_inicio_estudios,
+            "fin_estimado": fecha_estimada_fin.strftime("%m/%Y"),
+            "tiene_atraso": tiene_atraso,
+            "atraso_meses": atraso_meses
+        })
+
+    # ─────────────────────────────────────────────────────────
+    # 3. TABLA: ALUMNOS POR LÍNEA DE INVESTIGACIÓN
+    # ─────────────────────────────────────────────────────────
+    lineas_investigacion = Alumno.objects.values('linea_investigacion').annotate(total=Count('id')).order_by('-total')
+
+    # ─────────────────────────────────────────────────────────
+    # 4. TABLA: ACTAS FALTANTES POR SEMINARIO
+    # ─────────────────────────────────────────────────────────
+    seminarios_faltantes = Seminario.objects.select_related('alumno', 'comite').filter(
+        Q(actaComite='') | Q(actaComite__isnull=True) | 
+        Q(actaAlumno='') | Q(actaAlumno__isnull=True)
+    ).order_by('alumno__apellido_paterno', 'numero')
+    
+    tabla_actas_faltantes = []
+    for sem in seminarios_faltantes:
+        falta_comite = not sem.actaComite
+        falta_alumno = not sem.actaAlumno
+        
+        if falta_comite and falta_alumno:
+            estatus_falta = "Ambas Actas"
+        elif falta_comite:
+            estatus_falta = "Acta del Comité"
+        else:
+            estatus_falta = "Acta del Alumno"
+            
+        tabla_actas_faltantes.append({
+            "seminario": sem,
+            "alumno": sem.alumno,
+            "numero": sem.numero,
+            "falta": estatus_falta
+        })
+
+# ─────────────────────────────────────────────────────────
+    # 5. TABLA: ESTADOS DE ALUMNOS ACTUALES
+    # ─────────────────────────────────────────────────────────
+    estados_breakdown = Alumno.objects.values('estado').annotate(total=Count('id')).order_by('-total')
+    
+    dict_estados = {'activo': 'Activos', 'egresado': 'Egresados', 'dado de baja': 'Dados de Baja', 'baja temporal': 'Baja Temporal'}
+    tabla_estados = [
+        {"nombre": dict_estados.get(item['estado'], item['estado']), "total": item['total']}
+        for item in estados_breakdown
+    ]
+
+    # 🌟 CORRECCIÓN AQUÍ: Importamos con alias para romper el conflicto de nombres
+    from django.contrib import admin as django_admin
 
     context = {
-        **admin.site.each_context(request),
+        **django_admin.site.each_context(request),  # 🌟 Usamos el alias aquí
         "title": "Panel de Control e Indicadores LUMAT",
-        "total_alumnos": total_alumnos,
-        "total_docentes": total_docentes,
-        "total_seminarios": total_seminarios,
-        "promedio_seminarios": promedio_seminarios,
+        "tabla_direcciones": tabla_direcciones,
+        "tabla_titulacion": tabla_titulacion,
+        "lineas_investigacion": lineas_investigacion,
+        "tabla_actas_faltantes": tabla_actas_faltantes,
+        "tabla_estados": tabla_estados,
     }
     return render(request, "admin/estadisticas.html", context)
-
 
 def admin_cambio_tutor_view(request):
     if request.method == "POST":
@@ -716,7 +847,7 @@ def admin_cambio_tutor_view(request):
             ).first()
 
             if comite:
-                if nuevo_tutor in [comite.miembro1, comite.miembro2]:
+                if nuevo_tutor in [comite.director, comite.coodirector]:
                     messages.error(
                         request,
                         "El docente ya es miembro activo de este comité."
