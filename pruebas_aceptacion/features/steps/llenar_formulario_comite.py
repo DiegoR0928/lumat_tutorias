@@ -52,7 +52,6 @@ def step_impl(context):
     context.seminario, _ = Seminario.objects.get_or_create(
         alumno=context.alumno,
         numero=4,
-        periodo=1,
         defaults={'comite': context.comite,
                   'fecha': datetime.date.today(), 'hora': datetime.time(10, 0)}
     )

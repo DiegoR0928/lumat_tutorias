@@ -99,7 +99,7 @@ def _combinar_roles(tutores, miembros):
     ]
     return sorted(
         tutores + miembros_unicos,
-        key=lambda i: (i['seminario'].numero, i['seminario'].periodo)
+        key=lambda i: (i['seminario'].numero)
     )
 
 
@@ -393,7 +393,6 @@ def docente_descargar_acta(request, seminario_id):
 
     pdf_bytes = generar_pdf_comite(formulario)
     nombre = (f'acta_seminario_{seminario.numero}_'
-              f'periodo_{seminario.periodo}_'
               f'{seminario.alumno.apellido_paterno}.pdf')
 
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
@@ -431,7 +430,7 @@ def descargar_evidencias_zip(request, seminario_id):
     nombre_alumno = slugify(
         f"{seminario.alumno.nombre} {seminario.alumno.apellido_paterno}")
     alumno = seminario.alumno
-    nombre_zip = f"{nombre_alumno}-semestre{alumno.semestre}-{slugify(seminario.periodo)}.zip"
+    nombre_zip = f"{nombre_alumno}-semestre{alumno.semestre}-.zip"
 
     response = HttpResponse(buffer.getvalue(), content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="{nombre_zip}"'

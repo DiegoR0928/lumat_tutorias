@@ -47,7 +47,6 @@ class GenerarPdfComiteTestCase(TestCase):
 
         self.seminario = MagicMock(spec=Seminario)
         self.seminario.numero = 8
-        self.seminario.periodo = 1
         self.seminario.fecha = datetime.date(2026, 6, 3)
         self.seminario.alumno = self.alumno
         self.seminario.comite = self.comite
@@ -205,7 +204,6 @@ class FormularioComiteSaveCompleteTestCase(TestCase):
             alumno=self.alumno,
             comite=self.comite,
             numero=5,
-            periodo=1,
             fecha=datetime.date.today(),
             hora=datetime.time(10, 0)
         )

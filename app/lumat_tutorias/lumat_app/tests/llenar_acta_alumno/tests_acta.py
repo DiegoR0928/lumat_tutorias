@@ -81,7 +81,6 @@ class GenerarActaViewTestCase(TestCase):
             alumno=self.alumno,
             comite=self.comite,
             numero=1,
-            periodo=1,
             fecha=datetime.date.today(),
             hora=datetime.time(10, 0),
             calificacion=Decimal("9.50")
@@ -92,7 +91,6 @@ class GenerarActaViewTestCase(TestCase):
             alumno=self.alumno,
             comite=self.comite,
             numero=2,
-            periodo=1,
             fecha=datetime.date.today(),
             hora=datetime.time(11, 0),
             calificacion=None

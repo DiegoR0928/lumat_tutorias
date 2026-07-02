@@ -58,7 +58,6 @@ def step_preparar_seminario_calif(context, num, alumno_user):
         alumno=alumno_obj,
         numero=num,
         comite=comite_obj,
-        periodo=1,
         calificacion=None
     )
 

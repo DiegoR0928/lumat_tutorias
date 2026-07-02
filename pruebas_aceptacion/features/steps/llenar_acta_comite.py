@@ -59,7 +59,6 @@ def step_preparar_seminario_e_infraestructura(context, num, alumno_user):
         alumno=alumno_obj,
         numero=num,
         comite=comite_sinodal,
-        periodo=1,
         calificacion=None
     )
 

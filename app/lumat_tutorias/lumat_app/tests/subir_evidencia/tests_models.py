@@ -313,7 +313,7 @@ class EvidenciaModelTestCase(TestCase):
         comite = Comite.objects.create(tutor=tutor, miembro1=m1, miembro2=m2)
 
         self.seminario = Seminario.objects.create(
-            alumno=self.alumno, comite=comite, numero=1, periodo=1,
+            alumno=self.alumno, comite=comite, numero=1,
             fecha=datetime.date.today(), hora=datetime.time(10, 0)
         )
 

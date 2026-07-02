@@ -26,8 +26,8 @@ from .models import (
 from .forms import (
     ActaAlumnoForm,
     UserForm,
-    AlumnoForm,
-    AlumnoEditForm,
+    AlumnoPerfilForm,
+    #AlumnoForm,
     PasswordChangeCustomForm,
 )
 
@@ -216,7 +216,7 @@ def seminario_detalle(request, num):
         'evidencias': evidencias,
         'proximo_seminario': _proximo_seminario(alumno),
         'solicitud_pendiente': solicitud_pendiente,
-        'periodo': seminario_obj.periodo if seminario_obj else None,
+        # 'periodo': seminario_obj.periodo if seminario_obj else None,
         'formulario_comite': formulario_comite,
         'acta_comite_url': acta_comite_url,
         'form_acta': form_acta,
@@ -238,8 +238,8 @@ def generar_acta_view(request, num):
     seminario = (
         Seminario.objects
         .filter(alumno=alumno, numero=num)
-        .order_by('-periodo')
-        .first()
+        # .order_by('-periodo')
+        # .first()
     )
 
     if not seminario:
@@ -427,34 +427,23 @@ def cambio_tutor(request):
 @login_required
 @user_passes_test(es_alumno)
 def perfil_alumno(request):
-    """
-    Vista principal del perfil del alumno.
-    Maneja la visualización y las acciones de edición.
-    """
-    alumno = request.user.alumno
+    alumno = get_object_or_404(Alumno, user=request.user)
 
-    editando = request.GET.get('modo')  # 'perfil' | 'password' | None
+    if request.method == 'POST':
+        form = AlumnoPerfilForm(request.POST, request.FILES, instance=alumno)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Perfil actualizado correctamente.')
+            return redirect('lumat_app:perfil_alumno')
+        else:
+            messages.error(request, 'Por favor corrige los errores del formulario.')
+    else:
+        form = AlumnoPerfilForm(instance=alumno)
 
-    if request.method == 'GET':
-        return _render_perfil(
-            request, alumno,
-            editando=editando,
-            alumno_form=AlumnoEditForm(instance=alumno),
-            password_form=PasswordChangeCustomForm(user=request.user),
-        )
-
-    # Manejo de acciones POST
-    accion = request.POST.get('accion')
-
-    if accion == 'perfil':
-        return _guardar_perfil(request, alumno)
-
-    if accion == 'password':
-        return _cambiar_password(request, alumno)
-
-    return redirect('lumat_app:perfil_alumno')
-
-# Funciones auxiliares para mantener limpia la vista principal
+    return render(request, 'alumno_perfil.html', {
+        'alumno': alumno,
+        'form': form,
+    })
 
 
 def _render_perfil(request, alumno, editando, alumno_form, password_form):
@@ -467,18 +456,16 @@ def _render_perfil(request, alumno, editando, alumno_form, password_form):
 
 
 def _guardar_perfil(request, alumno):
-    alumno_form = AlumnoEditForm(request.POST, instance=alumno)
+    alumno_form = AlumnoEditForm(
+        request.POST, request.FILES, instance=alumno)
     password_form = PasswordChangeCustomForm(user=request.user)
 
     if alumno_form.is_valid():
-        # 1. Guardamos los datos del alumno en la base de datos
         alumno_actualizado = alumno_form.save()
 
-        # 2. Sincronizamos el email del modelo User de Django
         usuario = request.user
         if usuario.email != alumno_actualizado.correo:
             usuario.email = alumno_actualizado.correo
-            # update_fields por buena práctica y rendimiento
             usuario.save(update_fields=['email'])
 
         messages.success(request, 'Perfil actualizado exitosamente')
@@ -500,7 +487,6 @@ def _cambiar_password(request, alumno):
 
     if password_form.is_valid():
         password_form.save()
-        # Mantiene la sesión iniciada tras cambiar la contraseña
         update_session_auth_hash(request, password_form.user)
         messages.success(request, 'Contraseña actualizada exitosamente')
         return redirect('lumat_app:perfil_alumno')

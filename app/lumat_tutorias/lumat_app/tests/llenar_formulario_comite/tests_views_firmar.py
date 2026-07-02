@@ -44,7 +44,7 @@ class DocenteFirmarSeminarioTestCase(TestCase):
         self.comite = Comite.objects.create(
             tutor=self.tutor, miembro1=self.m1, miembro2=self.m2)
         self.seminario = Seminario.objects.create(
-            alumno=self.alumno, comite=self.comite, numero=5, periodo=1,
+            alumno=self.alumno, comite=self.comite, numero=5, 
             fecha=datetime.date.today(), hora=datetime.time(10, 0)
         )
 

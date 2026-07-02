@@ -84,12 +84,12 @@ class ViewsTests(TestCase):
             self.sem_tutor = Seminario.objects.create(
                 alumno=self.alumno1, comite=self.comite_tutor, fecha=date.today() +
                 timedelta(days=2),
-                hora=time(10, 0), numero=1, periodo=1
+                hora=time(10, 0), numero=1
             )
             self.sem_miembro = Seminario.objects.create(
                 alumno=self.alumno2, comite=self.comite_miembro, fecha=date.today() +
                 timedelta(days=5),
-                hora=time(11, 0), numero=2, periodo=1
+                hora=time(11, 0), numero=2
             )
 
             self.form_tutor = FormularioComite.objects.create(
@@ -186,7 +186,7 @@ class ViewsTests(TestCase):
             seminario_pasado = Seminario.objects.create(
                 alumno=self.alumno1, comite=self.comite_tutor, fecha=date.today() -
                 timedelta(days=1),
-                hora=time(9, 0), numero=3, periodo=1
+                hora=time(9, 0), numero=3
             )
             f_pasado = FormularioComite.objects.create(
                 seminario=seminario_pasado, estado_general='pendiente')

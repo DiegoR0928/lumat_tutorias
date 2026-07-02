@@ -133,15 +133,12 @@ class Seminario(models.Model):
     # Número del seminario (1-8)
     numero = models.PositiveSmallIntegerField()
 
-    # Intento del seminario
-    periodo = models.PositiveSmallIntegerField(default=1)
-
     class Meta:
-        ordering = ['numero', 'periodo']
+        ordering = ['numero']
 
         constraints = [
             models.UniqueConstraint(
-                fields=['alumno', 'numero', 'periodo'],
+                fields=['alumno', 'numero'],
                 name='unique_seminario_periodo'
             )
         ]
@@ -149,19 +146,8 @@ class Seminario(models.Model):
     def __str__(self):
         return (
             f"Seminario"
-            f"(Periodo {self.periodo}) - "
             f"{self.alumno}"
         )
-
-
-# class CalifSeminario(models.Model):
-#     seminario = models.ForeignKey(Seminario, on_delete=models.CASCADE)
-#     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
-#     calificacion = models.DecimalField(max_digits=4, decimal_places=2)
-
-#     def __str__(self):
-#         return f"Calificación de {self.docente.__str__()} para \
-#         {self.seminario.__str__()}"
 
 
 class CalendarioGenerado(models.Model):
@@ -338,10 +324,10 @@ class FormularioComite(models.Model):
 
             # Crear nombre del archivo
             sem_num = self.seminario.numero
-            periodo = self.seminario.periodo
+            # periodo = self.seminario.periodo
             alumno_nombre = self.seminario.alumno.nombre.replace(' ', '_')
             filename = (
-                f"acta_comite_sem{sem_num}_p{periodo}_{alumno_nombre}_"
+                f"acta_comite_sem{sem_num}_{alumno_nombre}_"
                 f"{self.seminario.alumno.id}.pdf"
             )
             # Eliminar el archivo anterior si existe

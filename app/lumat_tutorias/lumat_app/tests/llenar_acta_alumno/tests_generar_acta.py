@@ -33,7 +33,7 @@ class ActaGeneratorTechnicalTest(TestCase):
 
         # La fecha del seminario define las etiquetas de semestre del encabezado del PDF
         self.seminario = Seminario.objects.create(
-            alumno=self.alumno, comite=self.comite, numero=2, periodo=1,
+            alumno=self.alumno, comite=self.comite, numero=2,
             fecha=datetime.date(2026, 6, 1), hora=datetime.time(11, 0), calificacion=9.0
         )
 

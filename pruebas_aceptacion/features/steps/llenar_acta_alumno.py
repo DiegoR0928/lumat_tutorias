@@ -57,7 +57,6 @@ def step_preparar_seminario_alumno_acta_unico(context, num):
         alumno=context.alumno_real,
         numero=num,
         comite=comite_obj,
-        periodo=1,
         calificacion=None
     )
 

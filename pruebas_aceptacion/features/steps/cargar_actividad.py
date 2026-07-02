@@ -76,7 +76,6 @@ def step_asegurar_seminario_bd(context, num):
         alumno=context.alumno_obj,
         numero=num,
         comite=comite_obj,
-        periodo=1,
         calificacion=None
     )
 

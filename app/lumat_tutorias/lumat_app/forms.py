@@ -12,15 +12,30 @@ class UserForm(forms.ModelForm):
         fields = ['username', 'email', 'password']
 
 
-class AlumnoForm(forms.ModelForm):
-
+class AlumnoPerfilForm(forms.ModelForm):
     class Meta:
         model = Alumno
-        fields = [
-            'nombre',
-            'apellido_paterno',
-            'apellido_materno',
+        exclude = [
+            'user',
+            'semestre',
+            'periodo_inicio_estudios',
+            'periodo_fin_estudios',
+            'estado',
         ]
+        widgets = {
+            'matricula': forms.TextInput(attrs={'class': 'lumat-input'}),
+            'nombre': forms.TextInput(attrs={'class': 'lumat-input'}),
+            'apellido_paterno': forms.TextInput(attrs={'class': 'lumat-input'}),
+            'apellido_materno': forms.TextInput(attrs={'class': 'lumat-input'}),
+            'correo': forms.EmailInput(attrs={'class': 'lumat-input'}),
+            'posgrado': forms.Select(attrs={'class': 'lumat-select'}),
+            'linea_investigacion': forms.Select(attrs={'class': 'lumat-select'}),
+            'nacionalidad': forms.TextInput(attrs={'class': 'lumat-input'}),
+            'posgrado_o_universidad_anterior': forms.TextInput(attrs={'class': 'lumat-input'}),
+            'proyecto_investigacion': forms.TextInput(attrs={'class': 'lumat-input'}),
+            'acta_examen_titulacion': forms.ClearableFileInput(attrs={'class': 'lumat-file'}),
+        }
+
 
 
 class AlumnoEditForm(forms.ModelForm):

@@ -48,7 +48,7 @@ class DescargarEvidenciasZipTestCase(TestCase):
 
         # 3. Crear el Seminario
         self.seminario = Seminario.objects.create(
-            alumno=self.alumno, comite=self.comite, numero=5, periodo=1,
+            alumno=self.alumno, comite=self.comite, numero=5,
             fecha=datetime.date.today(), hora=datetime.time(10, 0)
         )
 

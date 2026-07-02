@@ -79,7 +79,7 @@ class DocenteDescargarActaViewTest(TestCase):
         ):
 
             self.seminario = Seminario.objects.create(
-                alumno=self.alumno, comite=self.comite, numero=1, periodo=1,
+                alumno=self.alumno, comite=self.comite, numero=1,
                 fecha=datetime.date(2026, 6, 1), hora=datetime.time(10, 0)
             )
 
@@ -108,7 +108,7 @@ class DocenteDescargarActaViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
-        nombre_esperado = 'attachment; filename="acta_seminario_1_periodo_1_Vega.pdf"'
+        nombre_esperado = 'attachment; filename="acta_seminario_1_Vega.pdf"'
         self.assertEqual(response['Content-Disposition'], nombre_esperado)
         self.assertEqual(response.content,
                          b"%PDF-1.4 contenido_falso_del_acta")

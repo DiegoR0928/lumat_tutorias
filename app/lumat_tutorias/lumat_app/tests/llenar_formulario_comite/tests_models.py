@@ -50,7 +50,6 @@ class FormularioComiteMetodosTestCase(TestCase):
             alumno=self.alumno,
             comite=self.comite,
             numero=8,
-            periodo=1,
             fecha=datetime.date.today(),
             hora=datetime.time(10, 0)
         )

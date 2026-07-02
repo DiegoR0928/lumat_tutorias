@@ -44,7 +44,7 @@ class ActaAlumnoDataModelTestCase(TestCase):
             alumno=self.alumno,
             comite=comite,
             numero=1,
-            periodo=1,
+  
             fecha=datetime.date.today(),
             hora=datetime.time(10, 0)
         )

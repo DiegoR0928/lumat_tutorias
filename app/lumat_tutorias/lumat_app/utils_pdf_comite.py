@@ -109,7 +109,7 @@ def generar_pdf_comite(formulario) -> bytes:
     story.append(Paragraph('INFORME SEMESTRAL DEL COMITÉ TUTOR', S['titulo']))
     story.append(Spacer(1, 4))
     story.append(Paragraph(
-        f'Semestre: {sem.numero} &nbsp;·&nbsp; Periodo: {sem.periodo}',
+        f'Semestre: {sem.numero} &nbsp;·&nbsp; ',
         S['subtitulo']))
     story.append(Spacer(1, 10))
     story.append(_hr())

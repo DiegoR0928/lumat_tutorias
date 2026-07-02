@@ -48,9 +48,8 @@ class GenerarActaRedireccionesTest(TestCase):
         # semestre del alumno y no dé 404)
         self.seminario_incompleto = Seminario.objects.create(
             alumno=self.alumno,
-            numero=1,             # <-- Debe coincidir con el num del request
-            periodo=20261,
-            calificacion=None,    # <-- Provoca que tu vista procesadora redirija al detalle
+            numero=1,            
+            calificacion=None,
             comite=self.comite,
             fecha=datetime.date(2026, 6, 1),
             hora=time(10, 0)
