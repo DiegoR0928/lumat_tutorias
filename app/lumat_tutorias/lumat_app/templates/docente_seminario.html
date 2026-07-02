@@ -22,7 +22,12 @@
                                 <p class="rem-alumno">
                                     {{ item.seminario.alumno.nombre }} {{ item.seminario.alumno.apellido_paterno }}
                                 </p>
-                                <span class="rol-badge-mini {% if item.rol == 'Tutor' %}rol-t-mini{% else %}rol-m-mini{% endif %}">
+                                <span class="rol-badge-mini
+                                    {% if item.rol == 'Tutor' %}rol-t-mini
+                                    {% elif item.rol == 'Director' %}rol-d-mini
+                                    {% elif item.rol == 'Coodirector' %}rol-co-mini
+                                    {% else %}rol-a-mini
+                                    {% endif %}">
                                     {{ item.rol }}
                                 </span>
                             </div>
@@ -93,18 +98,28 @@
                             <div class="filter-menu-section">
                                 <span class="filter-menu-label">Filtrar por Rol:</span>
                                 <div class="filter-menu-options">
-                                    <a href="?rol=todos&estado={{ estado_activo }}" class="filter-menu-link {% if rol_activo == 'todos' %}active{% endif %}">Todos</a>
-                                    <a href="?rol=tutor&estado={{ estado_activo }}" class="filter-menu-link {% if rol_activo == 'tutor' %}active{% endif %}">Tutor</a>
-                                    <a href="?rol=miembro&estado={{ estado_activo }}" class="filter-menu-link {% if rol_activo == 'miembro' %}active{% endif %}">Miembro</a>
+                                    <a href="?rol=todos&estado={{ estado_activo }}"
+                                       class="filter-menu-link {% if rol_activo == 'todos' %}active{% endif %}">Todos</a>
+                                    <a href="?rol=tutor&estado={{ estado_activo }}"
+                                       class="filter-menu-link {% if rol_activo == 'tutor' %}active{% endif %}">Tutor</a>
+                                    <a href="?rol=director&estado={{ estado_activo }}"
+                                       class="filter-menu-link {% if rol_activo == 'director' %}active{% endif %}">Director</a>
+                                    <a href="?rol=coodirector&estado={{ estado_activo }}"
+                                       class="filter-menu-link {% if rol_activo == 'coodirector' %}active{% endif %}">Coodirector</a>
+                                    <a href="?rol=asesor&estado={{ estado_activo }}"
+                                       class="filter-menu-link {% if rol_activo == 'asesor' %}active{% endif %}">Asesor</a>
                                 </div>
                             </div>
 
                             <div class="filter-menu-section">
                                 <span class="filter-menu-label">Filtrar por Estado:</span>
                                 <div class="filter-menu-options">
-                                    <a href="?rol={{ rol_activo }}&estado=todos" class="filter-menu-link {% if estado_activo == 'todos' %}active{% endif %}">Todos</a>
-                                    <a href="?rol={{ rol_activo }}&estado=completados" class="filter-menu-link {% if estado_activo == 'completados' %}active{% endif %}">Completados</a>
-                                    <a href="?rol={{ rol_activo }}&estado=pendientes" class="filter-menu-link {% if estado_activo == 'pendientes' %}active{% endif %}">Pendientes</a>
+                                    <a href="?rol={{ rol_activo }}&estado=todos"
+                                       class="filter-menu-link {% if estado_activo == 'todos' %}active{% endif %}">Todos</a>
+                                    <a href="?rol={{ rol_activo }}&estado=completados"
+                                       class="filter-menu-link {% if estado_activo == 'completados' %}active{% endif %}">Completados</a>
+                                    <a href="?rol={{ rol_activo }}&estado=pendientes"
+                                       class="filter-menu-link {% if estado_activo == 'pendientes' %}active{% endif %}">Pendientes</a>
                                 </div>
                             </div>
                         </div>
@@ -148,8 +163,12 @@
                     <div class="sem-right">
                         {% if item.rol == 'tutor' %}
                             <span class="rol-badge rol-tutor">Tutor</span>
-                        {% else %}
-                            <span class="rol-badge rol-miembro">Miembro</span>
+                        {% elif item.rol == 'director' %}
+                            <span class="rol-badge rol-director">Director</span>
+                        {% elif item.rol == 'coodirector' %}
+                            <span class="rol-badge rol-coodirector">Coodirector</span>
+                        {% elif item.rol == 'asesor' %}
+                            <span class="rol-badge rol-asesor">Asesor</span>
                         {% endif %}
                         <span class="arrow">›</span>
                     </div>
@@ -174,7 +193,6 @@
         const searchForm = document.getElementById('search-form');
         const searchInput = document.getElementById('search-input');
 
-        // Lógica para abrir/cerrar el Dropdown
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             menu.classList.toggle('open');
@@ -186,10 +204,8 @@
             }
         });
 
-        // Limpieza visual inmediata del cuadro al dar Enter
         if (searchForm && searchInput) {
             searchForm.addEventListener('submit', function () {
-                // Almacenamos el envío y limpiamos la caja inmediatamente en el hilo visual
                 setTimeout(() => {
                     searchInput.value = '';
                 }, 1);

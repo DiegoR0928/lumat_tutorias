@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Solicitud en revisión | LUMAT{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background-color: #ede9e0 !important; }
+  .pendiente-wrapper {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.25rem;
+  }
+  .pendiente-card {
+    width: 100%;
+    max-width: 440px;
+    background: #f7f4ef;
+    border: 1px solid #c8b89a;
+    border-top: 3px solid #4a7c7a;
+    border-radius: 10px;
+    overflow: hidden;
+    text-align: center;
+    box-shadow: 0 8px 28px rgba(74,63,50,.1);
+  }
+  .pendiente-body { padding: 2.5rem 2rem; }
+  .pendiente-icon {
+    width: 56px; height: 56px;
+    background: #e8f0ef;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.2rem;
+    color: #4a7c7a;
+  }
+  .pendiente-icon svg { width: 26px; height: 26px; }
+  .pendiente-body h5 {
+    font-family: Georgia, serif;
+    font-size: 1.1rem;
+    color: #4a3f32;
+    font-weight: normal;
+    margin: 0 0 .6rem;
+  }
+  .pendiente-body p {
+    font-size: .88rem;
+    color: #6a5f52;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .pendiente-footer {
+    border-top: 1px solid #e3d9cb;
+    padding: 12px 24px;
+    background: #eee8de;
+    font-size: .7rem;
+    color: #a89880;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pendiente-wrapper">
+  <div class="pendiente-card">
+    <div class="pendiente-body">
+      <div class="pendiente-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <h5>Solicitud en revisión</h5>
+      <p>
+        Tu solicitud de registro fue recibida correctamente. El administrador la revisará y validará que seas docente del programa.
+      </p>
+      <p style="margin-top:.8rem; font-size:.85rem; color:#6a5f52;">
+        Cuando tu cuenta sea aprobada recibirás un correo de confirmación. A partir de ese momento podrás iniciar sesión desde
+        <a href="{% url 'lumat_app:login' %}" style="color:#4a7c7a; font-weight:600; text-decoration:none;">
+          este enlace
+        </a>.
+      </p>
+      <p style="margin-top:.8rem; font-size:.78rem; color:#a89880;">
+        Si tienes dudas contacta al administrador del sistema.
+      </p>
+    </div>
+    <div class="pendiente-footer">Sistema de Gestión Académica · UAZ</div>
+  </div>
+</div>
+{% endblock %}

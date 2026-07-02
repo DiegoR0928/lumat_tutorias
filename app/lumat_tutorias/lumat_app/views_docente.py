@@ -1,3 +1,5 @@
+from email.headerregistry import Group
+
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
@@ -18,7 +20,16 @@ from .forms import (
     DocenteForm,
     FirmaCalificacionForm,
     FormularioComiteForm,
+    RegistroDocenteForm,
 )
+from django.contrib.auth.models import User, Group
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.urls import reverse
 
 
 def es_docente(user):
@@ -78,45 +89,42 @@ def editar_perfil_docente(request):
     return render(request, 'docente_perfil.html', context)
 
 
+ROLES_COMITE = ['tutor', 'director', 'coodirector', 'asesor']
+
+
 def _obtener_universo_seminarios(docente):
-    """Filtra y devuelve los queries base optimizados como tutor y miembro."""
+    """Devuelve un dict {rol: queryset} para cada rol del comité."""
     base_qs = Seminario.objects.select_related(
         'alumno', 'comite', 'formulario_comite'
     )
-    como_tutor = base_qs.filter(comite__tutor=docente)
-    como_miembro = base_qs.filter(
-        Q(comite__miembro1=docente) | Q(comite__miembro2=docente)
-    ).distinct()
-
-    return como_tutor, como_miembro
+    return {
+        rol: base_qs.filter(**{f'comite__{rol}': docente})
+        for rol in ROLES_COMITE
+    }
 
 
-def _combinar_roles(tutores, miembros):
-    """Une listas de tutores y miembros evitando duplicados basados en pk."""
-    ids_tutor = {i['seminario'].pk for i in tutores}
-    miembros_unicos = [
-        m for m in miembros if m['seminario'].pk not in ids_tutor
-    ]
-    return sorted(
-        tutores + miembros_unicos,
-        key=lambda i: (i['seminario'].numero)
-    )
+def _combinar_todos(por_rol):
+    """
+    Recibe dict {rol: [items]} y devuelve lista unificada sin duplicados
+    (gana el rol de menor índice), ordenada por número de seminario.
+    """
+    vistos = {}
+    for rol in ROLES_COMITE:
+        for item in por_rol.get(rol, []):
+            pk = item['seminario'].pk
+            if pk not in vistos:
+                vistos[pk] = item
+    return sorted(vistos.values(), key=lambda i: i['seminario'].numero)
 
 
-def _filtrar_por_busqueda(como_tutor, como_miembro, query):
-    """Flujo A: Filtra por matrícula ignorando el resto de los filtros."""
+def _filtrar_por_busqueda(universo, query):
+    """Flujo A: filtra por matrícula en todos los roles."""
     condicion = Q(alumno__matricula__icontains=query)
-
-    tutores_list = [
-        {'seminario': s, 'rol': 'tutor'}
-        for s in como_tutor.filter(condicion)
-    ]
-    miembros_list = [
-        {'seminario': s, 'rol': 'miembro'}
-        for s in como_miembro.filter(condicion)
-    ]
-
-    return _combinar_roles(tutores_list, miembros_list)
+    por_rol = {
+        rol: [{'seminario': s, 'rol': rol} for s in qs.filter(condicion)]
+        for rol, qs in universo.items()
+    }
+    return _combinar_todos(por_rol)
 
 
 def _obtener_estado_formulario(seminario):
@@ -126,30 +134,27 @@ def _obtener_estado_formulario(seminario):
     return 'pendiente'
 
 
-def _filtrar_por_rol_y_estado(como_tutor, como_miembro, rol, estado):
-    """Flujo B: Filtra según los dropdowns de control de la pantalla."""
-    tutores = [{'seminario': s, 'rol': 'tutor'} for s in como_tutor]
-    miembros = [{'seminario': s, 'rol': 'miembro'} for s in como_miembro]
+def _filtrar_por_rol_y_estado(universo, rol, estado):
+    """Flujo B: filtra según los dropdowns de rol y estado."""
+    roles_a_incluir = ROLES_COMITE if rol == 'todos' else [rol]
 
-    if rol == 'tutor':
-        seminarios_raw = tutores
-    elif rol == 'miembro':
-        seminarios_raw = miembros
-    else:
-        seminarios_raw = _combinar_roles(tutores, miembros)
+    por_rol = {
+        r: [{'seminario': s, 'rol': r} for s in universo[r]]
+        for r in roles_a_incluir
+        if r in universo
+    }
+    candidatos = _combinar_todos(por_rol)
 
-    resultado = []
-    for item in seminarios_raw:
-        est_form = _obtener_estado_formulario(item['seminario'])
+    if estado == 'todos':
+        return candidatos
 
-        if estado == 'completados' and est_form == 'completo':
-            resultado.append(item)
-        elif estado == 'pendientes' and est_form == 'pendiente':
-            resultado.append(item)
-        elif estado == 'todos':
-            resultado.append(item)
-
-    return resultado
+    return [
+        item for item in candidatos
+        if (
+            (estado == 'completados' and _obtener_estado_formulario(item['seminario']) == 'completo') or
+            (estado == 'pendientes' and _obtener_estado_formulario(item['seminario']) == 'pendiente')
+        )
+    ]
 
 
 def _obtener_proximos_seminarios(docente):
@@ -160,10 +165,10 @@ def _obtener_proximos_seminarios(docente):
     # sin operadores lógicos sueltos
     condicion_docente = (
         Q(comite__tutor=docente) |
-        Q(comite__miembro1=docente) |
-        Q(comite__miembro2=docente)
+        Q(comite__director=docente) |
+        Q(comite__coodirector=docente) |
+        Q(comite__asesor=docente)
     )
-
     proximos_raw = Seminario.objects.filter(
         condicion_docente,
         fecha__gte=hoy
@@ -172,7 +177,14 @@ def _obtener_proximos_seminarios(docente):
     proximos = []
     for s in proximos_raw:
         if _obtener_estado_formulario(s) == 'pendiente':
-            rol_label = 'Tutor' if s.comite.tutor == docente else 'Miembro'
+            if s.comite.tutor == docente:
+                rol_label = "Tutor"
+            elif s.comite.director == docente:
+                rol_label = "Director"
+            elif s.comite.coodirector == docente:
+                rol_label = "Coodirector"
+            else:
+                rol_label = "Asesor"
             proximos.append({'seminario': s, 'rol': rol_label})
 
     return proximos
@@ -188,18 +200,14 @@ def docente_seminarios(request):
     estado = request.GET.get('estado', 'pendientes')
     query_busqueda = request.GET.get('q', '').strip()
 
-    como_tutor, como_miembro = _obtener_universo_seminarios(docente)
+    universo = _obtener_universo_seminarios(docente)
 
     if query_busqueda:
-        seminarios = _filtrar_por_busqueda(
-            como_tutor, como_miembro, query_busqueda
-        )
+        seminarios = _filtrar_por_busqueda(universo, query_busqueda)
         rol = 'todos'
         estado = 'todos'
     else:
-        seminarios = _filtrar_por_rol_y_estado(
-            como_tutor, como_miembro, rol, estado
-        )
+        seminarios = _filtrar_por_rol_y_estado(universo, rol, estado)
 
     return render(request, 'docente_seminario.html', {
         'docente': docente,
@@ -215,14 +223,17 @@ def docente_seminarios(request):
 
 
 def _rol_en_seminario(docente, seminario):
-    """Devuelve 'tutor', 'miembro1', 'miembro2' o None."""
+    """Devuelve 'tutor', 'director', 'coodirector' o 'asesor' o None."""
     c = seminario.comite
     if c.tutor == docente:
         return 'tutor'
-    if c.miembro1 == docente:
-        return 'miembro1'
-    if c.miembro2 == docente:
-        return 'miembro2'
+    if c.director == docente:
+        return 'director'
+    if c.coodirector == docente:
+        return 'coodirector'
+    if c.asesor == docente:
+        return 'asesor'
+
     return None
 
 
@@ -240,7 +251,8 @@ def docente_seminario_detalle(request, seminario_id):
     seminario = get_object_or_404(
         Seminario.objects.select_related(
             'alumno', 'comite',
-            'comite__tutor', 'comite__miembro1', 'comite__miembro2'
+            'comite__tutor', 'comite__director',
+            'comite__coodirector', 'comite__asesor'
         ).prefetch_related('evidencias'),
         pk=seminario_id
     )
@@ -275,15 +287,6 @@ def docente_seminario_detalle(request, seminario_id):
         'rol_activo': rol_activo,
         'ya_firme': ya_firme,
     })
-
-
-# def text_form_valido(form, request):
-#     if form.is_valid():
-#         return True
-#     messages.error(
-#         request, "La calificación debe ser un número válido entre 0 y 10.")
-#     return False
-
 
 def _verificar_y_generar_pdf_comite(request, seminario, formulario):
     """Evalúa si el formulario del comité cambió su estatus a 'completo'
@@ -338,7 +341,7 @@ def docente_firmar_seminario(request, seminario_id):
     seminario = get_object_or_404(
         Seminario.objects.select_related(
             'comite', 'comite__tutor',
-            'comite__miembro1', 'comite__miembro2'),
+            'comite__director', 'comite__coodirector', 'comite__asesor'),
         pk=seminario_id)
 
     rol = _rol_en_seminario(docente, seminario)
@@ -359,8 +362,9 @@ def docente_firmar_seminario(request, seminario_id):
         # Asignar calificación según rol
         campo_calif = {
             'tutor': 'calificacion_tutor',
-            'miembro1': 'calificacion_miembro1',
-            'miembro2': 'calificacion_miembro2',
+            'director': 'calificacion_director',
+            'coodirector': 'calificacion_coodirector',
+            'asesor': 'calificacion_asesor',
         }[rol]
         setattr(formulario, campo_calif, calif)
         setattr(formulario, f'firma_{rol}', True)
@@ -383,7 +387,8 @@ def docente_descargar_acta(request, seminario_id):
     seminario = get_object_or_404(
         Seminario.objects.select_related(
             'alumno', 'comite',
-            'comite__tutor', 'comite__miembro1', 'comite__miembro2'),
+            'comite__tutor', 'comite__director',
+            'comite__coodirector', 'comite__asesor'),
         pk=seminario_id)
 
     if not _rol_en_seminario(docente, seminario):
@@ -435,3 +440,151 @@ def descargar_evidencias_zip(request, seminario_id):
     response = HttpResponse(buffer.getvalue(), content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="{nombre_zip}"'
     return response
+
+# R E G I S T R O D E  D O C E N T E S
+
+def registro_docente(request):
+    if request.method == 'POST':
+        form = RegistroDocenteForm(request.POST, request.FILES)
+        if form.is_valid():
+            d = form.cleaned_data
+
+            user = User.objects.create_user(
+                username=d['username'],
+                email=d['email'],
+                password=d['password1'],
+            )
+            user.is_active = False  # inactivo hasta que admin apruebe
+            user.save()
+
+            grupo, _ = Group.objects.get_or_create(name='Docente')
+            user.groups.add(grupo)
+
+            docente = Docente.objects.create(
+                user=user,
+                nombre=d['nombre'],
+                apellido_paterno=d['apellido_paterno'],
+                apellido_materno=d['apellido_materno'],
+                correo=d['email'],
+                telefono=d['telefono'],
+                ultimo_grado_estudio=d['ultimo_grado_estudio'],
+                universidad_o_centro=d['universidad_o_centro'],
+                facultad_o_instituto=d['facultad_o_instituto'],
+                red_social_investigacion=d['red_social_investigacion'],
+                firma=request.FILES['firma'],
+                nombramiento_sni=request.FILES.get('nombramiento_sni'),
+            )
+
+            # Correo al docente: "tu solicitud está en revisión"
+            _correo_solicitud_recibida(user, docente)
+
+            # Correo al admin: "nuevo docente esperando aprobación"
+            _correo_admin_nuevo_docente(request, user, docente)
+
+            messages.success(
+                request,
+                "Solicitud enviada. El administrador revisará tu registro y recibirás una notificación."
+            )
+            return redirect('lumat_app:registro_docente_pendiente')
+    else:
+        form = RegistroDocenteForm()
+
+    return render(request, 'docente_registro.html', {'form': form})
+
+
+def _correo_solicitud_recibida(user, docente):
+    """Avisa al docente que su solicitud fue recibida y está en revisión."""
+    send_mail(
+        subject="Solicitud de registro recibida — LUMAT",
+        message=(
+            f"Hola {docente.nombre},\n\n"
+            "Tu solicitud de registro como docente en LUMAT fue recibida correctamente. "
+            "El administrador la revisará y recibirás un correo cuando tu cuenta sea activada.\n\n"
+            "Sistema de Gestión Académica · UAZ"
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+
+def _correo_admin_nuevo_docente(request, user, docente):
+    """Envía al admin un correo con los datos del docente y enlace para activar."""
+    # Enlace para activar directo desde el correo
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    enlace_activar = request.build_absolute_uri(
+        reverse('lumat_app:activar_docente', kwargs={
+            'uidb64': uid,
+            'token': token,
+        })
+    )
+    # Enlace al admin de Django como alternativa
+    enlace_admin = request.build_absolute_uri(
+        f"/admin/auth/user/{user.pk}/change/"
+    )
+
+    cuerpo = render_to_string('emails/admin_nuevo_docente.html', {
+        'docente': docente,
+        'user': user,
+        'enlace_activar': enlace_activar,
+        'enlace_admin': enlace_admin,
+    })
+
+    send_mail(
+        subject=f"Nuevo docente pendiente de aprobación: {docente.nombre} {docente.apellido_paterno}",
+        message=(
+            f"Nuevo registro de docente:\n"
+            f"Nombre: {docente.nombre} {docente.apellido_paterno} {docente.apellido_materno}\n"
+            f"Correo: {user.email}\n"
+            f"Universidad: {docente.universidad_o_centro}\n\n"
+            f"Activar cuenta: {enlace_activar}"
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[settings.ADMIN_EMAIL],
+        html_message=cuerpo,
+        fail_silently=False,
+    )
+
+
+def activar_docente(request, uidb64, token):
+    """El admin hace clic en el enlace del correo y activa la cuenta."""
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+
+        # Avisar al docente que ya puede entrar
+        _correo_cuenta_activada(user)
+
+        messages.success(
+            request,
+            f"Cuenta de {user.username} activada correctamente. Se le notificó por correo."
+        )
+        return redirect('/admin/auth/user/')  # manda al admin de Django
+    else:
+        messages.error(request, "El enlace es inválido o ha expirado.")
+        return redirect('/admin/')
+    
+
+def _correo_cuenta_activada(user):
+    """Avisa al docente que el admin activó su cuenta."""
+    send_mail(
+        subject="Tu cuenta en LUMAT ha sido activada",
+        message=(
+            f"Hola {user.username},\n\n"
+            "Tu cuenta de docente en LUMAT fue aprobada. Ya puedes iniciar sesión.\n\n"
+            "Sistema de Gestión Académica · UAZ"
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+def registro_docente_pendiente(request):
+    return render(request, 'docente_registro_pendiente.html')

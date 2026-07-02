@@ -25,7 +25,6 @@ BLACK = colors.black
 
 
 def _styles():
-    # base = getSampleStyleSheet()
     s = {}
 
     s['titulo'] = ParagraphStyle(
@@ -137,13 +136,15 @@ def generar_pdf_comite(formulario) -> bytes:
 
     comite_rows = [
         [Paragraph(
-            f'<b>{docente_str(com.tutor)}</b> (Tutor Principal) &nbsp;&nbsp;&nbsp; '
+            f'<b>{docente_str(com.tutor)}</b> (Tutor) &nbsp;&nbsp;&nbsp; '
             f'Fecha de reunión: <b>{sem.fecha.strftime("%d-%m-%Y")}</b>',
             S['value'])],
         [Paragraph(
-            f'{docente_str(com.miembro1)} (Miembro Tutor 1)', S['value'])],
+            f'{docente_str(com.director)} (Director de tesis)', S['value'])],
         [Paragraph(
-            f'{docente_str(com.miembro2)} (Miembro Tutor 2)', S['value'])],
+            f'{docente_str(com.coodirector)} (Codirector de tesis)', S['value'])],
+        [Paragraph(
+            f'{docente_str(com.asesor)} (Asesor de tesis)', S['value'])],
     ]
     story.append(_box_table(comite_rows))
     story.append(Spacer(1, 8))
@@ -177,12 +178,15 @@ def generar_pdf_comite(formulario) -> bytes:
         [Paragraph(docente_str(com.tutor), S['value']),
          Paragraph('Tutor', S['value']),
          Paragraph(fmt(formulario.calificacion_tutor), S['value'])],
-        [Paragraph(docente_str(com.miembro1), S['value']),
-         Paragraph('Miembro 1', S['value']),
-         Paragraph(fmt(formulario.calificacion_miembro1), S['value'])],
-        [Paragraph(docente_str(com.miembro2), S['value']),
-         Paragraph('Miembro 2', S['value']),
-         Paragraph(fmt(formulario.calificacion_miembro2), S['value'])],
+        [Paragraph(docente_str(com.director), S['value']),
+         Paragraph('Director', S['value']),
+         Paragraph(fmt(formulario.calificacion_director), S['value'])],
+        [Paragraph(docente_str(com.coodirector), S['value']),
+         Paragraph('Coodirector', S['value']),
+         Paragraph(fmt(formulario.calificacion_coodirector), S['value'])],
+        [Paragraph(docente_str(com.asesor), S['value']),
+         Paragraph('Asesor', S['value']),
+         Paragraph(fmt(formulario.calificacion_asesor), S['value'])],
         [Paragraph('<b>Calificación final (promedio)</b>', S['label']),
          Paragraph('', S['value']),
          Paragraph(f'<b>{fmt(formulario.calificacion_final)}</b>', S['label'])],
@@ -192,7 +196,7 @@ def generar_pdf_comite(formulario) -> bytes:
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
         ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER),
         ('BACKGROUND', (0, 0), (-1, 0), LIGHT),
-        ('BACKGROUND', (0, 4), (-1, 4), LIGHT),
+        ('BACKGROUND', (0, 5), (-1, 5), LIGHT),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
         ('RIGHTPADDING', (0, 0), (-1, -1), 6),
         ('TOPPADDING', (0, 0), (-1, -1), 4),
@@ -205,7 +209,6 @@ def generar_pdf_comite(formulario) -> bytes:
     story.append(Paragraph('VISTO BUENO', S['section']))
     story.append(Spacer(1, 6))
 
-    # Retorna una lista de elementos (Flowables) para integrar la imagen
     def firma_cell(docente, firmado):
         celda_contenido = []
 
@@ -225,30 +228,29 @@ def generar_pdf_comite(formulario) -> bytes:
                     Paragraph("<font color='#a89880'>[APROBADO]</font>",
                               S['firma_nombre']))
         else:
-            # Si no ha firmado, mantiene la línea de firma clásica
             celda_contenido.append(Spacer(1, 0.8 * cm))
             celda_contenido.append(
                 Paragraph('___________________', S['firma_nombre']))
 
         celda_contenido.append(Spacer(1, 4))
-        # Nombre del docente debajo de la firma o línea
         celda_contenido.append(Paragraph(
             f'<b>{docente.nombre} {docente.apellido_paterno}</b>',
             S['firma_nombre']))
         return celda_contenido
 
-    # Pasamos los elementos directos como celdas contenedoras
+    # 4 firmas en una sola fila, columnas más angostas
+    col_w = 3.8 * cm
     firmas = Table([[
-        firma_cell(com.tutor, formulario.firma_tutor),
-        firma_cell(com.miembro1, formulario.firma_miembro1),
-        firma_cell(com.miembro2, formulario.firma_miembro2),
-    ]], colWidths=[5.5 * cm, 5.5 * cm, 5.5 * cm])
+        firma_cell(com.tutor,       formulario.firma_tutor),
+        firma_cell(com.director,    formulario.firma_director),
+        firma_cell(com.coodirector, formulario.firma_coodirector),
+        firma_cell(com.asesor,      formulario.firma_asesor),
+    ]], colWidths=[col_w, col_w, col_w, col_w])
 
     firmas.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        # 👈 Ajustado a BOTTOM para que asiente bien la firma
-        ('VALIGN', (0, 0), (-1, -1), 'BOTTOM'),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('ALIGN',         (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN',        (0, 0), (-1, -1), 'BOTTOM'),
+        ('TOPPADDING',    (0, 0), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
     story.append(firmas)

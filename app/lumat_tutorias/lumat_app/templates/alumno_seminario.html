@@ -9,7 +9,6 @@
   rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/seminario.css' %}">
 <style>
-  /* Estilos para la subdivisión del Panel Central */
   .tabs-container {
     display: flex;
     gap: 4px;
@@ -29,24 +28,16 @@
     transition: all 0.2s ease;
   }
 
-  .tab-btn:hover {
-    color: #2C5F8A;
-  }
+  .tab-btn:hover { color: #2C5F8A; }
 
   .tab-btn.active {
     color: #2C5F8A;
     border-bottom-color: #2C5F8A;
   }
 
-  .tab-content {
-    display: none;
-  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 
-  .tab-content.active {
-    display: block;
-  }
-
-  /* Estilos del Formulario embebido */
   .acta-form-card {
     background: #ffffff;
     border: 1px solid #C8C0B4;
@@ -134,25 +125,26 @@
       <nav class="sem-nav-list" aria-label="Navegación de seminarios">
         {% for i in "12345678" %}
         {% with n=forloop.counter %}
-        {% if n <= semestre_int %} <a href="{% url 'lumat_app:seminario_detalle' n %}"
-          class="sem-nav-item done {% if n == num %}active{% endif %}">
-          <span class="sem-status-dot" aria-hidden="true"></span>
-          Seminario {{ n }}
+        {% if n <= semestre_int %}
+          <a href="{% url 'lumat_app:seminario_detalle' n %}"
+            class="sem-nav-item done {% if n == num %}active{% endif %}">
+            <span class="sem-status-dot" aria-hidden="true"></span>
+            Seminario {{ n }}
           </a>
-          {% elif n == semestre_int %}
+        {% elif n == semestre_int %}
           <a href="{% url 'lumat_app:seminario_detalle' n %}"
             class="sem-nav-item pending {% if n == num %}active{% endif %}">
             <span class="sem-status-dot" aria-hidden="true"></span>
             Seminario {{ n }}
           </a>
-          {% else %}
+        {% else %}
           <button class="sem-nav-item locked" disabled title="Disponible en semestre {{ n }}">
             <i class="ti ti-lock" style="font-size:12px;" aria-hidden="true"></i>
             Seminario {{ n }}
           </button>
-          {% endif %}
-          {% endwith %}
-          {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% endfor %}
       </nav>
 
       {# ── Acciones rápidas ── #}
@@ -162,8 +154,7 @@
           <i class="ti ti-calendar-due" aria-hidden="true"></i>
           <div>
             <div class="alerta-label">Próximo seminario</div>
-            <div class="alerta-fecha">{{ proximo_seminario.fecha|date:"d/m/Y" }}<br>{{ proximo_seminario.hora|time:"H:i"
-              }} hrs</div>
+            <div class="alerta-fecha">{{ proximo_seminario.fecha|date:"d/m/Y" }}<br>{{ proximo_seminario.hora|time:"H:i" }} hrs</div>
           </div>
         </div>
         {% else %}
@@ -198,7 +189,7 @@
     </div>
   </aside>
 
-  {# ═══ CONTENIDO PRINCIPAL REFACTORIZADO ═══ #}
+  {# ═══ CONTENIDO PRINCIPAL ═══ #}
   <main class="sem-main">
 
     <div class="tabs-container">
@@ -226,6 +217,7 @@
         <iframe src="{{ acta_comite_url }}#toolbar=0&navpanes=0" class="sem-pdf-frame" title="Acta Comité"
           loading="lazy"></iframe>
       </div>
+
       {% elif seminario and seminario.calificacion %}
       <div class="sem-programado-card">
         <i class="ti ti-file-info big-icon" aria-hidden="true"></i>
@@ -238,20 +230,23 @@
         <p class="sem-programado-lugar" style="margin-top: 12px;">
           <i class="ti ti-users" aria-hidden="true"></i> Estado de las firmas:
           <span style="color: #ffc107; font-weight: 500;">
-            ({{ formulario_comite.firma_tutor|yesno:"✓," }}{{ formulario_comite.firma_miembro1|yesno:"✓," }}{{
-            formulario_comite.firma_miembro2|yesno:"✓," }})
+            Tutor {{ formulario_comite.firma_tutor|yesno:"✓,✗" }} &nbsp;·&nbsp;
+            Director {{ formulario_comite.firma_director|yesno:"✓,✗" }} &nbsp;·&nbsp;
+            Coodirector {{ formulario_comite.firma_coodirector|yesno:"✓,✗" }} &nbsp;·&nbsp;
+            Asesor {{ formulario_comite.firma_asesor|yesno:"✓,✗" }}
           </span>
         </p>
         {% endif %}
       </div>
+
       {% elif seminario and not seminario.calificacion %}
       <div class="sem-programado-card">
         <i class="ti ti-calendar-event big-icon" aria-hidden="true"></i>
         <p class="sem-programado-label">Programado para</p>
         <p class="sem-programado-fecha">{{ seminario.fecha|date:"d \d\e F, Y" }}</p>
-        <p class="sem-programado-hora"><i class="ti ti-clock" aria-hidden="true"></i> {{ seminario.hora|time:"H:i" }}
-          hrs</p>
+        <p class="sem-programado-hora"><i class="ti ti-clock" aria-hidden="true"></i> {{ seminario.hora|time:"H:i" }} hrs</p>
       </div>
+
       {% else %}
       <div class="sem-sin-programar-card">
         <i class="ti ti-calendar-off" aria-hidden="true"></i>
@@ -281,6 +276,7 @@
           loading="lazy"></iframe>
       </div>
 
+      <!-- {% elif seminario and seminario.calificacion %} -->
       {% elif seminario and seminario.calificacion %}
       <div class="acta-form-card">
         <h3 style="color:#2C5F8A; margin-bottom: 8px; font-weight:600;">Llenar Informe Semestral del Alumno</h3>
@@ -344,12 +340,12 @@
           </div>
         </form>
       </div>
+
       {% else %}
       <div class="sem-sin-programar-card">
         <i class="ti ti-lock" aria-hidden="true"></i>
         <p style="font-weight:500;">Opción no disponible</p>
-        <p>Podrás llenar y emitir tu informe semestral en cuanto tu comité asigne una calificación formal al seminario.
-        </p>
+        <p>Podrás llenar y emitir tu informe semestral en cuanto tu comité asigne una calificación formal al seminario.</p>
       </div>
       {% endif %}
     </div>
@@ -384,11 +380,11 @@
           <span class="det-label">Estado</span>
           <span>
             {% if seminario and seminario.calificacion %}
-            <span class="estado-pill aprobado">Aprobado</span>
+              <span class="estado-pill aprobado">Aprobado</span>
             {% elif seminario %}
-            <span class="estado-pill pendiente">Pendiente</span>
+              <span class="estado-pill pendiente">Pendiente</span>
             {% else %}
-            <span class="estado-pill sin-calificar">Sin programar</span>
+              <span class="estado-pill sin-calificar">Sin programar</span>
             {% endif %}
           </span>
         </div>
@@ -403,29 +399,15 @@
       </div>
       <div class="panel-card-body">
         {% if comite %}
-        {% with tutor=comite.tutor m1=comite.miembro1 m2=comite.miembro2 %}
-        <div class="comite-member">
-          <div class="comite-avatar">{{ tutor.nombre|slice:":1" }}{{ tutor.apellido_paterno|slice:":1" }}</div>
-          <div class="comite-info">
-            <p class="comite-nombre">{{ tutor.nombre }} {{ tutor.apellido_paterno }}</p>
-            <p class="comite-rol">Tutor</p>
+          {% for miembro, rol_label in comite_members %}
+          <div class="comite-member">
+            <div class="comite-avatar">{{ miembro.nombre|slice:":1" }}{{ miembro.apellido_paterno|slice:":1" }}</div>
+            <div class="comite-info">
+              <p class="comite-nombre">{{ miembro.nombre }} {{ miembro.apellido_paterno }}</p>
+              <p class="comite-rol">{{ rol_label }}</p>
+            </div>
           </div>
-        </div>
-        <div class="comite-member">
-          <div class="comite-avatar">{{ m1.nombre|slice:":1" }}{{ m1.apellido_paterno|slice:":1" }}</div>
-          <div class="comite-info">
-            <p class="comite-nombre">{{ m1.nombre }} {{ m1.apellido_paterno }}</p>
-            <p class="comite-rol">Miembro 1</p>
-          </div>
-        </div>
-        <div class="comite-member">
-          <div class="comite-avatar">{{ m2.nombre|slice:":1" }}{{ m2.apellido_paterno|slice:":1" }}</div>
-          <div class="comite-info">
-            <p class="comite-nombre">{{ m2.nombre }} {{ m2.apellido_paterno }}</p>
-            <p class="comite-rol">Miembro 2</p>
-          </div>
-        </div>
-        {% endwith %}
+          {% endfor %}
         {% else %}
         <p style="font-size:13px; color:var(--lumat-muted); text-align:center; padding:12px 0;">
           Sin comité asignado
@@ -485,9 +467,7 @@
 
 {% endwith %}
 
-{# CORREGIDO: Scripts totalmente independientes y asíncronos #}
 <script>
-  // 1. Manejo independiente del cambio de pestañas de actas
   function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -500,16 +480,13 @@
     }
   }
 
-  // 2. CORRECCIÓN CRÍTICA: Enlace inmediato del input de archivos en cuanto el DOM está listo
   document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('ev-archivo');
     if (fileInput) {
       fileInput.addEventListener('change', function(e) {
         const fileName = e.target.files[0] ? e.target.files[0].name : "Seleccionar PDF…";
         const textSpan = document.getElementById('ev-file-text');
-        if (textSpan) {
-          textSpan.textContent = fileName;
-        }
+        if (textSpan) textSpan.textContent = fileName;
       });
     }
   });

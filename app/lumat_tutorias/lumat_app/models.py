@@ -270,15 +270,18 @@ class FormularioComite(models.Model):
     # ── Calificaciones individuales ───────────────────────────
     calificacion_tutor = models.DecimalField(
         max_digits=4, decimal_places=2, null=True, blank=True)
-    calificacion_miembro1 = models.DecimalField(
+    calificacion_director = models.DecimalField(
         max_digits=4, decimal_places=2, null=True, blank=True)
-    calificacion_miembro2 = models.DecimalField(
+    calificacion_coodirector = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True)
+    calificacion_asesor = models.DecimalField(
         max_digits=4, decimal_places=2, null=True, blank=True)
 
     # ── Firmas (True = firmado/aprobado) ──────────────────────
     firma_tutor = models.BooleanField(default=False)
-    firma_miembro1 = models.BooleanField(default=False)
-    firma_miembro2 = models.BooleanField(default=False)
+    firma_director = models.BooleanField(default=False)
+    firma_coodirector = models.BooleanField(default=False)
+    firma_asesor = models.BooleanField(default=False)
 
     # ── Calculados automáticamente ────────────────────────────
     calificacion_final = models.DecimalField(
@@ -296,14 +299,15 @@ class FormularioComite(models.Model):
 
     @property
     def todos_firmaron(self):
-        return self.firma_tutor and self.firma_miembro1 and self.firma_miembro2
+        return self.firma_tutor and self.firma_director and self.firma_coodirector and self.firma_asesor
 
     def calcular_calificacion_final(self):
         califs = [
             c for c in (
                 self.calificacion_tutor,
-                self.calificacion_miembro1,
-                self.calificacion_miembro2,
+                self.calificacion_director,
+                self.calificacion_coodirector,
+                self.calificacion_asesor,
             ) if c is not None
         ]
         if not califs:
@@ -354,13 +358,15 @@ class FormularioComite(models.Model):
                 old_instance = FormularioComite.objects.get(pk=self.pk)
                 old_firmas = (
                     old_instance.firma_tutor,
-                    old_instance.firma_miembro1,
-                    old_instance.firma_miembro2,
+                    old_instance.firma_director,
+                    old_instance.firma_coodirector,
+                    old_instance.firma_asesor,
                 )
                 new_firmas = (
                     self.firma_tutor,
-                    self.firma_miembro1,
-                    self.firma_miembro2,
+                    self.firma_director,
+                    self.firma_coodirector,
+                    self.firma_asesor,
                 )
                 firmas_cambiaron = old_firmas != new_firmas
             except FormularioComite.DoesNotExist:

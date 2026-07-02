@@ -208,6 +208,15 @@ def seminario_detalle(request, num):
         else:
             form_acta = ActaAlumnoForm()
 
+    comite_members = []
+    if seminario_obj and seminario_obj.comite:
+        c = seminario_obj.comite
+        comite_members = [
+            (c.tutor,       'Tutor'),
+            (c.director,    'Director'),
+            (c.coodirector, 'Coodirector'),
+            (c.asesor,      'Asesor'),
+        ]
     context = {
         'alumno': alumno,
         'num': num,
@@ -222,6 +231,7 @@ def seminario_detalle(request, num):
         'form_acta': form_acta,
         'acta_alumno_bloqueado': acta_existente is not None,
         'acta_alumno_existente': acta_existente,
+        'comite_members': comite_members,
     }
 
     return render(request, 'alumno_seminario.html', context)

@@ -218,3 +218,98 @@ class ActaAlumnoForm(forms.Form):
             "placeholder": "Cualquier observación adicional (opcional).",
         }),
     )
+
+class RegistroDocenteForm(forms.Form):
+    # ── Credenciales ──
+    username = forms.CharField(
+        max_length=150, label="Usuario",
+        widget=forms.TextInput(attrs={'class': 'lumat-input', 'autocomplete': 'off'})
+    )
+    email = forms.EmailField(
+        label="Correo electrónico",
+        widget=forms.EmailInput(attrs={'class': 'lumat-input'})
+    )
+    password1 = forms.CharField(
+        label="Contraseña",
+        widget=forms.PasswordInput(attrs={'class': 'lumat-input'})
+    )
+    password2 = forms.CharField(
+        label="Confirmar contraseña",
+        widget=forms.PasswordInput(attrs={'class': 'lumat-input'})
+    )
+
+    # ── Datos personales ──
+    nombre = forms.CharField(
+        max_length=100, label="Nombre(s)",
+        widget=forms.TextInput(attrs={'class': 'lumat-input'})
+    )
+    apellido_paterno = forms.CharField(
+        max_length=100, label="Apellido paterno",
+        widget=forms.TextInput(attrs={'class': 'lumat-input'})
+    )
+    apellido_materno = forms.CharField(
+        max_length=100, label="Apellido materno",
+        widget=forms.TextInput(attrs={'class': 'lumat-input'})
+    )
+    telefono = forms.CharField(
+        max_length=20, label="Teléfono",
+        widget=forms.TextInput(attrs={'class': 'lumat-input'})
+    )
+
+    # ── Datos académicos ──
+    ultimo_grado_estudio = forms.CharField(
+        max_length=100, label="Último grado de estudio",
+        widget=forms.TextInput(attrs={'class': 'lumat-input'})
+    )
+    universidad_o_centro = forms.CharField(
+        max_length=100, label="Universidad o centro",
+        widget=forms.TextInput(attrs={'class': 'lumat-input'})
+    )
+    facultad_o_instituto = forms.CharField(
+        max_length=100, label="Facultad o instituto",
+        widget=forms.TextInput(attrs={'class': 'lumat-input'})
+    )
+    red_social_investigacion = forms.URLField(
+        max_length=200, label="Perfil de investigación (URL)",
+        widget=forms.URLInput(attrs={
+            'class': 'lumat-input',
+            'placeholder': 'https://orcid.org/...'
+        })
+    )
+
+    # ── Archivos ──
+    firma = forms.ImageField(
+        label="Firma (imagen)",
+        widget=forms.ClearableFileInput(attrs={'class': 'lumat-file'})
+    )
+    nombramiento_sni = forms.FileField(
+        label="Nombramiento SNI (PDF)", required=False,
+        widget=forms.ClearableFileInput(attrs={'class': 'lumat-file'}),
+        help_text="Opcional"
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Este nombre de usuario ya está en uso.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Ya existe una cuenta con este correo.")
+        return email
+
+    def clean_nombramiento_sni(self):
+        archivo = self.cleaned_data.get('nombramiento_sni')
+        if archivo and not archivo.name.endswith('.pdf'):
+            raise forms.ValidationError("Solo se permiten archivos PDF.")
+        return archivo
+
+    def clean(self):
+        cleaned = super().clean()
+        p1 = cleaned.get('password1')
+        p2 = cleaned.get('password2')
+        if p1 and p2 and p1 != p2:
+            self.add_error('password2', "Las contraseñas no coinciden.")
+        return cleaned

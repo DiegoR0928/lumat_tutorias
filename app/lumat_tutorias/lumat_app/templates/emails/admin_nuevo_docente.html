@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#ede9e0;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:520px;background:#f7f4ef;border:1px solid #c8b89a;border-top:3px solid #4a7c7a;border-radius:10px;overflow:hidden;">
+
+          <tr>
+            <td style="background:#eee8de;border-bottom:1px solid #c8b89a;padding:20px 32px;text-align:center;">
+              <p style="font-family:Georgia,serif;font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#4a7c7a;font-weight:bold;margin:0 0 4px;">LUMAT · UAZ — Admin</p>
+              <p style="font-family:Georgia,serif;font-size:18px;color:#4a3f32;font-weight:normal;margin:0;">Nuevo docente pendiente de aprobación</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 32px;">
+              <p style="font-size:14px;color:#6a5f52;margin:0 0 20px;">
+                El siguiente docente se ha registrado y está esperando aprobación:
+              </p>
+
+              <table width="100%" style="border-collapse:collapse;font-size:13px;">
+                <tr>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#8a7560;width:40%;">Nombre</td>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#4a3f32;font-weight:600;">
+                    {{ docente.nombre }} {{ docente.apellido_paterno }} {{ docente.apellido_materno }}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#8a7560;">Correo</td>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#4a3f32;">{{ user.email }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#8a7560;">Universidad</td>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#4a3f32;">{{ docente.universidad_o_centro }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#8a7560;">Facultad</td>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#4a3f32;">{{ docente.facultad_o_instituto }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#8a7560;">Grado</td>
+                  <td style="padding:8px 0;border-bottom:1px solid #e3d9cb;color:#4a3f32;">{{ docente.ultimo_grado_estudio }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#8a7560;">Perfil investigación</td>
+                  <td style="padding:8px 0;color:#4a7c7a;">
+                    <a href="{{ docente.red_social_investigacion }}" style="color:#4a7c7a;">{{ docente.red_social_investigacion }}</a>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                <tr>
+                  <td align="center">
+                    <a href="{{ enlace_activar }}"
+                       style="display:inline-block;padding:12px 32px;background:#4a7c7a;color:#f7f4ef;font-family:Georgia,serif;font-size:14px;letter-spacing:1px;text-decoration:none;border-radius:6px;">
+                      ✓ Activar cuenta
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size:12px;color:#a89880;margin:20px 0 0;text-align:center;">
+                También puedes gestionar la cuenta desde el
+                <a href="{{ enlace_admin }}" style="color:#4a7c7a;">panel de administración</a>.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#eee8de;border-top:1px solid #e3d9cb;padding:12px 32px;text-align:center;">
+              <p style="font-size:11px;color:#a89880;text-transform:uppercase;letter-spacing:2px;margin:0;">Sistema de Gestión Académica · UAZ</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

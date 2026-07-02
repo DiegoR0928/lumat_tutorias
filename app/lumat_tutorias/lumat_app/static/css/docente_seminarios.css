@@ -336,3 +336,13 @@ body {
     border-color: #4a7c7a;
     box-shadow: 0 0 0 2px rgba(74,124,122,0.1);
 }
+
+/* Badges mini (panel izquierdo) */
+.rol-d-mini  { background: #eaf0fb; color: #1a4a8a; border: 0.5px solid #b8cef0; }
+.rol-co-mini { background: #f3edfb; color: #5a2d91; border: 0.5px solid #d4b8f0; }
+.rol-a-mini  { background: #faf3e0; color: #7a5500; border: 0.5px solid #e8d89a; }
+
+/* Badges en filas */
+.rol-director    { background: #eaf0fb; color: #1a4a8a; border: 0.5px solid #b8cef0; }
+.rol-coodirector { background: #f3edfb; color: #5a2d91; border: 0.5px solid #d4b8f0; }
+.rol-asesor      { background: #faf3e0; color: #7a5500; border: 0.5px solid #e8d79a; }
