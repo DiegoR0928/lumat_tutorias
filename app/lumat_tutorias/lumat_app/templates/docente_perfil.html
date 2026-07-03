@@ -1,256 +1,298 @@
 {% extends 'base.html' %}
+{% block title %}Mi Perfil | LUMAT{% endblock %}
 {% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/docente_perfil.css' %}">
+{% endblock %}
 
 {% block content %}
+<div class="perfil-page">
 
-<link rel="stylesheet" href="{% static 'css/docente_perfil.css' %}">
+  {# ── Mensajes ── #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="lumat-alert {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+        {% if message.tags == 'success' %}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        {% endif %}
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
 
-<style>
-    /* Contenedor principal alineado al centro */
-    .content-max-width {
-        max-width: 1200px;
-        margin: 0 auto;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-    }
+  {# ── Encabezado ── #}
+  <div class="perfil-header">
+    <div class="perfil-header-left">
+    <a href="{% url 'lumat_app:docente_seminarios' %}" class="btn-back">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m7-7-7 7 7 7"/>
+      </svg>
+      Regresar
+    </a>
+      <div class="perfil-avatar">
+        {{ docente.nombre|first|upper }}{{ docente.apellido_paterno|first|upper }}
+      </div>
+      <div>
+        <div class="perfil-nombre">
+          {{ docente.nombre }} {{ docente.apellido_paterno }} {{ docente.apellido_materno }}
+        </div>
+        <div class="perfil-sub">{{ docente.facultad_o_instituto }}</div>
+      </div>
+    </div>
+    <button class="btn-edit" id="btnEdit" type="button" onclick="toggleEdit()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+      <span id="btnEditLabel">Editar perfil</span>
+    </button>
+  </div>
 
-    /* Botón volver alineado a la extrema izquierda */
-    .btn-back-container {
-        display: flex;
-        justify-content: flex-start;
-        margin-bottom: 1.5rem;
-    }
+  <form method="post" enctype="multipart/form-data" novalidate id="perfilForm">
+    {% csrf_token %}
 
-    /* Estructura de dos paneles con alturas idénticas */
-    .panels-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
-        align-items: stretch; /* Fuerza a que ambos paneles midan lo mismo de alto */
-    }
+    {# ── Datos personales ── #}
+    <div class="lumat-card">
+      <div class="card-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        Datos personales
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
 
-    /* Forzar que las tarjetas y formularios ocupen el 100% de la altura de la fila */
-    .panels-container .form-card {
-        margin-bottom: 0; 
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
+          <div class="form-group">
+            <label>Nombre(s)</label>
+            <div class="view-val field-val">{{ docente.nombre }}</div>
+            <div class="edit-ctrl">
+              {{ form.nombre }}
+              {% if form.nombre.errors %}<span class="field-error">{{ form.nombre.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
 
-    .panels-container form {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1; /* Hace que el formulario se estire */
-    }
+          <div class="form-group">
+            <label>Correo electrónico</label>
+            <div class="view-val field-val">{{ docente.correo }}</div>
+            <div class="edit-ctrl">
+              {{ form.correo }}
+              {% if form.correo.errors %}<span class="field-error">{{ form.correo.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
 
-    .panels-container .form-card-body {
-        flex-grow: 1; /* Empuja el footer hacia abajo uniformemente */
-    }
+          <div class="form-group">
+            <label>Apellido paterno</label>
+            <div class="view-val field-val">{{ docente.apellido_paterno }}</div>
+            <div class="edit-ctrl">
+              {{ form.apellido_paterno }}
+              {% if form.apellido_paterno.errors %}<span class="field-error">{{ form.apellido_paterno.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
 
-    /* Ajuste responsivo para pantallas medianas o pequeñas */
-    @media (max-width: 1024px) {
-        .panels-container {
-            grid-template-columns: 1fr;
-            max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-        }
-    }
-</style>
+          <div class="form-group">
+            <label>Apellido materno</label>
+            <div class="view-val field-val">{{ docente.apellido_materno }}</div>
+            <div class="edit-ctrl">
+              {{ form.apellido_materno }}
+              {% if form.apellido_materno.errors %}<span class="field-error">{{ form.apellido_materno.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
 
-<div class="page-wrap">
+          <div class="form-group">
+            <label>Teléfono</label>
+            <div class="view-val field-val {% if not docente.telefono %}empty{% endif %}">
+              {{ docente.telefono|default:"Sin especificar" }}
+            </div>
+            <div class="edit-ctrl">
+              {{ form.telefono }}
+              {% if form.telefono.errors %}<span class="field-error">{{ form.telefono.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
 
-    <div class="content-max-width">
-        <div class="btn-back-container">
-            <a href="{% url 'lumat_app:docente_seminarios' %}" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;">
-                ← Volver
-            </a>
+          <div class="form-group">
+            <label>Perfil de investigación</label>
+            <div class="view-val field-val {% if not docente.red_social_investigacion %}empty{% endif %}">
+              {% if docente.red_social_investigacion %}
+                <a href="{{ docente.red_social_investigacion }}" target="_blank">
+                  {{ docente.red_social_investigacion|truncatechars:40 }}
+                </a>
+              {% else %}
+                Sin especificar
+              {% endif %}
+            </div>
+            <div class="edit-ctrl">
+              {{ form.red_social_investigacion }}
+              {% if form.red_social_investigacion.errors %}<span class="field-error">{{ form.red_social_investigacion.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    {# ── Datos académicos ── #}
+    <div class="lumat-card" style="border-top: 1px solid #c8b89a;">
+      <div class="card-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-4-3.5 4 1.5 4-1.5"/>
+        </svg>
+        Datos académicos
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label>Último grado de estudio</label>
+            <div class="view-val field-val {% if not docente.ultimo_grado_estudio %}empty{% endif %}">
+              {{ docente.ultimo_grado_estudio|default:"Sin especificar" }}
+            </div>
+            <div class="edit-ctrl">
+              {{ form.ultimo_grado_estudio }}
+              {% if form.ultimo_grado_estudio.errors %}<span class="field-error">{{ form.ultimo_grado_estudio.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Universidad o centro</label>
+            <div class="view-val field-val {% if not docente.universidad_o_centro %}empty{% endif %}">
+              {{ docente.universidad_o_centro|default:"Sin especificar" }}
+            </div>
+            <div class="edit-ctrl">
+              {{ form.universidad_o_centro }}
+              {% if form.universidad_o_centro.errors %}<span class="field-error">{{ form.universidad_o_centro.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label>Facultad o instituto</label>
+            <div class="view-val field-val {% if not docente.facultad_o_instituto %}empty{% endif %}">
+              {{ docente.facultad_o_instituto|default:"Sin especificar" }}
+            </div>
+            <div class="edit-ctrl">
+              {{ form.facultad_o_instituto }}
+              {% if form.facultad_o_instituto.errors %}<span class="field-error">{{ form.facultad_o_instituto.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    {# ── Documentos ── #}
+    <div class="lumat-card" style="border-top: 1px solid #c8b89a;">
+      <div class="card-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Documentos
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+
+          {# Firma #}
+          <div class="form-group">
+            <label>Firma</label>
+            <div class="view-val field-val" style="border-bottom: none; padding: 0;">
+              {% if docente.firma %}
+                <img src="{{ docente.firma.url }}" alt="Firma" class="firma-preview">
+              {% else %}
+                <div class="firma-placeholder">Sin firma</div>
+              {% endif %}
+            </div>
+            <div class="edit-ctrl">
+              {% if docente.firma %}
+                <img src="{{ docente.firma.url }}" alt="Firma actual"
+                     class="firma-preview" style="margin-bottom:.5rem;">
+                <span class="help-text">Firma actual — selecciona otra para reemplazarla</span>
+              {% endif %}
+              {{ form.firma }}
+              {% if form.firma.errors %}<span class="field-error">{{ form.firma.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
+
+          {# Nombramiento SNI #}
+          <div class="form-group">
+            <label>Nombramiento SNI (PDF)</label>
+            <div class="view-val field-val {% if not docente.nombramiento_sni %}empty{% endif %}">
+              {% if docente.nombramiento_sni %}
+                <div style="display:flex; align-items:center; gap:.4rem; color:#4a7c7a;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <a href="{{ docente.nombramiento_sni.url }}" target="_blank">Ver archivo</a>
+                </div>
+              {% else %}
+                Sin archivo cargado
+              {% endif %}
+            </div>
+            <div class="edit-ctrl">
+              {% if docente.nombramiento_sni %}
+                <div style="font-size:.82rem; color:#4a7c7a; margin-bottom:.4rem; display:flex; align-items:center; gap:.4rem;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <a href="{{ docente.nombramiento_sni.url }}" target="_blank">Archivo actual</a>
+                  — reemplazar:
+                </div>
+              {% endif %}
+              {{ form.nombramiento_sni }}
+              <span class="help-text">Opcional · solo PDF</span>
+              {% if form.nombramiento_sni.errors %}<span class="field-error">{{ form.nombramiento_sni.errors|join:", " }}</span>{% endif %}
+            </div>
+          </div>
+
         </div>
 
-        {% if messages %}
-            <div style="margin-bottom: 1.5rem;">
-                {% for message in messages %}
-                    <div {% if message.tags == 'error' %}class="alert-err"{% else %}class="alert-ok"{% endif %} style="margin-bottom: 0.5rem;">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+        <div class="form-actions" id="actionBar">
+          <button type="button" class="btn-cancel-form" onclick="cancelEdit()">Cancelar</button>
+          <button type="submit" class="btn-save">Guardar cambios</button>
+        </div>
 
-        <div class="panels-container">
+      </div>
+    </div>
 
-            <div class="form-card">
-                <div class="form-card-header">
-                    <div>
-                        <p class="eyebrow">Mi Cuenta</p>
-                        <h5>Información del Docente</h5>
-                    </div>
-                    {% if editando == 'perfil' %}
-                        <span class="edit-badge">Modo edición</span>
-                    {% else %}
-                        <a href="?modo=perfil" class="btn-edit" id="btn_editar_datos">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                            Editar Datos
-                        </a>
-                    {% endif %}
-                </div>
+  </form>
 
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="hidden" name="accion" value="perfil">
+</div>
 
-                    <div class="form-card-body">
-                        <p class="section-divider">Nombre Completo</p>
-                        <div class="form-grid-3">
-                            <div class="field-group">
-                                <span class="field-label">Nombre(s)</span>
-                                {% if editando == 'perfil' %}
-                                    {{ docente_form.nombre }}
-                                    <div class="field-error">{{ docente_form.nombre.errors }}</div>
-                                {% else %}
-                                    <div class="field-value">{{ docente.nombre|default:"—" }}</div>
-                                {% endif %}
-                            </div>
+<script>
+  const formHasErrors = {{ form.errors|yesno:"true,false" }};
 
-                            <div class="field-group">
-                                <span class="field-label">Apellido Paterno</span>
-                                {% if editando == 'perfil' %}
-                                    {{ docente_form.apellido_paterno }}
-                                    <div class="field-error">{{ docente_form.apellido_paterno.errors }}</div>
-                                {% else %}
-                                    <div class="field-value">{{ docente.apellido_paterno|default:"—" }}</div>
-                                {% endif %}
-                            </div>
+  const btnEdit  = document.getElementById('btnEdit');
+  const btnLabel = document.getElementById('btnEditLabel');
 
-                            <div class="field-group">
-                                <span class="field-label">Apellido Materno</span>
-                                {% if editando == 'perfil' %}
-                                    {{ docente_form.apellido_materno }}
-                                    <div class="field-error">{{ docente_form.apellido_materno.errors }}</div>
-                                {% else %}
-                                    <div class="field-value">{{ docente.apellido_materno|default:"—" }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
+  function toggleEdit() {
+    const isEditing = document.body.classList.toggle('is-editing');
+    btnLabel.textContent = isEditing ? 'Cancelar edición' : 'Editar perfil';
+    btnEdit.style.cssText = isEditing
+      ? 'background:#4a7c7a;color:#f7f4ef;border-color:#4a7c7a;'
+      : '';
+    if (isEditing) {
+      document.getElementById('perfilForm').querySelector('.lumat-input').focus();
+    }
+  }
 
-                        <p class="section-divider" style="margin-top: 24px;">Contacto y Formalización</p>
-                        <div class="form-grid-2">
-                            <div class="field-group">
-                                <span class="field-label">Correo Electrónico</span>
-                                {% if editando == 'perfil' %}
-                                    {{ docente_form.correo }}
-                                    <div class="field-error">{{ docente_form.correo.errors }}</div>
-                                {% else %}
-                                    <div class="field-value">{{ docente.correo|default:"—" }}</div>
-                                {% endif %}
-                            </div>
+  function cancelEdit() {
+    document.body.classList.remove('is-editing');
+    btnLabel.textContent = 'Editar perfil';
+    btnEdit.style.cssText = '';
+  }
 
-                            <div class="field-group">
-                                <span class="field-label">Firma Digital (Imagen)</span>
-                                {% if editando == 'perfil' %}
-                                    {{ docente_form.firma }}
-                                    <div class="field-error">{{ docente_form.firma.errors }}</div>
-                                {% else %}
-                                    <div class="field-value">
-                                        {% if docente.firma %}
-                                            <span style="color: #4a7c7a; font-weight: bold;">✓ Archivo registrado</span>
-                                        {% else %}
-                                            — Sin firma cargada —
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        {% if not editando and docente.firma %}
-                            <div style="margin-top: 10px; background: #faf8f4; padding: 12px; border: 1px dashed #c8b89a; border-radius: 6px; text-align: center;">
-                                <span class="field-label" style="margin-bottom: 8px;">Visualización de la firma</span>
-                                <img src="{{ docente.firma.url }}" alt="Firma docente" style="max-height: 70px; mix-blend-mode: multiply;">
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-card-footer">
-                        {% if editando == 'perfil' %}
-                            <a href="{% url 'lumat_app:perfil_docente' %}" class="btn-secondary">Cancelar</a>
-                            <button type="submit" class="btn-primary">Guardar cambios</button>
-                        {% endif %}
-                    </div>
-                </form>
-            </div>
-
-            <div class="form-card">
-                <div class="form-card-header">
-                    <div>
-                        <p class="eyebrow">Seguridad</p>
-                        <h5>Acceso y Contraseña</h5>
-                    </div>
-                    {% if editando == 'password' %}
-                        <span class="edit-badge">Modo edición</span>
-                    {% else %}
-                        <a href="?modo=password" class="btn-edit">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                            Modificar
-                        </a>
-                    {% endif %}
-                </div>
-
-                <form method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="accion" value="password">
-
-                    <div class="form-card-body">
-                        <p class="section-divider">Identificación de Usuario</p>
-                        <div class="form-grid-2">
-                            <div class="field-group">
-                                <span class="field-label">Nombre de Usuario</span>
-                                <div class="field-value">{{ request.user.username }}</div>
-                            </div>
-
-                            <div class="field-group">
-                                <span class="field-label">Último Inicio de Sesión</span>
-                                <div class="field-value">{{ request.user.last_login|date:"d/m/Y H:i"|default:"—" }}</div>
-                            </div>
-                        </div>
-
-                        <p class="section-divider" style="margin-top: 24px;">Credenciales de Seguridad</p>
-                        
-                        {% if editando == 'password' %}
-                            {% for field in password_form %}
-                                <div class="field-group">
-                                    <span class="field-label">{{ field.label }}</span>
-                                    {{ field }}
-                                    {% if field.errors %}
-                                        <div class="field-error">{{ field.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="form-grid-2">
-                                <div class="field-group">
-                                    <span class="field-label">Contraseña de acceso</span>
-                                    <div class="field-value">••••••••••••••••</div>
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-card-footer">
-                        {% if editando == 'password' %}
-                            <a href="{% url 'lumat_app:perfil_docente' %}" class="btn-secondary">Cancelar</a>
-                            <button type="submit" class="btn-primary">Actualizar contraseña</button>
-                        {% endif %}
-                    </div>
-                </form>
-            </div>
-
-        </div> </div> </div>
-
+  if (formHasErrors) {
+    document.body.classList.add('is-editing');
+    btnLabel.textContent = 'Cancelar edición';
+    btnEdit.style.cssText = 'background:#4a7c7a;color:#f7f4ef;border-color:#4a7c7a;';
+  }
+</script>
 {% endblock %}

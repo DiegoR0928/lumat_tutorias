@@ -38,55 +38,23 @@ def es_docente(user):
 
 @login_required
 def editar_perfil_docente(request):
-    try:
-        docente = request.user.docente
-    except Docente.DoesNotExist:
-        messages.error(request, "No tienes un perfil de docente asignado.")
-        # <-- Ojo con el namespace aquí también
-        return redirect('lumat_app:docente_seminarios')
-
-    editando = request.GET.get('modo', None)
+    docente = get_object_or_404(Docente, user=request.user)
 
     if request.method == 'POST':
-        accion = request.POST.get('accion')
-
-        if accion == 'perfil':
-            docente_form = DocenteForm(
-                request.POST, request.FILES, instance=docente)
-            password_form = PasswordChangeForm(request.user)
-
-            if docente_form.is_valid():
-                docente_form.save()
-                messages.success(
-                    request, "Información personal actualizada correctamente.")
-                return redirect('lumat_app:perfil_docente')
-            else:
-                editando = 'perfil'
-
-        elif accion == 'password':
-            docente_form = DocenteForm(instance=docente)
-            password_form = PasswordChangeForm(request.user, request.POST)
-            if password_form.is_valid():
-                user = password_form.save()
-                update_session_auth_hash(request, user)
-                messages.success(request, "Contraseña actualizada con éxito.")
-                return redirect('lumat_app:perfil_docente')
-            else:
-                editando = 'password'
+        form = DocenteForm(request.POST, request.FILES, instance=docente)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Perfil actualizado correctamente.')
+            return redirect('lumat_app:perfil_docente')
+        else:
+            messages.error(request, 'Por favor corrige los errores del formulario.')
     else:
-        docente_form = DocenteForm(instance=docente)
-        password_form = PasswordChangeForm(request.user)
+        form = DocenteForm(instance=docente)
 
-        for field in password_form.fields.values():
-            field.widget.attrs.update({'class': 'alumno-input'})
-
-    context = {
+    return render(request, 'docente_perfil.html', {
         'docente': docente,
-        'docente_form': docente_form,
-        'password_form': password_form,
-        'editando': editando,
-    }
-    return render(request, 'docente_perfil.html', context)
+        'form': form,
+    })
 
 
 ROLES_COMITE = ['tutor', 'director', 'coodirector', 'asesor']

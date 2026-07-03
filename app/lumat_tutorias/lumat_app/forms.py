@@ -36,7 +36,15 @@ class AlumnoPerfilForm(forms.ModelForm):
             'acta_examen_titulacion': forms.ClearableFileInput(attrs={'class': 'lumat-file'}),
         }
 
+class AlumnoForm(forms.ModelForm):
 
+    class Meta:
+        model = Alumno
+        fields = [
+            'nombre',
+            'apellido_paterno',
+            'apellido_materno',
+        ]
 
 class AlumnoEditForm(forms.ModelForm):
 
@@ -67,14 +75,22 @@ class PasswordChangeCustomForm(PasswordChangeForm):
 class DocenteForm(forms.ModelForm):
     class Meta:
         model = Docente
-        fields = ['nombre', 'apellido_paterno',
-                  'apellido_materno', 'correo', 'firma']
+        exclude = ['user']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'apellido_paterno': forms.TextInput(attrs={'class': 'form-control'}),
-            'apellido_materno': forms.TextInput(attrs={'class': 'form-control'}),
-            'correo': forms.EmailInput(attrs={'class': 'form-control'}),
-            'firma': forms.FileInput(attrs={'class': 'form-control-file'}),
+            'nombre':                    forms.TextInput(attrs={'class': 'lumat-input'}),
+            'apellido_paterno':          forms.TextInput(attrs={'class': 'lumat-input'}),
+            'apellido_materno':          forms.TextInput(attrs={'class': 'lumat-input'}),
+            'correo':                    forms.EmailInput(attrs={'class': 'lumat-input'}),
+            'telefono':                  forms.TextInput(attrs={'class': 'lumat-input'}),
+            'ultimo_grado_estudio':      forms.TextInput(attrs={'class': 'lumat-input'}),
+            'universidad_o_centro':      forms.TextInput(attrs={'class': 'lumat-input'}),
+            'facultad_o_instituto':      forms.TextInput(attrs={'class': 'lumat-input'}),
+            'red_social_investigacion':  forms.URLInput(attrs={
+                'class': 'lumat-input',
+                'placeholder': 'https://orcid.org/...'
+            }),
+            'firma':          forms.ClearableFileInput(attrs={'class': 'lumat-file'}),
+            'nombramiento_sni': forms.ClearableFileInput(attrs={'class': 'lumat-file'}),
         }
 
 
