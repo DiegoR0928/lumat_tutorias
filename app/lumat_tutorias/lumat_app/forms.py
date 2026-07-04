@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
-from .models import Alumno, FormularioComite, Docente
+from .models import Alumno, FormularioComite, Docente, SolicitudCambioComite
 
 
 class UserForm(forms.ModelForm):
@@ -329,3 +329,28 @@ class RegistroDocenteForm(forms.Form):
         if p1 and p2 and p1 != p2:
             self.add_error('password2', "Las contraseñas no coinciden.")
         return cleaned
+
+class SolicitudCambioComiteForm(forms.ModelForm):
+    class Meta:
+        model = SolicitudCambioComite
+        fields = ['rol_solicitado', 'motivo']
+        widgets = {
+            'rol_solicitado': forms.Select(attrs={'class': 'lumat-select'}),
+            'motivo': forms.Textarea(attrs={
+                'class': 'lumat-input',
+                'rows': 5,
+                'placeholder': 'Describe el motivo de la solicitud...',
+            }),
+        }
+        labels = {
+            'rol_solicitado': 'Miembro a reemplazar',
+            'motivo':         'Motivo de la solicitud',
+        }
+
+    def clean_motivo(self):
+        motivo = self.cleaned_data.get('motivo', '').strip()
+        if len(motivo) < 30:
+            raise forms.ValidationError(
+                "Por favor proporciona un motivo más detallado (mínimo 30 caracteres)."
+            )
+        return motivo

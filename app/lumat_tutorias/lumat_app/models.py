@@ -224,30 +224,32 @@ class Evidencia(models.Model):
         return f"Evidencia [{self.tipo}] — Seminario {self.seminario_id}"
 
 
-# ─────────────────────────────────────────────
-# SolicitudCambioTutor
-# Registro de solicitudes de cambio de tutor.
-# ─────────────────────────────────────────────
-class SolicitudCambioTutor(models.Model):
-    ESTADO_CHOICES = [
+class SolicitudCambioComite(models.Model):
+    ROLES = [
+        ('tutor',       'Tutor'),
+        ('director',    'Director de tesis'),
+        ('coodirector', 'Coodirector de tesis'),
+        ('asesor',      'Asesor de tesis'),
+    ]
+    ESTADOS = [
         ('pendiente', 'Pendiente'),
-        ('aprobada', 'Aprobada'),
+        ('aceptada',  'Aceptada'),
         ('rechazada', 'Rechazada'),
     ]
 
-    alumno = models.ForeignKey(
-        'Alumno', on_delete=models.CASCADE, related_name='solicitudes_tutor')
-    motivo = models.TextField()
-    estado = models.CharField(
-        max_length=10, choices=ESTADO_CHOICES, default='pendiente')
-    creada_en = models.DateTimeField(auto_now_add=True)
-    resuelta_en = models.DateTimeField(null=True, blank=True)
+    alumno         = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='solicitudes_cambio_comite')
+    rol_solicitado = models.CharField(max_length=20, choices=ROLES)
+    motivo         = models.TextField()
+    estado         = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    fecha_respuesta = models.DateTimeField(null=True, blank=True)
+    respuesta_admin = models.TextField(blank=True)
 
     class Meta:
-        ordering = ['-creada_en']
+        ordering = ['-fecha_solicitud']
 
     def __str__(self):
-        return f"Solicitud cambio tutor — {self.alumno} ({self.estado})"
+        return f"Solicitud de {self.alumno} — {self.get_rol_solicitado_display()} ({self.estado})"
 
 
 class FormularioComite(models.Model):
@@ -484,6 +486,11 @@ class ActaAlumnoData(models.Model):
     comentarios = models.TextField(blank=True)
 
     generado_en = models.DateTimeField(auto_now_add=True)
+
+    firma_tutor = models.BooleanField(default=False)
+    firma_director = models.BooleanField(default=False)
+    firma_coodirector = models.BooleanField(default=False)
+    firma_asesor = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Datos de acta del alumno"

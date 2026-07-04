@@ -1,161 +1,402 @@
 {% extends 'base.html' %}
-{% load static %}
+{% block title %}Cambio de miembro del comité | LUMAT{% endblock %}
 
 {% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/cambio_tutor.css' %}">
-{% endblock extra_css %}
+<style>
+  body { background-color: #ede9e0 !important; }
 
-
-{% block content %}
-
-{% if messages %}
-<div class="toast-container" id="django-messages" aria-live="polite">
-  {% for message in messages %}
-  <div class="toast toast--{{ message.tags }}">
-    {% if message.tags == 'success' %}<i class="ti ti-circle-check toast__icon" aria-hidden="true"></i>
-    {% elif message.tags == 'error' %}<i class="ti ti-alert-circle toast__icon" aria-hidden="true"></i>
-    {% elif message.tags == 'warning' %}<i class="ti ti-alert-triangle toast__icon" aria-hidden="true"></i>
-    {% else %}<i class="ti ti-info-circle toast__icon" aria-hidden="true"></i>{% endif %}
-    <span>{{ message }}</span>
-  </div>
-  {% endfor %}
-</div>
-<script>
-  setTimeout(function () {
-    var el = document.getElementById('django-messages');
-    if (el) el.remove();
-  }, 10000);
-</script>
-{% endif %}
-
-<div class="ct-page">
-  <div class="ct-card">
-
-    {# ── Header ── #}
-    <div class="ct-card-header">
-      <nav class="ct-breadcrumb" aria-label="Ruta de navegación">
-        <a href="{% url 'lumat_app:seminario_detalle' num=alumno.semestre|add:'0' %}">
-          <i class="ti ti-arrow-left" aria-hidden="true"></i>
-          Volver al seminario
-        </a>
-      </nav>
-      <h1 class="ct-title">Solicitar cambio de tutor</h1>
-      <p class="ct-subtitle">
-        Tu solicitud será revisada por la coordinación del programa.
-      </p>
-    </div>
-
-    {# ── Aviso Dinámico ── #}
-    {% if solicitud_pendiente %}
-      <div class="ct-aviso ct-aviso--info" role="alert">
-        <i class="ti ti-info-circle" aria-hidden="true"></i>
-        <p>
-          Actualmente tienes una <strong>solicitud en estado pendiente</strong>. No es posible emitir un nuevo requerimiento hasta que la coordinación dictamine el caso actual.
-        </p>
-      </div>
-    {% else %}
-      <div class="ct-aviso" role="alert">
-        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
-        <p>
-          Solo puedes tener <strong>una solicitud activa</strong> a la vez.
-          Una vez enviada, no podrás modificarla hasta que sea resuelta.
-        </p>
-      </div>
-    {% endif %}
-
-    {# ── Formulario ── #}
-    <div class="ct-form-body">
-      <form method="post" id="ct-form" novalidate>
-        {% csrf_token %}
-
-        <label class="ct-label" for="ct-motivo">Motivo de la solicitud</label>
-        <textarea
-          id="ct-motivo"
-          name="motivo"
-          class="ct-textarea"
-          placeholder="Describe brevemente el motivo por el que solicitas el cambio de tutor…"
-          maxlength="500"
-          rows="6"
-          {% if solicitud_pendiente %}disabled{% endif %}
-          aria-describedby="ct-char-info ct-error-motivo">{% if solicitud_pendiente %}{{ solicitud_pendiente.motivo }}{% endif %}</textarea>
-        
-        {% if not solicitud_pendiente %}
-          <p class="ct-char-count" id="ct-char-info">0 / 500</p>
-          <p class="ct-error-msg" id="ct-error-motivo">
-            <i class="ti ti-alert-circle" aria-hidden="true"></i>
-            Debes indicar el motivo de la solicitud.
-          </p>
-        {% endif %}
-
-        <div class="ct-actions">
-          {% if solicitud_pendiente %}
-            <button type="button" class="ct-btn ct-btn--primary" id="ct-submit" disabled>
-              <i class="ti ti-lock" aria-hidden="true"></i>
-              Solicitud en trámite
-            </button>
-          {% else %}
-            <button type="submit" class="ct-btn ct-btn--primary" id="ct-submit" disabled>
-              <i class="ti ti-send" aria-hidden="true"></i>
-              Enviar solicitud
-            </button>
-          {% endif %}
-          
-          <a href="{% url 'lumat_app:seminario_detalle' num=alumno.semestre|add:'0' %}"
-             class="ct-btn ct-btn--secondary">
-            {% if solicitud_pendiente %}Volver{% else %}Cancelar{% endif %}
-          </a>
-        </div>
-      </form>
-    </div>
-
-  </div>
-</div>
-
-{# ── Script de validación (Solo se activa si el formulario está disponible) ── #}
-{% if not solicitud_pendiente %}
-<script>
-(function () {
-  var textarea = document.getElementById('ct-motivo');
-  var counter  = document.getElementById('ct-char-info');
-  var submitBtn = document.getElementById('ct-submit');
-  var errorMsg  = document.getElementById('ct-error-motivo');
-  var MAX = 500;
-
-  function actualizar() {
-    var len = textarea.value.trim().length;
-    var total = textarea.value.length;
-
-    // Contador de caracteres
-    counter.textContent = total + ' / ' + MAX;
-    counter.className = 'ct-char-count';
-    if (total >= MAX)       counter.classList.add('limit');
-    else if (total >= 400)  counter.classList.add('warn');
-
-    // Habilitar botón solo si hay contenido
-    submitBtn.disabled = len === 0;
-
-    // Limpiar error al escribir
-    if (len > 0) {
-      errorMsg.classList.remove('visible');
-      textarea.classList.remove('error');
-    }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
   }
 
-  textarea.addEventListener('input', actualizar);
+  /* ── Encabezado ── */
+  .page-header {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .btn-back {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .4rem .85rem;
+    background: transparent; border: 1px solid #c8b89a;
+    border-radius: 6px; font-size: .8rem; color: #8a7560;
+    text-decoration: none; font-weight: 600;
+    transition: background .18s, color .18s; white-space: nowrap;
+  }
+  .btn-back:hover { background: #eee8de; color: #4a3f32; border-color: #a89880; }
+  .page-title {
+    font-family: Georgia, serif; font-size: 1.05rem;
+    color: #4a3f32; font-weight: normal; margin: 0;
+  }
+  .page-sub {
+    font-size: .72rem; color: #8a7560;
+    text-transform: uppercase; letter-spacing: .07em; margin-top: 2px;
+  }
 
-  document.getElementById('ct-form').addEventListener('submit', function (e) {
-    if (textarea.value.trim().length === 0) {
-      e.preventDefault();
-      errorMsg.classList.add('visible');
-      textarea.classList.add('error');
-      textarea.focus();
+  /* ── Cards ── */
+  .lumat-card {
+    background: #f7f4ef; border: 1px solid #c8b89a;
+    border-top: 2px solid #4a7c7a;
+    border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden;
+  }
+  .lumat-card.blocked { border-top-color: #c8873a; }
+  .lumat-card.historial-card { border-top-color: #8a7560; }
+
+  .card-hdr {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .68rem 1.2rem; background: #eee8de;
+    border-bottom: 1px solid #c8b89a;
+    font-size: .67rem; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: #8a7560;
+  }
+  .card-hdr svg { width: 13px; height: 13px; flex-shrink: 0; color: #4a7c7a; }
+  .card-hdr.blocked-hdr svg { color: #c8873a; }
+  .card-body { padding: 1.2rem; }
+
+  /* ── Comité actual ── */
+  .comite-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .7rem;
+  }
+  .comite-item {
+    display: flex; align-items: center; gap: .65rem;
+    padding: .6rem .85rem;
+    background: #faf8f4; border: 1px solid #e3d9cb; border-radius: 6px;
+  }
+  .comite-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #4a7c7a; color: #f7f4ef;
+    font-size: .75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-family: Georgia, serif;
+  }
+  .comite-nombre { font-size: .85rem; color: #4a3f32; font-weight: 500; }
+  .comite-rol {
+    font-size: .67rem; color: #8a7560;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+
+  /* ── Alerta de solicitud activa ── */
+  .alert-pendiente {
+    display: flex; align-items: flex-start; gap: .75rem;
+    padding: 1rem 1.1rem;
+    background: #fff8ee; border: 1px solid #e8c97a;
+    border-left: 3px solid #c8873a; border-radius: 7px;
+  }
+  .alert-pendiente svg { flex-shrink: 0; color: #c8873a; margin-top: 1px; }
+  .alert-pendiente-title {
+    font-size: .85rem; font-weight: 700; color: #7a4f1a; margin-bottom: .25rem;
+  }
+  .alert-pendiente p { font-size: .82rem; color: #7a4f1a; margin: 0; line-height: 1.5; }
+  .badge-rol {
+    display: inline-block; padding: .18rem .6rem;
+    border-radius: 999px; font-size: .7rem; font-weight: 700;
+    background: #fdebc8; color: #7a4f1a; border: 1px solid #e8c97a;
+    margin: .3rem 0 0;
+  }
+
+  /* ── Form ── */
+  .form-group { display: flex; flex-direction: column; gap: .35rem; margin-bottom: 1rem; }
+  .form-group:last-of-type { margin-bottom: 0; }
+  .form-group label {
+    font-size: .7rem; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: #8a7560;
+  }
+
+  .lumat-select {
+    width: 100%; padding: .52rem .8rem;
+    border: 1px solid #c8b89a; border-radius: 6px;
+    background: #faf8f4; font-size: .88rem; color: #4a3f32;
+    outline: none; font-family: Arial, sans-serif;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%238a7560' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right .8rem center;
+    padding-right: 2rem; cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .lumat-select:focus {
+    border-color: #4a7c7a;
+    box-shadow: 0 0 0 3px rgba(74,124,122,.12);
+    background-color: #fff;
+  }
+  .lumat-input {
+    width: 100%; padding: .52rem .8rem;
+    border: 1px solid #c8b89a; border-radius: 6px;
+    background: #faf8f4; font-size: .88rem; color: #4a3f32;
+    outline: none; font-family: Arial, sans-serif;
+    transition: border-color .2s, box-shadow .2s; box-sizing: border-box;
+    resize: vertical;
+  }
+  .lumat-input:focus {
+    border-color: #4a7c7a;
+    box-shadow: 0 0 0 3px rgba(74,124,122,.12);
+    background: #fff;
+  }
+  .char-count {
+    font-size: .7rem; color: #a89880;
+    text-align: right; margin-top: .15rem;
+  }
+  .char-count.ok { color: #4a7c7a; }
+  .field-error { font-size: .74rem; color: #8a3a2a; margin-top: .12rem; }
+
+  .btn-enviar {
+    width: 100%; padding: .62rem;
+    background: #4a7c7a; border: none; border-radius: 6px;
+    font-family: Georgia, serif; font-size: .95rem;
+    letter-spacing: .05em; color: #f7f4ef;
+    cursor: pointer; margin-top: 1.1rem;
+    transition: background .2s;
+  }
+  .btn-enviar:hover { background: #3a6260; }
+
+  /* ── Alertas ── */
+  .lumat-alert {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .7rem 1rem; border-radius: 7px;
+    font-size: .85rem; margin-bottom: 1.1rem;
+  }
+  .lumat-alert.success { background: #e8f0ef; color: #2e6b69; border: 1px solid #b8d4d2; }
+  .lumat-alert.error   { background: #faeae6; color: #8a3a2a; border: 1px solid #e0b8ae; border-left: 3px solid #8a3a2a; }
+
+  /* ── Historial ── */
+  .historial-item {
+    padding: .85rem 0;
+    border-bottom: 1px solid #e3d9cb;
+  }
+  .historial-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .historial-top {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: .35rem;
+  }
+  .historial-rol {
+    font-size: .8rem; font-weight: 700; color: #4a3f32;
+  }
+  .historial-fecha { font-size: .72rem; color: #a89880; }
+  .historial-motivo {
+    font-size: .83rem; color: #6a5f52; line-height: 1.5;
+    margin-bottom: .3rem;
+  }
+  .historial-respuesta {
+    font-size: .78rem; color: #6a5f52;
+    background: #f0ece4; border-left: 2px solid #c8b89a;
+    padding: .4rem .7rem; border-radius: 0 4px 4px 0;
+    margin-top: .35rem;
+  }
+
+  /* Badges de estado */
+  .badge {
+    display: inline-block; padding: .18rem .65rem;
+    border-radius: 999px; font-size: .67rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .badge-pendiente  { background: #fff8ee; color: #7a4f1a; border: 1px solid #e8c97a; }
+  .badge-aceptada   { background: #e8f0ef; color: #2e6b69; border: 1px solid #b8d4d2; }
+  .badge-rechazada  { background: #faeae6; color: #8a3a2a; border: 1px solid #e0b8ae; }
+
+  .empty-historial {
+    text-align: center; padding: 1.25rem 0;
+    font-size: .85rem; color: #a89880; font-style: italic;
+  }
+
+  .footer-note {
+    text-align: center; font-size: .67rem; color: #a89880;
+    text-transform: uppercase; letter-spacing: .08em; margin-top: 1rem;
+  }
+
+  @media (max-width: 540px) {
+    .comite-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  {# ── Mensajes ── #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="lumat-alert {% if message.tags == 'success' %}success{% else %}error{% endif %}">
+        {% if message.tags == 'success' %}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        {% endif %}
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {# ── Encabezado ── #}
+  <div class="page-header">
+    <a href="{% url 'lumat_app:seminario_detalle' num=alumno.semestre %}" class="btn-back">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m7-7-7 7 7 7"/>
+      </svg>
+      Regresar
+    </a>
+    <div>
+      <p class="page-title">Solicitud de cambio de miembro del comité</p>
+      <p class="page-sub">{{ alumno.nombre }} {{ alumno.apellido_paterno }} · {{ alumno.matricula }}</p>
+    </div>
+  </div>
+
+  {# ── Comité actual ── #}
+  {% if comite %}
+  <div class="lumat-card">
+    <div class="card-hdr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Comité actual
+    </div>
+    <div class="card-body">
+      <div class="comite-grid">
+
+        {% for docente, rol_label in comite_display %}
+        <div class="comite-item">
+          <div class="comite-avatar">
+            {{ docente.nombre|first|upper }}{{ docente.apellido_paterno|first|upper }}
+          </div>
+          <div>
+            <div class="comite-nombre">{{ docente.nombre }} {{ docente.apellido_paterno }}</div>
+            <div class="comite-rol">{{ rol_label }}</div>
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Solicitud activa o formulario ── #}
+  {% if solicitud_activa %}
+  <div class="lumat-card blocked">
+    <div class="card-hdr blocked-hdr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path stroke-linecap="round" d="M12 8v4m0 4h.01"/>
+      </svg>
+      Solicitud en espera
+    </div>
+    <div class="card-body">
+      <div class="alert-pendiente">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <div>
+          <div class="alert-pendiente-title">Ya tienes una solicitud pendiente</div>
+          <p>No puedes enviar otra solicitud hasta que el administrador resuelva la actual.</p>
+          <div class="badge-rol">{{ solicitud_activa.get_rol_solicitado_display }}</div>
+          <p style="margin-top:.5rem;">
+            <strong>Motivo:</strong> {{ solicitud_activa.motivo }}
+          </p>
+          <p style="margin-top:.3rem; font-size:.75rem; color:#a89880;">
+            Enviada el {{ solicitud_activa.fecha_solicitud|date:"d/m/Y \a \l\a\s H:i" }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="lumat-card">
+    <div class="card-hdr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5
+                 m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+      Nueva solicitud
+    </div>
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label>{{ form.rol_solicitado.label }}</label>
+          {{ form.rol_solicitado }}
+          {% if form.rol_solicitado.errors %}
+            <span class="field-error">{{ form.rol_solicitado.errors|join:", " }}</span>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label>{{ form.motivo.label }}</label>
+          {{ form.motivo }}
+          <div class="char-count" id="char-count">0 / 30 mínimo</div>
+          {% if form.motivo.errors %}
+            <span class="field-error">{{ form.motivo.errors|join:", " }}</span>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn-enviar">Enviar solicitud</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Historial ── #}
+  <div class="lumat-card historial-card">
+    <div class="card-hdr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="12 8 12 12 14 14"/>
+        <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
+      </svg>
+      Historial de solicitudes
+    </div>
+    <div class="card-body">
+      {% if historial %}
+        {% for s in historial %}
+        <div class="historial-item">
+          <div class="historial-top">
+            <span class="historial-rol">{{ s.get_rol_solicitado_display }}</span>
+            <div style="display:flex; align-items:center; gap:.6rem;">
+              <span class="historial-fecha">{{ s.fecha_solicitud|date:"d/m/Y" }}</span>
+              <span class="badge
+                {% if s.estado == 'aceptada' %}badge-aceptada
+                {% elif s.estado == 'rechazada' %}badge-rechazada
+                {% else %}badge-pendiente{% endif %}">
+                {{ s.get_estado_display }}
+              </span>
+            </div>
+          </div>
+          <p class="historial-motivo">{{ s.motivo }}</p>
+          {% if s.respuesta_admin %}
+            <div class="historial-respuesta">
+              <strong>Respuesta del administrador:</strong> {{ s.respuesta_admin }}
+            </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-historial">Sin solicitudes anteriores.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <p class="footer-note">Sistema de Gestión Académica · UAZ</p>
+
+</div>
+
+<script>
+  const motivo = document.getElementById('{{ form.motivo.id_for_label }}');
+  const counter = document.getElementById('char-count');
+
+  if (motivo && counter) {
+    function actualizarContador() {
+      const n = motivo.value.trim().length;
+      counter.textContent = `${n} caracteres${n < 30 ? ' (mínimo 30)' : ''}`;
+      counter.className = 'char-count' + (n >= 30 ? ' ok' : '');
     }
-  });
-})();
+    motivo.addEventListener('input', actualizarContador);
+    actualizarContador();
+  }
 </script>
-{% endif %}
-
 {% endblock %}

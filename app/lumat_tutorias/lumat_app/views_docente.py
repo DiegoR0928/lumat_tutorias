@@ -7,6 +7,8 @@ from django.http import HttpResponse, Http404
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 
+from .acta_generador import generar_acta_alumno
+
 from .models import CalendarioGenerado, Docente, Seminario, FormularioComite
 from .utils_pdf_comite import generar_pdf_comite
 import io
@@ -238,23 +240,158 @@ def docente_seminario_detalle(request, seminario_id):
             return redirect(
                 'lumat_app:docente_seminario_detalle', seminario_id=seminario_id)
     else:
-        form = FormularioComiteForm(
-            instance=formulario) if rol == 'tutor' else None
+        form = FormularioComiteForm(instance=formulario) if rol == 'tutor' else None
 
-    # ── Formulario de firma / calificación ────────────────────
+    # ── Firma acta comité ─────────────────────────────────────
     ya_firme = getattr(formulario, f'firma_{rol}') if rol else False
     firma_form = FirmaCalificacionForm() if not ya_firme else None
 
+    # ── Acta del alumno ───────────────────────────────────────
+    from .models import ActaAlumnoData
+    acta_alumno = None
+    ya_firme_alumno = False
+    try:
+        acta_alumno = seminario.acta_data
+        if rol:
+            ya_firme_alumno = getattr(acta_alumno, f'firma_{rol}', False)
+    except ActaAlumnoData.DoesNotExist:
+        pass
+    firmas_comite = []
+    firmas_alumno = []
+    if seminario.comite:
+        c = seminario.comite
+        firmas_comite = [
+            (c.tutor,       'Tutor',        formulario.firma_tutor,       formulario.calificacion_tutor),
+            (c.director,    'Director',     formulario.firma_director,    formulario.calificacion_director),
+            (c.coodirector, 'Coodirector',  formulario.firma_coodirector, formulario.calificacion_coodirector),
+            (c.asesor,      'Asesor',       formulario.firma_asesor,      formulario.calificacion_asesor),
+        ]
+        if acta_alumno:
+            firmas_alumno = [
+                (c.tutor,       'Tutor',       getattr(acta_alumno, 'firma_tutor',       False)),
+                (c.director,    'Director',    getattr(acta_alumno, 'firma_director',    False)),
+                (c.coodirector, 'Coodirector', getattr(acta_alumno, 'firma_coodirector', False)),
+                (c.asesor,      'Asesor',      getattr(acta_alumno, 'firma_asesor',      False)),
+            ]
+    acta_campos = []
+    if acta_alumno:
+        acta_campos = [
+            ('Actividad principal', acta_alumno.actividad_principal),
+            ('Cursos inscritos', acta_alumno.cursos),
+            ('Artículos enviados / publicados', acta_alumno.articulos),
+            ('Eventos académicos / estancias', acta_alumno.eventos),
+            ('Plan de actividades siguiente semestre', acta_alumno.plan_siguiente),
+            ('Comentarios adicionales', acta_alumno.comentarios),
+        ]
+
     return render(request, 'docente_seminario_detalle.html', {
-        'docente': docente,
-        'seminario': seminario,
-        'formulario': formulario,
-        'form': form,
-        'firma_form': firma_form,
-        'rol': rol,
-        'rol_activo': rol_activo,
-        'ya_firme': ya_firme,
+        'docente':          docente,
+        'seminario':        seminario,
+        'formulario':       formulario,
+        'form':             form,
+        'firma_form':       firma_form,
+        'rol':              rol,
+        'rol_activo':       rol_activo,
+        'ya_firme':         ya_firme,
+        'acta_alumno':      acta_alumno,
+        'ya_firme_alumno':  ya_firme_alumno,
+        'firmas_comite':    firmas_comite,
+        'firmas_alumno':    firmas_alumno,
+        'acta_campos':      acta_campos,
     })
+
+
+@login_required
+@user_passes_test(es_docente)
+def docente_firmar_acta_alumno(request, seminario_id):
+    if request.method != 'POST':
+        return redirect('lumat_app:docente_seminario_detalle',
+                        seminario_id=seminario_id)
+
+    docente = request.user.docente
+    seminario = get_object_or_404(
+        Seminario.objects.select_related(
+            'alumno', 'comite',
+            'comite__tutor', 'comite__director',
+            'comite__coodirector', 'comite__asesor'),
+        pk=seminario_id)
+
+    rol = _rol_en_seminario(docente, seminario)
+    if not rol:
+        messages.error(request, 'No tienes un rol asignado en este seminario.')
+        return redirect('lumat_app:docente_seminario_detalle',
+                        seminario_id=seminario_id)
+
+    try:
+        acta_alumno = seminario.acta_data
+    except ActaAlumnoData.DoesNotExist:
+        messages.error(request, 'El alumno aún no ha enviado su informe.')
+        return redirect('lumat_app:docente_seminario_detalle',
+                        seminario_id=seminario_id)
+
+    campo_firma = f'firma_{rol}'
+    if getattr(acta_alumno, campo_firma, False):
+        messages.warning(request, 'Ya habías autorizado el acta del alumno.')
+        return redirect('lumat_app:docente_seminario_detalle',
+                        seminario_id=seminario_id)
+
+    # Registrar la firma
+    setattr(acta_alumno, campo_firma, True)
+    acta_alumno.save()
+
+    # Verificar si ya firmaron todos
+    todas_firmadas = all([
+        acta_alumno.firma_tutor,
+        acta_alumno.firma_director,
+        acta_alumno.firma_coodirector,
+        acta_alumno.firma_asesor,
+    ])
+
+    if todas_firmadas:
+        # Generar el PDF ahora que está completo
+        try:
+            pdf_buffer = generar_acta_alumno(
+                seminario=seminario,
+                alumno=seminario.alumno,
+                comite=seminario.comite,
+                datos_form=acta_alumno.to_dict(),
+            )
+            nombre_archivo = (
+                f"acta_{seminario.numero}_"
+                f"{seminario.alumno.matricula or seminario.alumno.id}.pdf"
+            )
+            seminario.actaAlumno.save(
+                nombre_archivo,
+                ContentFile(pdf_buffer.read()),
+                save=True,
+            )
+            messages.success(
+                request,
+                "Todos los docentes han autorizado el acta. "
+                "El PDF ha sido generado y está disponible para el alumno."
+            )
+        except Exception as e:
+            messages.error(
+                request,
+                f"Las firmas se registraron pero ocurrió un error al generar el PDF: {e}"
+            )
+    else:
+        # Contar cuántas faltan
+        firmas = [
+            acta_alumno.firma_tutor,
+            acta_alumno.firma_director,
+            acta_alumno.firma_coodirector,
+            acta_alumno.firma_asesor,
+        ]
+        pendientes = 4 - sum(firmas)
+        messages.success(
+            request,
+            f"Autorización registrada. "
+            f"Faltan {pendientes} firma{'s' if pendientes != 1 else ''} para generar el acta."
+        )
+
+    return redirect('lumat_app:docente_seminario_detalle',
+                    seminario_id=seminario_id)
 
 def _verificar_y_generar_pdf_comite(request, seminario, formulario):
     """Evalúa si el formulario del comité cambió su estatus a 'completo'

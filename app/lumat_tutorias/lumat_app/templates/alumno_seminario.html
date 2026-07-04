@@ -28,15 +28,22 @@
     transition: all 0.2s ease;
   }
 
-  .tab-btn:hover { color: #2C5F8A; }
+  .tab-btn:hover {
+    color: #2C5F8A;
+  }
 
   .tab-btn.active {
     color: #2C5F8A;
     border-bottom-color: #2C5F8A;
   }
 
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
 
   .acta-form-card {
     background: #ffffff;
@@ -105,6 +112,135 @@
     background: #cccccc;
     cursor: not-allowed;
   }
+
+  /* ── Subida manual discreta ── */
+  .upload-manual-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #a89880;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline dotted;
+    transition: color .2s;
+  }
+
+  .upload-manual-toggle:hover {
+    color: #6a5f52;
+  }
+
+  .upload-manual-box {
+    display: none;
+    margin-top: 10px;
+    background: #f7f4ef;
+    border: 1px dashed #c8b89a;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .upload-manual-box.open {
+    display: block;
+  }
+
+  .upload-manual-box p {
+    font-size: 12px;
+    color: #8a7560;
+    margin: 0 0 10px;
+    line-height: 1.5;
+  }
+
+  .upload-manual-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .upload-manual-row input[type="file"] {
+    font-size: 12px;
+    color: #4a3f32;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .btn-upload-manual {
+    padding: 5px 14px;
+    background: transparent;
+    border: 1px solid #c8b89a;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #6a5f52;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .18s;
+  }
+
+  .btn-upload-manual:hover {
+    background: #eee8de;
+  }
+
+  .comite-lista{
+    display:flex;
+    flex-direction:column;
+    gap:.55rem;
+}
+
+.comite-item{
+    display:flex;
+    align-items:center;
+    gap:.75rem;
+    padding:.45rem .25rem;
+    border-bottom:1px solid #ece8df;
+}
+
+.comite-item:last-child{
+    border-bottom:none;
+}
+
+.comite-avatar{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:#6a5f52;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.82rem;
+    font-weight:600;
+    flex-shrink:0;
+}
+
+.comite-datos{
+    display:flex;
+    flex-direction:column;
+    line-height:1.2;
+}
+
+.comite-nombre{
+    font-size:.9rem;
+    font-weight:600;
+    color:var(--lumat-text);
+}
+
+.comite-rol{
+    font-size:.74rem;
+    color:var(--lumat-muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+
+.comite-vacio{
+    text-align:center;
+    color:var(--lumat-muted);
+    font-size:.85rem;
+    margin:0;
+    padding:.75rem 0;
+}
 </style>
 {% endblock extra_css %}
 
@@ -125,26 +261,25 @@
       <nav class="sem-nav-list" aria-label="Navegación de seminarios">
         {% for i in "12345678" %}
         {% with n=forloop.counter %}
-        {% if n <= semestre_int %}
-          <a href="{% url 'lumat_app:seminario_detalle' n %}"
-            class="sem-nav-item done {% if n == num %}active{% endif %}">
-            <span class="sem-status-dot" aria-hidden="true"></span>
-            Seminario {{ n }}
+        {% if n <= semestre_int %} <a href="{% url 'lumat_app:seminario_detalle' n %}"
+          class="sem-nav-item done {% if n == num %}active{% endif %}">
+          <span class="sem-status-dot" aria-hidden="true"></span>
+          Seminario {{ n }}
           </a>
-        {% elif n == semestre_int %}
+          {% elif n == semestre_int %}
           <a href="{% url 'lumat_app:seminario_detalle' n %}"
             class="sem-nav-item pending {% if n == num %}active{% endif %}">
             <span class="sem-status-dot" aria-hidden="true"></span>
             Seminario {{ n }}
           </a>
-        {% else %}
+          {% else %}
           <button class="sem-nav-item locked" disabled title="Disponible en semestre {{ n }}">
             <i class="ti ti-lock" style="font-size:12px;" aria-hidden="true"></i>
             Seminario {{ n }}
           </button>
-        {% endif %}
-        {% endwith %}
-        {% endfor %}
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
       </nav>
 
       {# ── Acciones rápidas ── #}
@@ -154,7 +289,8 @@
           <i class="ti ti-calendar-due" aria-hidden="true"></i>
           <div>
             <div class="alerta-label">Próximo seminario</div>
-            <div class="alerta-fecha">{{ proximo_seminario.fecha|date:"d/m/Y" }}<br>{{ proximo_seminario.hora|time:"H:i" }} hrs</div>
+            <div class="alerta-fecha">{{ proximo_seminario.fecha|date:"d/m/Y" }}<br>{{ proximo_seminario.hora|time:"H:i"
+              }} hrs</div>
           </div>
         </div>
         {% else %}
@@ -226,6 +362,7 @@
         <div class="sem-programado-divider"></div>
         <p>El informe oficial del comité se renderizará aquí automáticamente una vez que todos los sinodales concluyan
           sus firmas.</p>
+
         {% if formulario_comite %}
         <p class="sem-programado-lugar" style="margin-top: 12px;">
           <i class="ti ti-users" aria-hidden="true"></i> Estado de las firmas:
@@ -244,7 +381,8 @@
         <i class="ti ti-calendar-event big-icon" aria-hidden="true"></i>
         <p class="sem-programado-label">Programado para</p>
         <p class="sem-programado-fecha">{{ seminario.fecha|date:"d \d\e F, Y" }}</p>
-        <p class="sem-programado-hora"><i class="ti ti-clock" aria-hidden="true"></i> {{ seminario.hora|time:"H:i" }} hrs</p>
+        <p class="sem-programado-hora"><i class="ti ti-clock" aria-hidden="true"></i> {{ seminario.hora|time:"H:i" }}
+          hrs</p>
       </div>
 
       {% else %}
@@ -253,6 +391,29 @@
         <p style="font-weight:500;">Aún no hay fecha asignada</p>
       </div>
       {% endif %}
+
+      {# ── Subida manual discreta — visible en todos los casos sin acta ── #}
+      {% if puede_subir_acta_comite %}
+      <div style="margin-top: 14px; text-align: center;">
+        <button class="upload-manual-toggle" type="button" onclick="toggleUpload('upload-comite')">
+          <i class="ti ti-upload" style="font-size:11px;"></i>
+          Subir acta del comité manualmente
+        </button>
+        <div class="upload-manual-box" id="upload-comite" style="text-align:left;">
+          <p>Usa esta opción solo si el sistema no generó el acta automáticamente.
+            El archivo debe ser un PDF.</p>
+          <form method="post" action="{% url 'lumat_app:subir_acta_manual' seminario.id 'comite' %}"
+            enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="upload-manual-row">
+              <input type="file" name="acta_pdf" accept="application/pdf" required>
+              <button type="submit" class="btn-upload-manual">Subir</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
     </div>
 
     <div id="alumno-tab" class="tab-content">
@@ -276,8 +437,7 @@
           loading="lazy"></iframe>
       </div>
 
-      <!-- {% elif seminario and seminario.calificacion %} -->
-      {% elif seminario and seminario.calificacion %}
+      {% elif seminario %}
       <div class="acta-form-card">
         <h3 style="color:#2C5F8A; margin-bottom: 8px; font-weight:600;">Llenar Informe Semestral del Alumno</h3>
         <p style="font-size:13px; color:#6b6560; margin-bottom: 20px;">
@@ -344,10 +504,33 @@
       {% else %}
       <div class="sem-sin-programar-card">
         <i class="ti ti-lock" aria-hidden="true"></i>
-        <p style="font-weight:500;">Opción no disponible</p>
-        <p>Podrás llenar y emitir tu informe semestral en cuanto tu comité asigne una calificación formal al seminario.</p>
+        <p style="font-weight:500;">Sin seminario registrado</p>
+        <p>No hay información de este seminario todavía.</p>
       </div>
       {% endif %}
+
+      {# Subida manual discreta del acta alumno si no existe PDF #}
+      {% if seminario and puede_subir_acta_alumno %}
+      <div style="margin-top: 14px; text-align: center;">
+        <button class="upload-manual-toggle" type="button" onclick="toggleUpload('upload-alumno')">
+          <i class="ti ti-upload" style="font-size:11px;"></i>
+          Subir acta del alumno manualmente
+        </button>
+        <div class="upload-manual-box" id="upload-alumno" style="text-align:left;">
+          <p>Usa esta opción solo si necesitas adjuntar el PDF del acta sin pasar
+            por el formulario. El archivo debe ser un PDF.</p>
+          <form method="post" action="{% url 'lumat_app:subir_acta_manual' seminario.id 'alumno' %}"
+            enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="upload-manual-row">
+              <input type="file" name="acta_pdf" accept="application/pdf" required>
+              <button type="submit" class="btn-upload-manual">Subir</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
     </div>
 
   </main>
@@ -380,11 +563,11 @@
           <span class="det-label">Estado</span>
           <span>
             {% if seminario and seminario.calificacion %}
-              <span class="estado-pill aprobado">Aprobado</span>
+            <span class="estado-pill aprobado">Aprobado</span>
             {% elif seminario %}
-              <span class="estado-pill pendiente">Pendiente</span>
+            <span class="estado-pill pendiente">Pendiente</span>
             {% else %}
-              <span class="estado-pill sin-calificar">Sin programar</span>
+            <span class="estado-pill sin-calificar">Sin programar</span>
             {% endif %}
           </span>
         </div>
@@ -397,19 +580,29 @@
         <i class="ti ti-users-group" aria-hidden="true"></i>
         Comité
       </div>
+
       <div class="panel-card-body">
         {% if comite %}
+        <div class="comite-lista">
           {% for miembro, rol_label in comite_members %}
-          <div class="comite-member">
-            <div class="comite-avatar">{{ miembro.nombre|slice:":1" }}{{ miembro.apellido_paterno|slice:":1" }}</div>
-            <div class="comite-info">
-              <p class="comite-nombre">{{ miembro.nombre }} {{ miembro.apellido_paterno }}</p>
-              <p class="comite-rol">{{ rol_label }}</p>
+          <div class="comite-item">
+            <div class="comite-avatar">
+              {{ miembro.nombre|slice:":1" }}{{ miembro.apellido_paterno|slice:":1" }}
+            </div>
+
+            <div class="comite-datos">
+              <span class="comite-nombre">
+                {{ miembro.nombre }} {{ miembro.apellido_paterno }}
+              </span>
+              <span class="comite-rol">
+                {{ rol_label }}
+              </span>
             </div>
           </div>
           {% endfor %}
+        </div>
         {% else %}
-        <p style="font-size:13px; color:var(--lumat-muted); text-align:center; padding:12px 0;">
+        <p class="comite-vacio">
           Sin comité asignado
         </p>
         {% endif %}
@@ -442,7 +635,8 @@
 
         <label for="ev-nombre" class="ev-form-label">Cargar actividad</label>
 
-        <form method="post" action="{% url 'lumat_app:subir_evidencia' seminario.id %}" enctype="multipart/form-data" id="ev-form">
+        <form method="post" action="{% url 'lumat_app:subir_evidencia' seminario.id %}" enctype="multipart/form-data"
+          id="ev-form">
           {% csrf_token %}
 
           <input type="text" id="ev-nombre" name="nombre" class="ev-input" placeholder="Nombre de la actividad"
@@ -454,7 +648,8 @@
             <i class="ti ti-upload" aria-hidden="true"></i>
             <span id="ev-file-text">Seleccionar PDF…</span>
           </label>
-          <p class="ev-error-msg" id="err-archivo" style="display: none;">Solo se permiten archivos PDF (máx. 10 MB).</p>
+          <p class="ev-error-msg" id="err-archivo" style="display: none;">Solo se permiten archivos PDF (máx. 10 MB).
+          </p>
 
           <button type="submit" class="ev-submit-btn" id="ev-submit">Cargar actividad</button>
         </form>
@@ -468,6 +663,11 @@
 {% endwith %}
 
 <script>
+  function toggleUpload(id) {
+    const box = document.getElementById(id);
+    if (box) box.classList.toggle('open');
+  }
+
   function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -480,10 +680,10 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const fileInput = document.getElementById('ev-archivo');
     if (fileInput) {
-      fileInput.addEventListener('change', function(e) {
+      fileInput.addEventListener('change', function (e) {
         const fileName = e.target.files[0] ? e.target.files[0].name : "Seleccionar PDF…";
         const textSpan = document.getElementById('ev-file-text');
         if (textSpan) textSpan.textContent = fileName;

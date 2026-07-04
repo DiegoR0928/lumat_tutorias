@@ -115,10 +115,12 @@
             <div style="display:flex; gap:6px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
                 {% if rol == 'tutor' %}
                     <span class="rol-badge rol-tutor">Tutor</span>
-                {% else %}
-                    <span class="rol-badge rol-miembro">
-                        {% if rol == 'miembro1' %}Miembro 1{% else %}Miembro 2{% endif %}
-                    </span>
+                {% elif rol == 'director' %}
+                    <span class="rol-badge rol-director">Director</span>
+                {% elif rol == 'coodirector' %}
+                    <span class="rol-badge rol-coodirector">Coodirector</span>
+                {% elif rol == 'asesor' %}
+                    <span class="rol-badge rol-asesor">Asesor</span>
                 {% endif %}
                 <span class="estado-badge {% if formulario.estado_general == 'completo' %}estado-completo{% else %}estado-pendiente{% endif %}">
                     {{ formulario.get_estado_general_display }}
@@ -265,15 +267,15 @@
                     <iframe src="{{ seminario.actaComite.url }}#toolbar=0&navpanes=0" class="docente-pdf-frame" title="Acta del Comité"></iframe>
                 {% else %}
                     <div class="no-pdf-block">
-                        El acta oficial del sínodo se generará y estará disponible aquí una vez que los 3 docentes del comité asienten sus firmas.
+                        El acta oficial del sínodo se generará y estará disponible aquí una vez que los 4 docentes del comité asienten sus firmas.
                     </div>
                 {% endif %}
             </div>
 
-            <!-- PESTAÑA: ACTA ALUMNO REFACTORIZADA CON BOTONES ALINEADOS AL TÍTULO -->
+            <!-- PESTAÑA: ACTA ALUMNO -->
             <div id="alumno-tab" class="tab-content">
                 <div class="pdf-header-container">
-                    <p class="section-label" style="margin: 0;">Vista Previa — Acta del Alumno</p>
+                    <p class="section-label" style="margin: 0;">Acta del Alumno</p>
                     {% if seminario.actaAlumno %}
                         <div class="pdf-toolbar-actions">
                             <a href="{{ seminario.actaAlumno.url }}" target="_blank" class="pdf-toolbar-link">↗ Abrir</a>
@@ -283,10 +285,73 @@
                 </div>
 
                 {% if seminario.actaAlumno %}
-                    <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0" class="docente-pdf-frame" title="Acta del Alumno"></iframe>
+                    {# PDF ya generado — mostrar iframe #}
+                    <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0"
+                            class="docente-pdf-frame" title="Acta del Alumno"></iframe>
+
+                {% elif acta_alumno %}
+                    {# El alumno llenó el formulario pero faltan firmas — mostrar los datos #}
+                    <div style="background:#f7f4ef; border:1px solid #c8b89a; border-radius:8px;
+                                padding:18px 20px; margin-top:10px;">
+
+                        <p style="font-size:0.7rem; font-weight:700; letter-spacing:0.09em;
+                                  text-transform:uppercase; color:#4a7c7a; margin:0 0 14px;">
+                            Informe enviado por el alumno — pendiente de firmas
+                        </p>
+
+                        {# Datos rápidos en grid #}
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr;
+                                    gap:8px 16px; margin-bottom:14px;">
+                            <div>
+                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560;
+                                          text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
+                                    Reuniones tutor
+                                </p>
+                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
+                                    {{ acta_alumno.reuniones_tutor }}
+                                </p>
+                            </div>
+                            <div>
+                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560;
+                                          text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
+                                    Reuniones comité
+                                </p>
+                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
+                                    {{ acta_alumno.reuniones_comite }}
+                                </p>
+                            </div>
+                            <div>
+                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560;
+                                          text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
+                                    Coloquios
+                                </p>
+                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
+                                    {{ acta_alumno.coloquios }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr style="border:none; border-top:1px solid #e3d9cb; margin:12px 0;">
+
+                        {% for etiqueta, valor in acta_campos %}
+                        {% if valor %}
+                        <div style="margin-bottom:10px;">
+                            <p style="font-size:0.65rem; font-weight:700; color:#8a7560;
+                                      text-transform:uppercase; letter-spacing:0.07em; margin:0 0 3px;">
+                                {{ etiqueta }}
+                            </p>
+                            <p style="font-size:0.85rem; color:#4a3f32; margin:0;
+                                      line-height:1.5; white-space:pre-wrap;">{{ valor }}</p>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+
                 {% else %}
+                    {# El alumno aún no ha enviado nada #}
                     <div class="no-pdf-block">
-                        El estudiante aún no ha generado ni cargado su informe semestral de actividades.
+                        El estudiante aún no ha enviado su informe semestral de actividades.
                     </div>
                 {% endif %}
             </div>
@@ -296,51 +361,27 @@
         <div class="panel-card panel-signatures">
             <p class="section-label">Firmas y Notas</p>
 
+            {# ── Firmas Acta Comité ── #}
+            <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:8px;">Acta Comité</p>
             <div class="firmas-mini-list" style="margin-bottom:14px;">
-                <div class="firma-mini-row">
-                    <div class="firma-mini-meta">
-                        <div class="firma-mini-name">{{ seminario.comite.tutor.nombre }} {{ seminario.comite.tutor.apellido_paterno }}</div>
-                        <div class="firma-mini-role">Tutor</div>
-                    </div>
-                    <div>
-                        {% if formulario.firma_tutor %}
-                            <span class="sello-aprobado-mini">APROBADO</span>
-                            <div class="calif-val-mini" style="text-align:right;">{{ formulario.calificacion_tutor }}</div>
-                        {% else %}
-                            <span class="pendiente-label-mini">Pendiente</span>
-                        {% endif %}
-                    </div>
-                </div>
 
+                {% for docente_obj, rol_label, campo_firma, campo_calif in firmas_comite %}
                 <div class="firma-mini-row">
                     <div class="firma-mini-meta">
-                        <div class="firma-mini-name">{{ seminario.comite.miembro1.nombre }} {{ seminario.comite.miembro1.apellido_paterno }}</div>
-                        <div class="firma-mini-role">Miembro 1</div>
+                        <div class="firma-mini-name">{{ docente_obj.nombre }} {{ docente_obj.apellido_paterno }}</div>
+                        <div class="firma-mini-role">{{ rol_label }}</div>
                     </div>
                     <div>
-                        {% if formulario.firma_miembro1 %}
+                        {% if campo_firma %}
                             <span class="sello-aprobado-mini">APROBADO</span>
-                            <div class="calif-val-mini" style="text-align:right;">{{ formulario.calificacion_miembro1 }}</div>
+                            <div class="calif-val-mini" style="text-align:right;">{{ campo_calif }}</div>
                         {% else %}
                             <span class="pendiente-label-mini">Pendiente</span>
                         {% endif %}
                     </div>
                 </div>
+                {% endfor %}
 
-                <div class="firma-mini-row">
-                    <div class="firma-mini-meta">
-                        <div class="firma-mini-name">{{ seminario.comite.miembro2.nombre }} {{ seminario.comite.miembro2.apellido_paterno }}</div>
-                        <div class="firma-mini-role">Miembro 2</div>
-                    </div>
-                    <div>
-                        {% if formulario.firma_miembro2 %}
-                            <span class="sello-aprobado-mini">APROBADO</span>
-                            <div class="calif-val-mini" style="text-align:right;">{{ formulario.calificacion_miembro2 }}</div>
-                        {% else %}
-                            <span class="pendiente-label-mini">Pendiente</span>
-                        {% endif %}
-                    </div>
-                </div>
             </div>
 
             {% if formulario.calificacion_final %}
@@ -379,9 +420,55 @@
             <hr class="section-divider" style="margin: 12px 0;">
             <div style="text-align:center;">
                 <a href="{% url 'lumat_app:docente_descargar_acta' seminario.id %}"
-                   class="btn-pdf" style="width:100%; box-sizing:border-box; text-align:center; padding: 5px 0;">↓ Descargar Acta</a>
+                   class="btn-pdf" style="width:100%; box-sizing:border-box; text-align:center; padding: 5px 0;">↓ Descargar Acta Comité</a>
             </div>
             {% endif %}
+
+            {# ── Firmas Acta Alumno ── #}
+            {% if acta_alumno %}
+            <hr class="section-divider" style="margin: 14px 0;">
+            <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:8px;">Acta Alumno</p>
+
+            <div class="firmas-mini-list" style="margin-bottom:12px;">
+                {% for docente_obj, rol_label, firmado in firmas_alumno %}
+                <div class="firma-mini-row">
+                    <div class="firma-mini-meta">
+                        <div class="firma-mini-name">{{ docente_obj.nombre }} {{ docente_obj.apellido_paterno }}</div>
+                        <div class="firma-mini-role">{{ rol_label }}</div>
+                    </div>
+                    <div>
+                        {% if firmado %}
+                            <span class="sello-aprobado-mini">AUTORIZADO</span>
+                        {% else %}
+                            <span class="pendiente-label-mini">Pendiente</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if not ya_firme_alumno %}
+            <form method="post" action="{% url 'lumat_app:docente_firmar_acta_alumno' seminario.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary-custom"
+                        style="width:100%; padding:6px 0; font-size:0.82rem;">
+                    Autorizar acta del alumno
+                </button>
+            </form>
+            {% else %}
+            <div class="success-box" style="text-align:center; padding:8px; font-size:0.78rem;">
+                Acta del alumno autorizada.
+            </div>
+            {% endif %}
+
+            {% else %}
+            <hr class="section-divider" style="margin: 14px 0;">
+            <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:6px;">Acta Alumno</p>
+            <p style="font-size:0.78rem; color:#a89880; font-style:italic; margin:0;">
+                El alumno aún no ha generado su acta.
+            </p>
+            {% endif %}
+
         </div>
 
     </div> </div>

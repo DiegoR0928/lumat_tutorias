@@ -15,16 +15,16 @@ import random
 from django.core.files.base import ContentFile
 from django.db.models import Count, Q
 
-from .models import ActaAlumnoData, Alumno, Docente, FormularioComite
+from .models import ActaAlumnoData, Alumno, Docente, FormularioComite, SolicitudCambioComite
 from .models import Seminario, CalendarioGenerado, Comite
 from django.utils import timezone
 
 from .models import (
     Evidencia,
-    SolicitudCambioTutor
 )
 from .forms import (
     ActaAlumnoForm,
+    SolicitudCambioComiteForm,
     UserForm,
     AlumnoPerfilForm,
     AlumnoEditForm,
@@ -157,7 +157,6 @@ def seminario_detalle(request, num):
     alumno = request.user.alumno
     semestre = int(alumno.semestre)
 
-    # Validación: No permitir acceder a seminarios futuros
     if num > semestre:
         messages.warning(
             request,
@@ -165,7 +164,6 @@ def seminario_detalle(request, num):
         )
         return redirect('lumat_app:seminario_detalle', num=semestre)
 
-    # Obtiene el último intento (periodo) del seminario indicado
     seminario_obj = _get_seminario_para_alumno(alumno, num)
     comite = seminario_obj.comite if seminario_obj else None
 
@@ -174,40 +172,29 @@ def seminario_detalle(request, num):
         if seminario_obj else Evidencia.objects.none()
     )
 
-    solicitud_pendiente = SolicitudCambioTutor.objects.filter(
-        alumno=alumno,
-        estado='pendiente'
+    solicitud_pendiente = SolicitudCambioComite.objects.filter(
+        alumno=alumno, estado='pendiente'
     ).exists()
 
-    # ========== Obtener estado de actas y formularios ==========
     formulario_comite = None
-    acta_comite_url = None
-    acta_existente = None
+    acta_comite_url   = None
+    acta_existente    = None
 
     if seminario_obj:
         if seminario_obj.actaComite:
             acta_comite_url = seminario_obj.actaComite.url
-
         try:
             formulario_comite = seminario_obj.formulario_comite
         except FormularioComite.DoesNotExist:
             pass
-
-        # ¿Ya existe un acta de alumno guardada en la base de datos?
         acta_existente = ActaAlumnoData.objects.filter(
             seminario=seminario_obj).first()
 
-    # Si ya existe, pre-rellenamos el formulario con los datos guardados (modo lectura)
     if acta_existente:
         form_acta = ActaAlumnoForm(initial=acta_existente.to_dict())
     else:
-        # Intentamos recuperar datos que hayan fallado en la validación
-        # del POST (enviados via sesión)
         session_form_data = request.session.pop('failed_acta_form_data', None)
-        if session_form_data:
-            form_acta = ActaAlumnoForm(session_form_data)
-        else:
-            form_acta = ActaAlumnoForm()
+        form_acta = ActaAlumnoForm(session_form_data) if session_form_data else ActaAlumnoForm()
 
     comite_members = []
     if seminario_obj and seminario_obj.comite:
@@ -218,24 +205,58 @@ def seminario_detalle(request, num):
             (c.coodirector, 'Coodirector'),
             (c.asesor,      'Asesor'),
         ]
+
     context = {
-        'alumno': alumno,
-        'num': num,
-        'seminario': seminario_obj,
-        'comite': comite,
-        'evidencias': evidencias,
-        'proximo_seminario': _proximo_seminario(alumno),
-        'solicitud_pendiente': solicitud_pendiente,
-        # 'periodo': seminario_obj.periodo if seminario_obj else None,
-        'formulario_comite': formulario_comite,
-        'acta_comite_url': acta_comite_url,
-        'form_acta': form_acta,
+        'alumno':               alumno,
+        'num':                  num,
+        'seminario':            seminario_obj,
+        'comite':               comite,
+        'evidencias':           evidencias,
+        'proximo_seminario':    _proximo_seminario(alumno),
+        'solicitud_pendiente':  solicitud_pendiente,
+        'formulario_comite':    formulario_comite,
+        'acta_comite_url':      acta_comite_url,
+        'form_acta':            form_acta,
         'acta_alumno_bloqueado': acta_existente is not None,
         'acta_alumno_existente': acta_existente,
-        'comite_members': comite_members,
+        'comite_members':       comite_members,
+        # Flags para mostrar la opción discreta de subida manual
+        'puede_subir_acta_comite': seminario_obj is not None and not acta_comite_url,
+        'puede_subir_acta_alumno': seminario_obj is not None and not getattr(seminario_obj, 'actaAlumno', None),
     }
 
     return render(request, 'alumno_seminario.html', context)
+
+
+@login_required
+@user_passes_test(es_alumno)
+def subir_acta_manual(request, seminario_id, tipo):
+    """
+    Permite subir manualmente el PDF de un acta (comite o alumno).
+    tipo: 'comite' | 'alumno'
+    """
+    alumno = request.user.alumno
+    seminario_obj = get_object_or_404(Seminario, pk=seminario_id, alumno=alumno)
+
+    if request.method == 'POST' and request.FILES.get('acta_pdf'):
+        archivo = request.FILES['acta_pdf']
+        if not archivo.name.lower().endswith('.pdf'):
+            messages.error(request, "Solo se permiten archivos PDF.")
+        else:
+            if tipo == 'comite':
+                seminario_obj.actaComite = archivo
+                seminario_obj.save()
+                messages.success(request, "Acta del comité subida correctamente.")
+            elif tipo == 'alumno':
+                seminario_obj.actaAlumno = archivo
+                seminario_obj.save()
+                messages.success(request, "Acta del alumno subida correctamente.")
+            else:
+                messages.error(request, "Tipo de acta no válido.")
+    else:
+        messages.error(request, "No se seleccionó ningún archivo.")
+
+    return redirect('lumat_app:seminario_detalle', num=seminario_obj.numero)
 
 
 # =====================================================================
@@ -245,78 +266,33 @@ def seminario_detalle(request, num):
 @user_passes_test(es_alumno)
 def generar_acta_view(request, num):
     alumno = request.user.alumno
-
-    seminario = (
-        Seminario.objects
-        .filter(alumno=alumno, numero=num)
-        # .order_by('-periodo')
-        # .first()
-    )
-
-    if not seminario:
-        messages.error(
-            request, "No hay seminario registrado para este número.")
-        return redirect("lumat_app:seminario_detalle", num=num)
-
-    if not seminario.calificacion:
-        messages.error(
-            request, "Solo puedes generar el acta de un seminario completado.")
-        return redirect("lumat_app:seminario_detalle", num=num)
-
-    comite = seminario.comite
+    seminario = get_object_or_404(Seminario, alumno=alumno, numero=num)
     acta_existente = ActaAlumnoData.objects.filter(seminario=seminario).first()
 
     if request.method == "POST":
         if acta_existente:
             messages.warning(
-                request, "Tu acta ya fue generada y no puede modificarse.")
+                request, "Tu informe ya fue enviado y no puede modificarse.")
             return redirect("lumat_app:seminario_detalle", num=num)
 
         form = ActaAlumnoForm(request.POST)
         if form.is_valid():
-            try:
-                # 1. Guardar los datos en la base
-                acta_existente = ActaAlumnoData.objects.create(
-                    seminario=seminario,
-                    **form.cleaned_data
-                )
-
-                # 2. Generar el PDF usando el buffer
-                pdf_buffer = generar_acta_alumno(
-                    seminario=seminario,
-                    alumno=alumno,
-                    comite=comite,
-                    datos_form=acta_existente.to_dict(),
-                )
-
-                # 3. Guardar el archivo PDF directamente en el modelo Seminario
-                nombre_archivo = f"acta_{num}_{alumno.matricula or alumno.id}.pdf"
-                seminario.actaAlumno.save(
-                    nombre_archivo,
-                    ContentFile(pdf_buffer.read()),
-                    save=True,
-                )
-
-                messages.success(
-                    request, "Acta generada y guardada correctamente.")
-                return redirect("lumat_app:seminario_detalle", num=num)
-
-            except Exception as e:
-                # Si falla la renderización, borramos la data huérfana para permitir reintentos
-                ActaAlumnoData.objects.filter(seminario=seminario).delete()
-                messages.error(
-                    request, f"Error al generar el PDF técnico: {e}")
-                return redirect("lumat_app:seminario_detalle", num=num)
+            ActaAlumnoData.objects.create(
+                seminario=seminario,
+                **form.cleaned_data
+            )
+            messages.success(
+                request,
+                "Informe enviado correctamente. El acta se generará "
+                "cuando todos los docentes del comité lo autoricen."
+            )
+            return redirect("lumat_app:seminario_detalle", num=num)
         else:
-            # Si el formulario tiene errores de validación, alertamos al usuario
             messages.error(
-                request, "Por favor corrige los campos marcados en rojo antes de guardar.")
-            # Guardamos temporalmente la data inválida en la sesión para no borrar lo
-            # que el alumno escribió
+                request, "Por favor corrige los campos marcados antes de guardar.")
             request.session['failed_acta_form_data'] = request.POST
             return redirect("lumat_app:seminario_detalle", num=num)
 
-    # Si intentan ingresar por GET de manera manual, los regresamos al panel principal
     return redirect("lumat_app:seminario_detalle", num=num)
 
 
@@ -382,53 +358,62 @@ def subir_evidencia(request, seminario_id):
 def cambio_tutor(request):
     alumno = request.user.alumno
 
-    # 1. Buscamos si existe una solicitud pendiente
-    solicitud_pendiente = SolicitudCambioTutor.objects.filter(
-        alumno=alumno, estado="pendiente"
-    ).first()  # Usamos .first() para obtener el objeto real o None
+    # Solicitud activa pendiente
+    solicitud_activa = SolicitudCambioComite.objects.filter(
+        alumno=alumno, estado='pendiente'
+    ).first()
 
-    # 2. Si hay una solicitud pendiente, avisamos al usuario
-    if solicitud_pendiente:
-        messages.warning(
-            request,
-            "Ya tienes una solicitud de cambio de tutor en proceso. "
-            "No puedes enviar una nueva hasta que esta se resuelva.",
-        )
+    # Historial de solicitudes anteriores
+    historial = SolicitudCambioComite.objects.filter(
+        alumno=alumno
+    ).exclude(estado='pendiente')
 
-    if request.method == "POST":
-        # Segurito: Si intentan saltarse el bloqueo del HTML enviando un
-        # POST manual, los frenamos aquí si ya existe una solicitud pendiente.
-        if solicitud_pendiente:
-            messages.error(request, "No puedes enviar otra solicitud.")
-            return redirect(
-                "lumat_app:seminario_detalle",
-                num=int(alumno.semestre)
-            )
-
-        motivo = request.POST.get("motivo", "").strip()
-        if not motivo:
+    if request.method == 'POST':
+        if solicitud_activa:
             messages.error(
-                request, "Debes indicar el motivo de la solicitud."
+                request,
+                "Ya tienes una solicitud pendiente. Espera a que sea resuelta antes de enviar otra."
             )
-        else:
-            SolicitudCambioTutor.objects.create(alumno=alumno, motivo=motivo)
+            return redirect('lumat_app:cambio_tutor')
+
+        form = SolicitudCambioComiteForm(request.POST)
+        if form.is_valid():
+            solicitud = form.save(commit=False)
+            solicitud.alumno = alumno
+            solicitud.save()
             messages.success(
                 request,
-                "Solicitud enviada. La coordinación la revisará pronto.",
+                "Tu solicitud fue enviada correctamente. El administrador la revisará pronto."
             )
-            return redirect(
-                "lumat_app:seminario_detalle", num=int(alumno.semestre)
-            )
+            return redirect('lumat_app:cambio_tutor')
+    else:
+        form = SolicitudCambioComiteForm()
 
-    # 3. Pasamos 'solicitud_pendiente' al contexto del template
-    return render(
-        request,
-        "alumno_cambio_tutor.html",
-        {
-            "alumno": alumno,
-            "solicitud_pendiente": solicitud_pendiente
-        }
-    )
+    # Miembros actuales del comité (para mostrar en la página)
+    comite = None
+    seminario_actual = Seminario.objects.filter(
+        alumno=alumno
+    ).order_by('-numero').first()
+    if seminario_actual and seminario_actual.comite:
+        comite = seminario_actual.comite
+
+    comite_display = []
+    if comite:
+        comite_display = [
+            (comite.tutor,       'Tutor'),
+            (comite.director,    'Director de tesis'),
+            (comite.coodirector, 'Coodirector de tesis'),
+            (comite.asesor,      'Asesor de tesis'),
+        ]
+
+    return render(request, 'alumno_cambio_tutor.html', {
+        'alumno':           alumno,
+        'form':             form,
+        'solicitud_activa': solicitud_activa,
+        'historial':        historial,
+        'comite':           comite,
+        'comite_display':   comite_display,  # ← faltaba esto
+    })
 
 # ==========================================
 # 3. GESTIÓN DEL PERFIL (MODO ROBUSTO)
@@ -785,7 +770,7 @@ def admin_cambio_tutor_view(request):
         sol_id = request.POST.get("solicitud_id")
         doc_id = request.POST.get("docente_id")
         accion = request.POST.get("accion")
-        solicitud = SolicitudCambioTutor.objects.get(id=sol_id)
+        solicitud = SolicitudCambioComite.objects.get(id=sol_id)
 
         if accion == "aprobar":
             if not doc_id:
@@ -827,7 +812,7 @@ def admin_cambio_tutor_view(request):
     context = {
         **admin.site.each_context(request),
         "title": "Gestión de Cambio de Tutor",
-        "solicitudes": SolicitudCambioTutor.objects.all(),
+        "solicitudes": SolicitudCambioComite.objects.all(),
         "docentes": Docente.objects.all(),
     }
     return render(request, "admin/cambio_tutor.html", context)
