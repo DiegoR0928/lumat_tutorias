@@ -64,7 +64,7 @@
     <div class="mb-5">
         <h1 class="text-3xl font-bold text-gray-800 dark:text-zinc-100">{{ title }}</h1>
         <p class="text-gray-500 dark:text-zinc-400 text-sm mt-1">
-            Revise las solicitudes emitidas y asigne un nuevo docente tutor al sínodo.
+            Revise las solicitudes emitidas por los alumnos y asigne al nuevo integrante del sínodo evaluador.
         </p>
     </div>
 
@@ -85,15 +85,17 @@
                                 md:flex-row md:items-start md:justify-between gap-6">
                         
                         <div class="space-y-2 flex-1 min-w-0">
-                            <div class="flex items-center gap-3">
+                            <div class="flex flex-wrap items-center gap-3">
                                 <h3 class="font-bold text-gray-800 dark:text-zinc-100 text-base">
                                     {{ sol.alumno }}
                                 </h3>
-                                <span class="px-2.5 py-0.5 rounded text-xs font-semibold 
-                                    uppercase tracking-wider
+                                <span class="bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 rounded text-xs font-medium">
+                                    Cambio de: <strong class="text-[#4a7c7a]">{{ sol.get_rol_solicitado_display }}</strong>
+                                </span>
+                                <span class="px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider
                                     {% if sol.estado == 'pendiente' %}badge-pending
-                                    {% elif sol.estado == 'approved' or sol.estado == 'aprobada' %}
-                                    badge-approved{% else %}badge-rejected{% endif %}">
+                                    {% elif sol.estado == 'aceptada' %}badge-approved
+                                    {% else %}badge-rejected{% endif %}">
                                     {{ sol.get_estado_display }}
                                 </span>
                             </div>
@@ -105,9 +107,9 @@
                             </p>
                             
                             <p class="text-xs text-gray-400 dark:text-zinc-500">
-                                Creada el {{ sol.creada_en|date:"d/m/Y H:i" }}
-                                {% if sol.resuelta_en %}
-                                    | Resuelta el {{ sol.resuelta_en|date:"d/m/Y H:i" }}
+                                Solicitado el {{ sol.fecha_solicitud|date:"d/m/Y H:i" }}
+                                {% if sol.fecha_respuesta %}
+                                    | Resuelto el {{ sol.fecha_respuesta|date:"d/m/Y H:i" }}
                                 {% endif %}
                             </p>
                         </div>
@@ -122,8 +124,8 @@
                                 <div>
                                     <select name="docente_id" class="custom-select border 
                                         rounded-md p-2 text-sm focus:border-[#4a7c7a] 
-                                        w-full sm:w-48 block transition-colors">
-                                        <option value="">-- Nuevo Tutor --</option>
+                                        w-full sm:w-52 block transition-colors" required>
+                                        <option value="">-- Seleccionar Reemplazo --</option>
                                         {% for doc in docentes %}
                                             <option value="{{ doc.id }}">
                                                 {{ doc.nombre }} {{ doc.apellido_paterno }}
@@ -136,13 +138,13 @@
                                     <button type="submit" name="accion" value="aprobar" 
                                             class="bg-[#4a7c7a] hover:bg-[#3a9795] text-white 
                                                    font-medium py-2 px-4 rounded text-sm 
-                                                   transition-all inline-flex items-center">
+                                                   transition-all inline-flex items-center justify-center flex-1 sm:flex-initial">
                                         Aprobar
                                     </button>
                                     <button type="submit" name="accion" value="rechazar" 
                                             class="bg-red-600 hover:bg-red-700 text-white 
                                                    font-medium py-2 px-4 rounded text-sm 
-                                                   transition-all inline-flex items-center">
+                                                   transition-all inline-flex items-center justify-center flex-1 sm:flex-initial">
                                         Rechazar
                                     </button>
                                 </div>
@@ -153,7 +155,7 @@
             </div>
         {% else %}
             <p class="text-gray-400 dark:text-zinc-500 text-sm italic py-4 text-center">
-                No existen solicitudes de cambio de tutor registradas en el sistema.
+                No existen solicitudes de cambio de miembros de comité registradas en el sistema.
             </p>
         {% endif %}
     </div>
