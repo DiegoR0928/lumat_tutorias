@@ -18,6 +18,7 @@ from django.db.models import Count, Q
 from .models import ActaAlumnoData, Alumno, Docente, FormularioComite, SolicitudCambioComite
 from .models import Seminario, CalendarioGenerado, Comite
 from django.utils import timezone
+from django.core.files.base import ContentFile
 
 from .models import (
     Evidencia,

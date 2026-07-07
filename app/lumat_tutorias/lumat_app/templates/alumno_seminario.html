@@ -289,8 +289,7 @@
           <i class="ti ti-calendar-due" aria-hidden="true"></i>
           <div>
             <div class="alerta-label">Próximo seminario</div>
-            <div class="alerta-fecha">{{ proximo_seminario.fecha|date:"d/m/Y" }}<br>{{ proximo_seminario.hora|time:"H:i"
-              }} hrs</div>
+            <div class="alerta-fecha">{{ proximo_seminario.fecha|date:"d/m/Y" }}<br>{{ proximo_seminario.hora|time:"H:i" }} hrs</div>
           </div>
         </div>
         {% else %}
@@ -319,7 +318,7 @@
         </a>
         <a href="{% url 'lumat_app:cambio_tutor' %}" class="bar-btn danger">
           <i class="ti ti-user-x" aria-hidden="true"></i>
-          Cambio de tutor
+          Cambio de comité
         </a>
       </div>
     </div>

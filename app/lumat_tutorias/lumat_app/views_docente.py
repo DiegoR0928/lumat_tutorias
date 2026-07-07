@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
+from django.core.files.base import ContentFile
 
 from .acta_generador import generar_acta_alumno
 
@@ -394,37 +395,37 @@ def docente_firmar_acta_alumno(request, seminario_id):
                     seminario_id=seminario_id)
 
 def _verificar_y_generar_pdf_comite(request, seminario, formulario):
-    """Evalúa si el formulario del comité cambió su estatus a 'completo'
+    if formulario.estado_general != 'completo':
+        return  # todavía faltan firmas
 
-    y procede a renderizar y guardar de forma física el archivo PDF.
-    """
-    if formulario.estado_general == 'completo':
-        try:
-            seminario.calificacion = formulario.calificacion_final
+    try:
+        from .utils_pdf_comite import generar_pdf_comite
+        from django.core.files.base import ContentFile
 
-            # Aquí desmarcas e integras tu generador real de PDF:
-            # pdf_buffer = generar_acta_comite(seminario=seminario, formulario=formulario)
-            # nombre_archivo = f"acta_comite_{seminario.numero}_{seminario.alumno.matricula
-            # or seminario.alumno.id}.pdf"
-            # seminario.actaComite.save(nombre_archivo, ContentFile(pdf_buffer.read()), save=False)
+        seminario.calificacion = formulario.calificacion_final
 
-            seminario.save()
-            messages.info(
-                request,
-                (
-                    "El sínodo se ha completado. "
-                    "Se ha emitido y archivado el Acta del Comité PDF."
-                ),
-            )
+        pdf_bytes = generar_pdf_comite(formulario)
 
-        except Exception as e:
-            messages.error(
-                request,
-                (
-                    "Las firmas son válidas pero ocurrió un error al "
-                    f"construir el archivo PDF: {e}"
-                ),
-            )
+        nombre_archivo = (
+            f"acta_comite_{seminario.numero}_"
+            f"{seminario.alumno.matricula or seminario.alumno.id}.pdf"
+        )
+        seminario.actaComite.save(
+            nombre_archivo,
+            ContentFile(pdf_bytes),
+            save=True,  # también guarda seminario.calificacion
+        )
+
+        messages.info(
+            request,
+            "El sínodo se ha completado. Se ha generado y archivado el Acta del Comité."
+        )
+
+    except Exception as e:
+        messages.error(
+            request,
+            f"Las firmas son válidas pero ocurrió un error al generar el PDF: {e}"
+        )
 
 
 def text_form_valido(form, request, formulario, rol):
@@ -474,7 +475,7 @@ def docente_firmar_seminario(request, seminario_id):
         setattr(formulario, campo_calif, calif)
         setattr(formulario, f'firma_{rol}', True)
         formulario.save()   # recalcula calificacion_final y estado_general
-
+        _verificar_y_generar_pdf_comite(request, seminario, formulario)
         messages.success(request, 'Firma y calificación registradas.')
     else:
         messages.error(request, 'Datos inválidos. Verifica la calificación.')

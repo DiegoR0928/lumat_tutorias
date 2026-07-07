@@ -134,10 +134,12 @@ def generar_pdf_comite(formulario) -> bytes:
     def docente_str(d):
         return f'{d.nombre} {d.apellido_paterno} {d.apellido_materno}'
 
+    fecha_str = sem.fecha.strftime("%d-%m-%Y") if sem.fecha else "Sin fecha asignada"
+
     comite_rows = [
         [Paragraph(
             f'<b>{docente_str(com.tutor)}</b> (Tutor) &nbsp;&nbsp;&nbsp; '
-            f'Fecha de reunión: <b>{sem.fecha.strftime("%d-%m-%Y")}</b>',
+            f'Fecha de reunión: <b>{fecha_str}</b>',
             S['value'])],
         [Paragraph(
             f'{docente_str(com.director)} (Director de tesis)', S['value'])],
