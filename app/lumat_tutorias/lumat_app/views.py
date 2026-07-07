@@ -767,6 +767,7 @@ def admin_estadisticas_view(request):
     return render(request, "admin/estadisticas.html", context)
 
 def admin_cambio_tutor_view(request):
+    """Maneja la aprobación o rechazo de cambios para cualquier miembro del comité."""
     if request.method == "POST":
         sol_id = request.POST.get("solicitud_id")
         doc_id = request.POST.get("docente_id")
@@ -777,43 +778,58 @@ def admin_cambio_tutor_view(request):
             if not doc_id:
                 messages.error(
                     request,
-                    "Debe seleccionar un nuevo tutor para aprobar la solicitud."
+                    "Debe seleccionar un docente para aprobar la solicitud."
                 )
                 return redirect('/admin/cambio-tutor/')
 
-            nuevo_tutor = Docente.objects.get(id=doc_id)
+            nuevo_docente = Docente.objects.get(id=doc_id)
+            
             comite = Comite.objects.filter(
                 seminario__alumno=solicitud.alumno
             ).first()
 
             if comite:
-                if nuevo_tutor in [comite.director, comite.coodirector]:
+                puestos_actuales = {
+                    'tutor': comite.tutor,
+                    'director': comite.director,
+                    'coodirector': comite.coodirector,
+                    'asesor': comite.asesor,
+                }
+                
+                rol_a_cambiar = solicitud.rol_solicitado
+                puestos_actuales.pop(rol_a_cambiar, None)
+                
+                if nuevo_docente in puestos_actuales.values():
                     messages.error(
                         request,
-                        "El docente ya es miembro activo de este comité."
+                        "El docente seleccionado ya forma parte de este comité en otra función."
                     )
                     return redirect('/admin/cambio-tutor/')
 
-                comite.tutor = nuevo_tutor
+                setattr(comite, rol_a_cambiar, nuevo_docente)
                 comite.save()
 
-            solicitud.estado = "aprobada"
-            solicitud.resuelta_en = timezone.now()
+            # Actualizamos la solicitud con los nuevos estados del modelo
+            solicitud.estado = "aceptada"
+            solicitud.fecha_respuesta = timezone.now()
             solicitud.save()
-            messages.success(request, "Solicitud aprobada con éxito.")
+            messages.success(request, f"Solicitud aprobada. Se actualizó el puesto de ({solicitud.get_rol_solicitado_display()}) con éxito.")
 
         elif accion == "rechazar":
             solicitud.estado = "rechazada"
-            solicitud.resuelta_en = timezone.now()
+            solicitud.fecha_respuesta = timezone.now()
             solicitud.save()
             messages.error(request, "Solicitud rechazada.")
+            
         return redirect('/admin/cambio-tutor/')
 
-    from django.contrib import admin
+    from django.contrib import admin as django_admin
+    
     context = {
-        **admin.site.each_context(request),
-        "title": "Gestión de Cambio de Tutor",
-        "solicitudes": SolicitudCambioComite.objects.all(),
+        **django_admin.site.each_context(request),
+        "title": "Gestión de Cambio de Miembros del Comité",
+        "solicitudes": SolicitudCambioComite.objects.all().select_related('alumno'),
         "docentes": Docente.objects.all(),
     }
     return render(request, "admin/cambio_tutor.html", context)
+
