@@ -487,10 +487,9 @@ class ActaAlumnoData(models.Model):
 
     generado_en = models.DateTimeField(auto_now_add=True)
 
-    firma_tutor = models.BooleanField(default=False)
+    # Solo director y codirector autorizan el acta del alumno
     firma_director = models.BooleanField(default=False)
     firma_coodirector = models.BooleanField(default=False)
-    firma_asesor = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Datos de acta del alumno"
@@ -498,8 +497,12 @@ class ActaAlumnoData(models.Model):
     def __str__(self):
         return f"Acta — {self.seminario}"
 
+    @property
+    def firmas_completas(self):
+        """True cuando director y codirector ya autorizaron."""
+        return self.firma_director and self.firma_coodirector
+
     def to_dict(self):
-        """Devuelve los datos como dict compatible con generar_acta_alumno."""
         return {
             'actividad_principal': self.actividad_principal,
             'reuniones_tutor': self.reuniones_tutor,

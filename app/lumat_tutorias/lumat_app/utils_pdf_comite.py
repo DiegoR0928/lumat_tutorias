@@ -1,10 +1,10 @@
-# utils_pdf_comite.py  — coloca este archivo en lumat_app/utils_pdf_comite.py
-"""Genera el PDF del Informe Semestral del Comité Tutor.
+# utils_pdf_comite.py — coloca este archivo en lumat_app/utils_pdf_comite.py
+"""Genera el PDF del Informe Semestral del Comité Tutor sobre una plantilla membretada."""
 
-con reportlab, siguiendo la estructura del documento de referencia.
-"""
 import io
 import os
+from django.conf import settings
+from pypdf import PdfReader, PdfWriter
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -29,17 +29,11 @@ def _styles():
 
     s['titulo'] = ParagraphStyle(
         'titulo', fontName='Times-Bold',
-        fontSize=16, leading=20, alignment=TA_CENTER, textColor=WARM)
+        fontSize=15, leading=18, alignment=TA_CENTER, textColor=WARM)
 
     s['subtitulo'] = ParagraphStyle(
         'subtitulo', fontName='Times-Roman',
-        fontSize=11, leading=14, alignment=TA_CENTER, textColor=WARM)
-
-    s['eyebrow'] = ParagraphStyle(
-        'eyebrow', fontName='Times-Bold',
-        fontSize=7, leading=10, alignment=TA_CENTER,
-        textColor=TEAL, spaceAfter=2,
-        wordWrap='LTR')
+        fontSize=10, leading=13, alignment=TA_CENTER, textColor=WARM)
 
     s['label'] = ParagraphStyle(
         'label', fontName='Times-Bold',
@@ -90,13 +84,16 @@ def _box_table(content_rows, style_extra=None):
 def generar_pdf_comite(formulario) -> bytes:
     """Recibe una instancia de FormularioComite con .seminario pre-cargado.
 
-    Devuelve los bytes del PDF.
+    Devuelve los bytes del PDF montado sobre la plantilla membretada.
     """
     buf = io.BytesIO()
+    
+    # ── Ajuste de márgenes para no solapar el membrete ────────────────────
+    # Ajustamos topMargin y bottomMargin para dejar espacio a los logotipos y al pie de página.
     doc = SimpleDocTemplate(
         buf, pagesize=letter,
         leftMargin=2 * cm, rightMargin=2 * cm,
-        topMargin=2 * cm, bottomMargin=2 * cm,
+        topMargin=3.8 * cm, bottomMargin=3.2 * cm,
     )
     S = _styles()
     sem = formulario.seminario
@@ -104,13 +101,11 @@ def generar_pdf_comite(formulario) -> bytes:
     com = sem.comite
     story = []
 
-    # ── Encabezado ────────────────────────────────────────────
+    # ── Encabezado del Acta ──────────────────────────────────────────────
     story.append(Paragraph('INFORME SEMESTRAL DEL COMITÉ TUTOR', S['titulo']))
     story.append(Spacer(1, 4))
-    story.append(Paragraph(
-        f'Semestre: {sem.numero} &nbsp;·&nbsp; ',
-        S['subtitulo']))
-    story.append(Spacer(1, 10))
+    story.append(Paragraph(f'Semestre: {sem.numero}', S['subtitulo']))
+    story.append(Spacer(1, 6))
     story.append(_hr())
 
     # ── Datos del alumno ──────────────────────────────────────
@@ -118,8 +113,7 @@ def generar_pdf_comite(formulario) -> bytes:
 
     alumno_data = [
         [Paragraph(
-            f'<b>Nombre:</b> {al.nombre} {al.apellido_paterno} '
-            f'{al.apellido_materno}', S['value'])],
+            f'<b>Nombre:</b> {al.nombre} {al.apellido_paterno} {al.apellido_materno}', S['value'])],
         [Paragraph(
             f'<b>Matrícula:</b> {al.matricula or "—"} &nbsp;&nbsp; '
             f'<b>Semestre:</b> {al.semestre} &nbsp;&nbsp; '
@@ -132,9 +126,11 @@ def generar_pdf_comite(formulario) -> bytes:
     story.append(Paragraph('COMITÉ TUTOR', S['section']))
 
     def docente_str(d):
+        if not d:
+            return "—"
         return f'{d.nombre} {d.apellido_paterno} {d.apellido_materno}'
 
-    fecha_str = sem.fecha.strftime("%d-%m-%Y") if sem.fecha else "Sin fecha asignada"
+    fecha_str = sem.fecha.strftime("%d-%m-%Y") if hasattr(sem, 'fecha') and sem.fecha else "Sin fecha asignada"
 
     comite_rows = [
         [Paragraph(
@@ -158,8 +154,7 @@ def generar_pdf_comite(formulario) -> bytes:
         story.append(Spacer(1, 6))
 
     seccion(
-        'TRAS UNA CUIDADOSA EVALUACIÓN, ESTE COMITÉ TUTOR ENCUENTRA QUE '
-        'EL ESTUDIANTE:',
+        'TRAS UNA CUIDADOSA EVALUACIÓN, ESTE COMITÉ TUTOR ENCUENTRA QUE EL ESTUDIANTE:',
         formulario.el_comite_encuentra)
     seccion('OTROS ASPECTOS OBSERVADOS POR ESTE COMITÉ:',
             formulario.observaciones)
@@ -205,16 +200,15 @@ def generar_pdf_comite(formulario) -> bytes:
         ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
     ]))
     story.append(t)
-    story.append(Spacer(1, 14))
+    story.append(Spacer(1, 12))
 
     # ── Firmas ────────────────────────────────────────────────
     story.append(Paragraph('VISTO BUENO', S['section']))
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 4))
 
     def firma_cell(docente, firmado):
         celda_contenido = []
-
-        if firmado and docente and docente.firma:
+        if firmado and docente and getattr(docente, 'firma', None):
             try:
                 ruta_firma = docente.firma.path
                 if os.path.exists(ruta_firma):
@@ -223,47 +217,67 @@ def generar_pdf_comite(formulario) -> bytes:
                     celda_contenido.append(img)
                 else:
                     celda_contenido.append(
-                        Paragraph("<font color='#a89880'>[APROBADO]</font>",
-                                  S['firma_nombre']))
+                        Paragraph("<font color='#a89880'>[APROBADO]</font>", S['firma_nombre']))
             except Exception:
                 celda_contenido.append(
-                    Paragraph("<font color='#a89880'>[APROBADO]</font>",
-                              S['firma_nombre']))
+                    Paragraph("<font color='#a89880'>[APROBADO]</font>", S['firma_nombre']))
         else:
             celda_contenido.append(Spacer(1, 0.8 * cm))
-            celda_contenido.append(
-                Paragraph('___________________', S['firma_nombre']))
+            celda_contenido.append(Paragraph('___________________', S['firma_nombre']))
 
         celda_contenido.append(Spacer(1, 4))
-        celda_contenido.append(Paragraph(
-            f'<b>{docente.nombre} {docente.apellido_paterno}</b>',
-            S['firma_nombre']))
+        nombre_str = f'<b>{docente.nombre} {docente.apellido_paterno}</b>' if docente else "—"
+        celda_contenido.append(Paragraph(nombre_str, S['firma_nombre']))
         return celda_contenido
 
-    # 4 firmas en una sola fila, columnas más angostas
     col_w = 3.8 * cm
     firmas = Table([[
-        firma_cell(com.tutor,       formulario.firma_tutor),
-        firma_cell(com.director,    formulario.firma_director),
+        firma_cell(com.tutor, formulario.firma_tutor),
+        firma_cell(com.director, formulario.firma_director),
         firma_cell(com.coodirector, formulario.firma_coodirector),
-        firma_cell(com.asesor,      formulario.firma_asesor),
+        firma_cell(com.asesor, formulario.firma_asesor),
     ]], colWidths=[col_w, col_w, col_w, col_w])
 
     firmas.setStyle(TableStyle([
-        ('ALIGN',         (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN',        (0, 0), (-1, -1), 'BOTTOM'),
-        ('TOPPADDING',    (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'BOTTOM'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
     ]))
     story.append(firmas)
 
-    # ── Pie ───────────────────────────────────────────────────
-    story.append(Spacer(1, 20))
-    story.append(_hr())
-    story.append(Paragraph(
-        'Sistema de Tutorías &nbsp;·&nbsp; Informe generado automáticamente',
-        ParagraphStyle('pie', fontName='Times-Roman',
-                       fontSize=7, textColor=BORDER, alignment=TA_CENTER)))
-
+    # Generar el PDF transparente en memoria
     doc.build(story)
-    return buf.getvalue()
+    pdf_contenido_bytes = buf.getvalue()
+    buf.close()
+
+    # ── Fusión de la plantilla con el contenido ─────────────────────────
+    # Ruta del archivo de plantilla (coloca la plantilla en tus static o templates)
+    ruta_plantilla = os.path.join(
+        settings.BASE_DIR, 'lumat_app', 'static', 'pdf', 'hoja membretada U_ACADEM_doc_digitales.pdf'
+    )
+
+    if not os.path.exists(ruta_plantilla):
+        # Si no existe la plantilla, se devuelve solo el contenido generado sin fallar
+        return pdf_contenido_bytes
+
+    reader_plantilla = PdfReader(ruta_plantilla)
+    pagina_plantilla = reader_plantilla.pages[0]
+
+    reader_contenido = PdfReader(io.BytesIO(pdf_contenido_bytes))
+    writer = PdfWriter()
+
+    # Para cada página generada por ReportLab, clonar la plantilla y superponer el contenido
+    for pagina_contenido in reader_contenido.pages:
+        # Copiamos la plantilla para no alterar la página original
+        pagina_fondo = reader_plantilla.pages[0]
+        # Superponemos la capa de texto sobre la plantilla
+        pagina_fondo.merge_page(pagina_contenido)
+        writer.add_page(pagina_fondo)
+
+    salida_buf = io.BytesIO()
+    writer.write(salida_buf)
+    pdf_final = salida_buf.getvalue()
+    salida_buf.close()
+
+    return pdf_final

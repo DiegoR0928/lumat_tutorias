@@ -269,10 +269,8 @@ def docente_seminario_detalle(request, seminario_id):
         ]
         if acta_alumno:
             firmas_alumno = [
-                (c.tutor,       'Tutor',       getattr(acta_alumno, 'firma_tutor',       False)),
                 (c.director,    'Director',    getattr(acta_alumno, 'firma_director',    False)),
                 (c.coodirector, 'Coodirector', getattr(acta_alumno, 'firma_coodirector', False)),
-                (c.asesor,      'Asesor',      getattr(acta_alumno, 'firma_asesor',      False)),
             ]
     acta_campos = []
     if acta_alumno:
@@ -318,8 +316,13 @@ def docente_firmar_acta_alumno(request, seminario_id):
         pk=seminario_id)
 
     rol = _rol_en_seminario(docente, seminario)
-    if not rol:
-        messages.error(request, 'No tienes un rol asignado en este seminario.')
+
+    # Solo director y codirector pueden autorizar el acta del alumno
+    if rol not in ('director', 'coodirector'):
+        messages.error(
+            request,
+            'Solo el director y el codirector pueden autorizar el acta del alumno.'
+        )
         return redirect('lumat_app:docente_seminario_detalle',
                         seminario_id=seminario_id)
 
@@ -340,16 +343,7 @@ def docente_firmar_acta_alumno(request, seminario_id):
     setattr(acta_alumno, campo_firma, True)
     acta_alumno.save()
 
-    # Verificar si ya firmaron todos
-    todas_firmadas = all([
-        acta_alumno.firma_tutor,
-        acta_alumno.firma_director,
-        acta_alumno.firma_coodirector,
-        acta_alumno.firma_asesor,
-    ])
-
-    if todas_firmadas:
-        # Generar el PDF ahora que está completo
+    if acta_alumno.firmas_completas:
         try:
             pdf_buffer = generar_acta_alumno(
                 seminario=seminario,
@@ -368,7 +362,7 @@ def docente_firmar_acta_alumno(request, seminario_id):
             )
             messages.success(
                 request,
-                "Todos los docentes han autorizado el acta. "
+                "El director y el codirector autorizaron el acta. "
                 "El PDF ha sido generado y está disponible para el alumno."
             )
         except Exception as e:
@@ -377,18 +371,14 @@ def docente_firmar_acta_alumno(request, seminario_id):
                 f"Las firmas se registraron pero ocurrió un error al generar el PDF: {e}"
             )
     else:
-        # Contar cuántas faltan
-        firmas = [
-            acta_alumno.firma_tutor,
+        pendientes = 2 - sum([
             acta_alumno.firma_director,
             acta_alumno.firma_coodirector,
-            acta_alumno.firma_asesor,
-        ]
-        pendientes = 4 - sum(firmas)
+        ])
         messages.success(
             request,
             f"Autorización registrada. "
-            f"Faltan {pendientes} firma{'s' if pendientes != 1 else ''} para generar el acta."
+            f"Falta {pendientes} firma para generar el acta."
         )
 
     return redirect('lumat_app:docente_seminario_detalle',

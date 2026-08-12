@@ -5,3 +5,4 @@ django-unfold
 flake8
 weasyprint
 reportlab
+pypdf

@@ -418,10 +418,6 @@
 
             {% if formulario.estado_general == 'completo' %}
             <hr class="section-divider" style="margin: 12px 0;">
-            <div style="text-align:center;">
-                <a href="{% url 'lumat_app:docente_descargar_acta' seminario.id %}"
-                   class="btn-pdf" style="width:100%; box-sizing:border-box; text-align:center; padding: 5px 0;">↓ Descargar Acta Comité</a>
-            </div>
             {% endif %}
 
             {# ── Firmas Acta Alumno ── #}
@@ -447,18 +443,24 @@
                 {% endfor %}
             </div>
 
-            {% if not ya_firme_alumno %}
-            <form method="post" action="{% url 'lumat_app:docente_firmar_acta_alumno' seminario.id %}">
-                {% csrf_token %}
-                <button type="submit" class="btn-primary-custom"
-                        style="width:100%; padding:6px 0; font-size:0.82rem;">
-                    Autorizar acta del alumno
-                </button>
-            </form>
+            {% if rol == 'director' or rol == 'coodirector' %}
+                {% if not ya_firme_alumno %}
+                <form method="post" action="{% url 'lumat_app:docente_firmar_acta_alumno' seminario.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-primary-custom"
+                            style="width:100%; padding:6px 0; font-size:0.82rem;">
+                        Autorizar acta del alumno
+                    </button>
+                </form>
+                {% else %}
+                <div class="success-box" style="text-align:center; padding:8px; font-size:0.78rem;">
+                    Acta del alumno autorizada.
+                </div>
+                {% endif %}
             {% else %}
-            <div class="success-box" style="text-align:center; padding:8px; font-size:0.78rem;">
-                Acta del alumno autorizada.
-            </div>
+                <div class="info-box" style="text-align:center; padding:8px; font-size:0.78rem; color:#a89880; font-style:italic;">
+                    Solo el director y el codirector pueden autorizar esta acta.
+                </div>
             {% endif %}
 
             {% else %}
