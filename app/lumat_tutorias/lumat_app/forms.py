@@ -96,26 +96,65 @@ class DocenteForm(forms.ModelForm):
 
 class FormularioComiteForm(forms.ModelForm):
     """Sólo el tutor llena el contenido del informe."""
+
+    dictamen = forms.ChoiceField(
+        choices=[('aprobado', 'Aprobado'), ('reprobado', 'Reprobado')],
+        widget=forms.RadioSelect(attrs={'class': 'radio-toggle-dictamen'}),
+        initial='aprobado',
+        label='Dictamen del Comité'
+    )
+
+    ratifica_plan = forms.TypedChoiceField(
+        coerce=lambda x: x == 'True' or x is True,
+        choices=[
+            (True, 'Ratificar el plan de trabajo propuesto por el alumno'),
+            (False, 'Modificar / Especificar nuevo plan de trabajo')
+        ],
+        widget=forms.RadioSelect(attrs={'class': 'radio-toggle-plan'}),
+        initial=True,
+        required=False,
+        label='Plan de trabajo para el siguiente semestre'
+    )
+
     class Meta:
         model = FormularioComite
         fields = [
+            'dictamen',
             'el_comite_encuentra',
             'observaciones',
-            'dictamen',
+            'ratifica_plan',
             'propuestas',
         ]
         labels = {
             'el_comite_encuentra': 'El Comité encuentra que el estudiante',
             'observaciones': 'Otros aspectos observados por el Comité',
-            'dictamen': 'Dictamen',
-            'propuestas': 'Plan de trabajo propuesto',
+            'propuestas': 'Especificar modificaciones al plan de trabajo',
         }
         widgets = {
-            'el_comite_encuentra': forms.Textarea(attrs={'rows': 3}),
-            'observaciones': forms.Textarea(attrs={'rows': 3}),
-            'dictamen': forms.Textarea(attrs={'rows': 2}),
-            'propuestas': forms.Textarea(attrs={'rows': 3}),
+            'el_comite_encuentra': forms.Textarea(attrs={'rows': 3, 'class': 'form-control-custom'}),
+            'observaciones': forms.Textarea(attrs={'rows': 3, 'class': 'form-control-custom'}),
+            'propuestas': forms.Textarea(attrs={
+                'rows': 3, 
+                'class': 'form-control-custom',
+                'placeholder': 'Describa las modificaciones o el plan de trabajo corregido...'
+            }),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        dictamen = cleaned_data.get('dictamen')
+        ratifica_plan = cleaned_data.get('ratifica_plan')
+
+        if dictamen == 'reprobado':
+            # Si está reprobado, limpiamos las observaciones y propuestas
+            cleaned_data['el_comite_encuentra'] = ''
+            cleaned_data['observaciones'] = ''
+            cleaned_data['propuestas'] = ''
+        elif dictamen == 'aprobado' and ratifica_plan:
+            # Si se ratifica el plan del alumno, no se necesitan modificaciones
+            cleaned_data['propuestas'] = ''
+
+        return cleaned_data
 
 
 class FirmaCalificacionForm(forms.Form):

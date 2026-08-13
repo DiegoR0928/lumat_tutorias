@@ -5,86 +5,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/docente_seminario_detalle.css' %}">
-<style>
-  /* Estructura limpia para la navegación de pestañas (Tabs) en el panel central */
-  .tabs-container {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #e2ddd5;
-  }
-  .tab-btn {
-    padding: 8px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #6b6560;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s ease;
-  }
-  .tab-btn:hover {
-    color: #4a7c7a;
-  }
-  .tab-btn.active {
-    color: #4a7c7a;
-    border-bottom-color: #4a7c7a;
-    font-weight: 600;
-  }
-  .tab-content {
-    display: none;
-  }
-  .tab-content.active {
-    display: block;
-  }
-  .docente-pdf-frame {
-    width: 100%;
-    height: 460px;
-    border: 1px solid #c8b89a;
-    border-radius: 6px;
-    background: #f0ede8;
-    display: block;
-    margin-top: 10px;
-  }
-  .no-pdf-block {
-    padding: 30px;
-    text-align: center;
-    background: #f7f4ef;
-    border: 1px dashed #c8b89a;
-    border-radius: 6px;
-    color: #8a7560;
-    font-family: 'Georgia', serif;
-    font-style: italic;
-    font-size: 0.85rem;
-    margin-top: 10px;
-  }
-  
-  /* Alineación flex horizontal para colocar las acciones al lado del título */
-  .pdf-header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-  .pdf-toolbar-actions {
-    display: flex;
-    gap: 12px;
-  }
-  .pdf-toolbar-link {
-    font-size: 0.78rem;
-    color: #4a7c7a;
-    text-decoration: none;
-    font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
-    transition: color 0.2s;
-  }
-  .pdf-toolbar-link:hover {
-    color: #385f5d;
-    text-decoration: underline;
-  }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -107,6 +27,7 @@
 
     <div class="panels-grid">
         
+        <!-- PANEL IZQUIERDO: INFORMACIÓN Y EVIDENCIAS -->
         <div class="panel-card panel-info">
             <div class="panel-header-integrated">
                 <p class="eyebrow">Informe del Comité</p>
@@ -194,53 +115,186 @@
             </div>
         </div>
 
+        <!-- PANEL CENTRAL: FORMULARIO Y VISTAS PREVIAS -->
         <div class="panel-card panel-form">
             
             <div class="tabs-container">
-                <button class="tab-btn active" id="btn-form-tab" onclick="switchTab('form-tab')">Formulario</button>
-                <button class="tab-btn" id="btn-comite-tab" onclick="switchTab('comite-tab')">Acta Comité</button>
-                <button class="tab-btn" id="btn-alumno-tab" onclick="switchTab('alumno-tab')">Acta Alumno</button>
+                <button class="acta-tab-btn" id="btn-alumno-tab" onclick="switchTab('alumno-tab')">Acta Alumno</button>
+                <button class="acta-tab-btn active" id="btn-form-tab" onclick="switchTab('form-tab')">Formulario</button>
+                <button class="acta-tab-btn" id="btn-comite-tab" onclick="switchTab('comite-tab')">Acta Comité</button>
             </div>
 
-            <div id="form-tab" class="tab-content active">
-                <p class="section-label">Evaluación del Comité</p>
+            <!-- PESTAÑA: ACTA ALUMNO -->
+            <div id="alumno-tab" class="acta-tab-content">
+                <div class="pdf-header-container">
+                    <p class="section-label" style="margin: 0;">Vista Previa</p>
+                    {% if seminario.actaAlumno %}
+                        <div class="pdf-toolbar-actions">
+                            <a href="{{ seminario.actaAlumno.url }}" target="_blank" class="pdf-toolbar-link">↗ Abrir</a>
+                            <a href="{{ seminario.actaAlumno.url }}" download class="pdf-toolbar-link">↓ Descargar</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if seminario.actaAlumno %}
+                    <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0"
+                            class="docente-pdf-frame" title="Acta del Alumno"></iframe>
+
+                {% elif acta_alumno %}
+                    <div style="background:#f7f4ef; border:1px solid #c8b89a; border-radius:8px; padding:18px 20px; margin-top:10px;">
+
+                        <p style="font-size:0.7rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:#4a7c7a; margin:0 0 14px;">
+                            Informe enviado por el alumno — pendiente de firmas
+                        </p>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px 16px; margin-bottom:14px;">
+                            <div>
+                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560; text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
+                                    Reuniones tutor
+                                </p>
+                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
+                                    {{ acta_alumno.reuniones_tutor }}
+                                </p>
+                            </div>
+                            <div>
+                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560; text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
+                                    Reuniones comité
+                                </p>
+                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
+                                    {{ acta_alumno.reuniones_comite }}
+                                </p>
+                            </div>
+                            <div>
+                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560; text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
+                                    Coloquios
+                                </p>
+                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
+                                    {{ acta_alumno.coloquios }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr style="border:none; border-top:1px solid #e3d9cb; margin:12px 0;">
+
+                        {% for etiqueta, valor in acta_campos %}
+                        {% if valor %}
+                        <div style="margin-bottom:10px;">
+                            <p style="font-size:0.65rem; font-weight:700; color:#8a7560; text-transform:uppercase; letter-spacing:0.07em; margin:0 0 3px;">
+                                {{ etiqueta }}
+                            </p>
+                            <p style="font-size:0.85rem; color:#4a3f32; margin:0; line-height:1.5; white-space:pre-wrap;">{{ valor }}</p>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+                    <div class="no-pdf-block">
+                        El estudiante aún no ha enviado su informe semestral de actividades.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- PESTAÑA: FORMULARIO COMITÉ (REFACTORIZADO) -->
+            <div id="form-tab" class="acta-tab-content active">
+                <p class="section-label">Evaluación del Comité Tutor</p>
 
                 {% if rol == 'tutor' %}
-                    <form method="post" action="">
+                    <form method="post" action="" id="form-comite-tutor">
                         {% csrf_token %}
-                        {% for field in form %}
+
+                        <!-- DICTAMEN -->
                         <div class="form-group-custom">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.errors %}
-                                <p style="color:#c0392b; font-size:0.78rem; margin-top:3px;">{{ field.errors.0 }}</p>
-                            {% endif %}
+                            <label style="font-weight: 700; color: #1a2b4c; display: block; margin-bottom: 4px;">{{ form.dictamen.label }}</label>
+                            <div class="radio-group-container" style="display: flex; gap: 12px; margin-bottom: 12px;">
+                                {% for radio in form.dictamen %}
+                                    <label class="radio-card" style="flex: 1; border: 1px solid #cbd5e1; background: #f8fafc; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 500;">
+                                        {{ radio.tag }} {{ radio.choice_label }}
+                                    </label>
+                                {% endfor %}
+                            </div>
                         </div>
-                        {% endfor %}
-                        
-                        <button type="submit" class="btn-primary-custom" style="margin-bottom: 6px;" {% if ya_firme %}disabled style="opacity:0.5; cursor:not-allowed;"{% endif %}>
+
+                        <!-- SECCIONES QUE DEPENDEN DE DICTAMEN APROBADO -->
+                        <div id="wrapper-secciones-aprobado">
+                            <div class="form-group-custom">
+                                <label for="{{ form.el_comite_encuentra.id_for_label }}">{{ form.el_comite_encuentra.label }}</label>
+                                {{ form.el_comite_encuentra }}
+                                {% if form.el_comite_encuentra.errors %}
+                                    <p style="color:#c0392b; font-size:0.78rem; margin-top:3px;">{{ form.el_comite_encuentra.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group-custom">
+                                <label for="{{ form.observaciones.id_for_label }}">{{ form.observaciones.label }}</label>
+                                {{ form.observaciones }}
+                                {% if form.observaciones.errors %}
+                                    <p style="color:#c0392b; font-size:0.78rem; margin-top:3px;">{{ form.observaciones.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- RATIFICACIÓN DE PLAN DE TRABAJO -->
+                            <div class="form-group-custom">
+                                <label style="font-weight: 700; color: #1a2b4c; display: block; margin-bottom: 4px;">{{ form.ratifica_plan.label }}</label>
+                                <div class="radio-group-container" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+                                    {% for radio in form.ratifica_plan %}
+                                        <label class="radio-card" style="border: 1px solid #cbd5e1; background: #f8fafc; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 500;">
+                                            {{ radio.tag }} {{ radio.choice_label }}
+                                        </label>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- PLAN DEL ALUMNO (PREVIEW) -->
+                                <div id="wrapper-plan-alumno-preview" style="background: #f1f5f9; border-left: 3px solid #4a7c7a; padding: 10px 12px; border-radius: 4px; font-size: 0.8rem; color: #334155; margin-top: 8px; margin-bottom: 10px;">
+                                    <strong>Plan enviado por el alumno:</strong><br>
+                                    <em>{{ acta_alumno.plan_siguiente|default:"El alumno no ha registrado un plan de trabajo." }}</em>
+                                </div>
+
+                                <!-- CAMPO LIBRE DE MODIFICACIONES -->
+                                <div id="wrapper-propuestas-modificacion" style="display:none; margin-top:8px;">
+                                    <label for="{{ form.propuestas.id_for_label }}">{{ form.propuestas.label }}</label>
+                                    {{ form.propuestas }}
+                                    {% if form.propuestas.errors %}
+                                        <p style="color:#c0392b; font-size:0.78rem; margin-top:3px;">{{ form.propuestas.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary-custom" style="margin-top: 10px; margin-bottom: 6px;" {% if ya_firme %}disabled style="opacity:0.5; cursor:not-allowed;"{% endif %}>
                             {% if ya_firme %}Informe Guardado{% else %}Guardar informe{% endif %}
                         </button>
                     </form>
 
                 {% else %}
-                    {% if formulario.el_comite_encuentra %}
-                        <div class="readonly-block">
-                            <p class="ro-label">El Comité encuentra que el estudiante</p>
-                            <p class="ro-value">{{ formulario.el_comite_encuentra }}</p>
-                        </div>
-                        <div class="readonly-block">
-                            <p class="ro-label">Otros aspectos observados</p>
-                            <p class="ro-value">{{ formulario.observaciones|default:"—" }}</p>
-                        </div>
-                        <div class="readonly-block">
+                    <!-- VISTA SOLO LECTURA PARA OTROS INTEGRANTES -->
+                    {% if formulario.dictamen %}
+                        <div class="readonly-block" style="margin-bottom: 12px;">
                             <p class="ro-label">Dictamen</p>
-                            <p class="ro-value">{{ formulario.dictamen|default:"—" }}</p>
+                            <span class="dictamen-badge-large" style="display: inline-block; padding: 4px 12px; font-size: 0.8rem; font-weight: 700; border-radius: 4px; text-transform: uppercase; {% if formulario.dictamen == 'aprobado' %}background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;{% else %}background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;{% endif %}">
+                                {{ formulario.get_dictamen_display }}
+                            </span>
                         </div>
-                        <div class="readonly-block">
-                            <p class="ro-label">Plan de trabajo propuesto</p>
-                            <p class="ro-value">{{ formulario.propuestas|default:"—" }}</p>
-                        </div>
+
+                        {% if formulario.dictamen == 'aprobado' %}
+                            <div class="readonly-block">
+                                <p class="ro-label">El Comité encuentra que el estudiante</p>
+                                <p class="ro-value">{{ formulario.el_comite_encuentra|default:"—" }}</p>
+                            </div>
+                            <div class="readonly-block">
+                                <p class="ro-label">Otros aspectos observados</p>
+                                <p class="ro-value">{{ formulario.observaciones|default:"—" }}</p>
+                            </div>
+                            <div class="readonly-block">
+                                <p class="ro-label">Plan de trabajo asignado</p>
+                                <p class="ro-value">{{ formulario.obtener_plan_trabajo_efectivo }}</p>
+                            </div>
+                        {% else %}
+                            <div class="no-pdf-block" style="text-align:left; background:#fff1f2; border-color:#fecaca; color:#991b1b;">
+                                El estudiante ha sido <strong>REPROBADO</strong> por este Comité. No aplican observaciones ni plan de trabajo.
+                            </div>
+                        {% endif %}
                     {% else %}
                         <p style="font-family:'Georgia',serif; font-size:0.85rem; color:#a89880; font-style:italic; margin-bottom: 10px;">
                             El tutor aún no ha completado el informe.
@@ -249,10 +303,10 @@
                 {% endif %}
             </div>
 
-            <!-- PESTAÑA: ACTA COMITÉ REFACTORIZADA CON BOTONES ALINEADOS AL TÍTULO -->
-            <div id="comite-tab" class="tab-content">
+            <!-- PESTAÑA: ACTA COMITÉ -->
+            <div id="comite-tab" class="acta-tab-content">
                 <div class="pdf-header-container">
-                    <p class="section-label" style="margin: 0;">Vista Previa — Acta de Comité</p>
+                    <p class="section-label" style="margin: 0;">Vista Previa</p>
                     {% if seminario.actaComite %}
                         <div class="pdf-toolbar-actions">
                             <a href="{{ seminario.actaComite.url }}" target="_blank" class="pdf-toolbar-link">↗ Abrir</a>
@@ -272,96 +326,12 @@
                 {% endif %}
             </div>
 
-            <!-- PESTAÑA: ACTA ALUMNO -->
-            <div id="alumno-tab" class="tab-content">
-                <div class="pdf-header-container">
-                    <p class="section-label" style="margin: 0;">Acta del Alumno</p>
-                    {% if seminario.actaAlumno %}
-                        <div class="pdf-toolbar-actions">
-                            <a href="{{ seminario.actaAlumno.url }}" target="_blank" class="pdf-toolbar-link">↗ Abrir</a>
-                            <a href="{{ seminario.actaAlumno.url }}" download class="pdf-toolbar-link">↓ Descargar</a>
-                        </div>
-                    {% endif %}
-                </div>
-
-                {% if seminario.actaAlumno %}
-                    {# PDF ya generado — mostrar iframe #}
-                    <iframe src="{{ seminario.actaAlumno.url }}#toolbar=0&navpanes=0"
-                            class="docente-pdf-frame" title="Acta del Alumno"></iframe>
-
-                {% elif acta_alumno %}
-                    {# El alumno llenó el formulario pero faltan firmas — mostrar los datos #}
-                    <div style="background:#f7f4ef; border:1px solid #c8b89a; border-radius:8px;
-                                padding:18px 20px; margin-top:10px;">
-
-                        <p style="font-size:0.7rem; font-weight:700; letter-spacing:0.09em;
-                                  text-transform:uppercase; color:#4a7c7a; margin:0 0 14px;">
-                            Informe enviado por el alumno — pendiente de firmas
-                        </p>
-
-                        {# Datos rápidos en grid #}
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr;
-                                    gap:8px 16px; margin-bottom:14px;">
-                            <div>
-                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560;
-                                          text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
-                                    Reuniones tutor
-                                </p>
-                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
-                                    {{ acta_alumno.reuniones_tutor }}
-                                </p>
-                            </div>
-                            <div>
-                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560;
-                                          text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
-                                    Reuniones comité
-                                </p>
-                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
-                                    {{ acta_alumno.reuniones_comite }}
-                                </p>
-                            </div>
-                            <div>
-                                <p style="font-size:0.65rem; font-weight:700; color:#8a7560;
-                                          text-transform:uppercase; letter-spacing:0.07em; margin:0 0 2px;">
-                                    Coloquios
-                                </p>
-                                <p style="font-size:0.9rem; color:#4a3f32; margin:0; font-weight:600;">
-                                    {{ acta_alumno.coloquios }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <hr style="border:none; border-top:1px solid #e3d9cb; margin:12px 0;">
-
-                        {% for etiqueta, valor in acta_campos %}
-                        {% if valor %}
-                        <div style="margin-bottom:10px;">
-                            <p style="font-size:0.65rem; font-weight:700; color:#8a7560;
-                                      text-transform:uppercase; letter-spacing:0.07em; margin:0 0 3px;">
-                                {{ etiqueta }}
-                            </p>
-                            <p style="font-size:0.85rem; color:#4a3f32; margin:0;
-                                      line-height:1.5; white-space:pre-wrap;">{{ valor }}</p>
-                        </div>
-                        {% endif %}
-                        {% endfor %}
-
-                    </div>
-
-                {% else %}
-                    {# El alumno aún no ha enviado nada #}
-                    <div class="no-pdf-block">
-                        El estudiante aún no ha enviado su informe semestral de actividades.
-                    </div>
-                {% endif %}
-            </div>
-
         </div>
 
+        <!-- PANEL DERECHO: FIRMAS Y NOTAS -->
         <div class="panel-card panel-signatures">
             <p class="section-label">Firmas y Notas</p>
 
-            {# ── Firmas Acta Comité ── #}
             <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:8px;">Acta Comité</p>
             <div class="firmas-mini-list" style="margin-bottom:14px;">
 
@@ -420,7 +390,6 @@
             <hr class="section-divider" style="margin: 12px 0;">
             {% endif %}
 
-            {# ── Firmas Acta Alumno ── #}
             {% if acta_alumno %}
             <hr class="section-divider" style="margin: 14px 0;">
             <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:8px;">Acta Alumno</p>
@@ -447,8 +416,7 @@
                 {% if not ya_firme_alumno %}
                 <form method="post" action="{% url 'lumat_app:docente_firmar_acta_alumno' seminario.id %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn-primary-custom"
-                            style="width:100%; padding:6px 0; font-size:0.82rem;">
+                    <button type="submit" class="btn-primary-custom" style="width:100%; padding:6px 0; font-size:0.82rem;">
                         Autorizar acta del alumno
                     </button>
                 </form>
@@ -473,12 +441,13 @@
 
         </div>
 
-    </div> </div>
+    </div>
+</div>
 
 <script>
   function switchTab(tabId) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelectorAll('.acta-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.acta-tab-content').forEach(content => content.classList.remove('active'));
     
     const targetContent = document.getElementById(tabId);
     if(targetContent) targetContent.classList.add('active');
@@ -487,5 +456,40 @@
     if (tabId === 'comite-tab') document.getElementById('btn-comite-tab').classList.add('active');
     if (tabId === 'alumno-tab') document.getElementById('btn-alumno-tab').classList.add('active');
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const dictamenRadios = document.querySelectorAll('input[name="dictamen"]');
+    const ratificaRadios = document.querySelectorAll('input[name="ratifica_plan"]');
+    
+    const wrapperSecciones = document.getElementById('wrapper-secciones-aprobado');
+    const wrapperPlanPreview = document.getElementById('wrapper-plan-alumno-preview');
+    const wrapperModificaciones = document.getElementById('wrapper-propuestas-modificacion');
+
+    function toggleFormSections() {
+      const selectedDictamen = document.querySelector('input[name="dictamen"]:checked')?.value;
+      const selectedRatifica = document.querySelector('input[name="ratifica_plan"]:checked')?.value;
+
+      if (!wrapperSecciones) return;
+
+      if (selectedDictamen === 'reprobado') {
+        wrapperSecciones.style.display = 'none';
+      } else {
+        wrapperSecciones.style.display = 'block';
+
+        if (selectedRatifica === 'True' || selectedRatifica === 'true') {
+          if (wrapperPlanPreview) wrapperPlanPreview.style.display = 'block';
+          if (wrapperModificaciones) wrapperModificaciones.style.display = 'none';
+        } else {
+          if (wrapperPlanPreview) wrapperPlanPreview.style.display = 'none';
+          if (wrapperModificaciones) wrapperModificaciones.style.display = 'block';
+        }
+      }
+    }
+
+    dictamenRadios.forEach(radio => radio.addEventListener('change', toggleFormSections));
+    ratificaRadios.forEach(radio => radio.addEventListener('change', toggleFormSections));
+
+    toggleFormSections();
+  });
 </script>
 {% endblock %}

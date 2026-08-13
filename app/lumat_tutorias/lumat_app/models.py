@@ -252,6 +252,11 @@ class SolicitudCambioComite(models.Model):
         return f"Solicitud de {self.alumno} — {self.get_rol_solicitado_display()} ({self.estado})"
 
 
+# models.py
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import models
+from django.core.files.base import ContentFile
+
 class FormularioComite(models.Model):
     ESTADO_CHOICES = [
         ('rechazado', 'Rechazado'),
@@ -259,15 +264,27 @@ class FormularioComite(models.Model):
         ('completo', 'Completo'),
     ]
 
+    DICTAMEN_CHOICES = [
+        ('aprobado', 'Aprobado'),
+        ('reprobado', 'Reprobado'),
+    ]
+
     seminario = models.OneToOneField(
         'Seminario', on_delete=models.CASCADE,
         related_name='formulario_comite')
 
-    # ── Contenido del informe (sólo el tutor los llena) ──────
+    # ── Dictamen y Evaluación ─────────────────────────────────
+    dictamen = models.CharField(
+        max_length=15, choices=DICTAMEN_CHOICES, default='aprobado')
+    
     el_comite_encuentra = models.TextField(blank=True)
     observaciones = models.TextField(blank=True)
-    dictamen = models.TextField(blank=True)
-    propuestas = models.TextField(blank=True)
+
+    # ── Plan de Trabajo ───────────────────────────────────────
+    # True = Ratifica el plan propuesto por el alumno en ActaAlumnoData
+    # False = El comité hace modificaciones
+    ratifica_plan = models.BooleanField(default=True)
+    propuestas = models.TextField(blank=True, verbose_name="Modificaciones al plan de trabajo")
 
     # ── Calificaciones individuales ───────────────────────────
     calificacion_tutor = models.DecimalField(
@@ -297,11 +314,22 @@ class FormularioComite(models.Model):
     class Meta:
         verbose_name = 'Formulario de Comité'
 
-    # ── Helpers ───────────────────────────────────────────────
-
     @property
     def todos_firmaron(self):
         return self.firma_tutor and self.firma_director and self.firma_coodirector and self.firma_asesor
+
+    def obtener_plan_trabajo_efectivo(self):
+        """Retorna el plan de trabajo final resuelto según la decisión del comité."""
+        if self.dictamen == 'reprobado':
+            return "No aplica (No Aprobado)"
+        if self.ratifica_plan:
+            try:
+                if hasattr(self.seminario, 'acta_data') and self.seminario.acta_data:
+                    return self.seminario.acta_data.plan_siguiente or "Plan de trabajo ratificado."
+            except Exception:
+                pass
+            return "Plan de trabajo propuesto por el alumno ratificado."
+        return self.propuestas or "Sin modificaciones especificadas."
 
     def calcular_calificacion_final(self):
         califs = [

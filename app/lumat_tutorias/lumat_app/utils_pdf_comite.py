@@ -1,5 +1,8 @@
 # utils_pdf_comite.py — coloca este archivo en lumat_app/utils_pdf_comite.py
-"""Genera el PDF del Informe Semestral del Comité Tutor sobre una plantilla membretada."""
+"""Genera el PDF del Informe Semestral del Comité Tutor sobre una plantilla membretada.
+
+Forzado a 1 sola página con paleta institucional UAZ / LUMAT.
+"""
 
 import io
 import os
@@ -8,71 +11,76 @@ from pypdf import PdfReader, PdfWriter
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, Image,
 )
 from reportlab.lib.enums import TA_CENTER
 
-# ── Paleta ────────────────────────────────────────────────────
-TEAL = colors.HexColor('#4a7c7a')
-WARM = colors.HexColor('#4a3f32')
-LIGHT = colors.HexColor('#eee8de')
-BORDER = colors.HexColor('#c8b89a')
-WHITE = colors.white
-BLACK = colors.black
+
+# ── Paleta Institucional (UAZ / LUMAT) ────────────────────────
+NAVY_PRIMARY = colors.HexColor("#1A2B4C")  # Azul marino institucional
+GOLD_ACCENT  = colors.HexColor("#B38E46")  # Dorado/Bronce decorativo
+BG_SOFT      = colors.HexColor("#F8FAFC")  # Fondo limpio ligeramente gris
+BORDER_SOFT  = colors.HexColor("#CBD5E1")  # Borde suave neutro
+TEXT_MAIN    = colors.HexColor("#1E293B")  # Texto oscuro de alto contraste
+TEXT_MUTED   = colors.HexColor("#64748B")  # Texto secundario/desactivado
 
 
 def _styles():
     s = {}
 
     s['titulo'] = ParagraphStyle(
-        'titulo', fontName='Times-Bold',
-        fontSize=15, leading=18, alignment=TA_CENTER, textColor=WARM)
+        'titulo', fontName='Helvetica-Bold',
+        fontSize=12, leading=14, alignment=TA_CENTER, textColor=NAVY_PRIMARY)
 
     s['subtitulo'] = ParagraphStyle(
-        'subtitulo', fontName='Times-Roman',
-        fontSize=10, leading=13, alignment=TA_CENTER, textColor=WARM)
+        'subtitulo', fontName='Helvetica',
+        fontSize=8, leading=10, alignment=TA_CENTER, textColor=TEXT_MUTED)
 
     s['label'] = ParagraphStyle(
-        'label', fontName='Times-Bold',
-        fontSize=8, leading=11, textColor=WARM)
+        'label', fontName='Helvetica-Bold',
+        fontSize=7.5, leading=10, textColor=NAVY_PRIMARY)
 
     s['value'] = ParagraphStyle(
-        'value', fontName='Times-Roman',
-        fontSize=9, leading=12, textColor=WARM)
+        'value', fontName='Helvetica',
+        fontSize=8, leading=11, textColor=TEXT_MAIN)
 
     s['section'] = ParagraphStyle(
-        'section', fontName='Times-Bold',
-        fontSize=8, leading=11, textColor=TEAL,
-        spaceAfter=4)
+        'section', fontName='Helvetica-Bold',
+        fontSize=8, leading=10, textColor=NAVY_PRIMARY,
+        spaceBefore=4, spaceAfter=2)
 
     s['body'] = ParagraphStyle(
-        'body', fontName='Times-Roman',
-        fontSize=9, leading=13, textColor=WARM)
+        'body', fontName='Helvetica',
+        fontSize=8, leading=11, textColor=TEXT_MAIN)
 
     s['firma_nombre'] = ParagraphStyle(
-        'firma_nombre', fontName='Times-Roman',
-        fontSize=8, leading=11, alignment=TA_CENTER, textColor=WARM)
+        'firma_nombre', fontName='Helvetica-Bold',
+        fontSize=7.5, leading=9, alignment=TA_CENTER, textColor=NAVY_PRIMARY)
+
+    s['firma_rol'] = ParagraphStyle(
+        'firma_rol', fontName='Helvetica-Bold',
+        fontSize=6.5, leading=8, alignment=TA_CENTER, textColor=TEXT_MUTED)
 
     return s
 
 
 def _hr():
-    return HRFlowable(width='100%', thickness=0.5,
-                      color=BORDER, spaceAfter=6, spaceBefore=6)
+    return HRFlowable(width='100%', thickness=0.6,
+                      color=GOLD_ACCENT, spaceAfter=4, spaceBefore=2)
 
 
 def _box_table(content_rows, style_extra=None):
-    """Crea una tabla con borde exterior fino color crema."""
+    """Crea una tabla estilizada con bordes suaves e interiores limpios."""
     base_style = [
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
-        ('BACKGROUND', (0, 0), (-1, -1), WHITE),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_SOFT),
+        ('BACKGROUND', (0, 0), (-1, -1), BG_SOFT),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
         ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
     ]
     if style_extra:
         base_style += style_extra
@@ -84,16 +92,15 @@ def _box_table(content_rows, style_extra=None):
 def generar_pdf_comite(formulario) -> bytes:
     """Recibe una instancia de FormularioComite con .seminario pre-cargado.
 
-    Devuelve los bytes del PDF montado sobre la plantilla membretada.
+    Devuelve los bytes del PDF montado sobre la plantilla membretada (fuerza 1 sola hoja).
     """
     buf = io.BytesIO()
     
-    # ── Ajuste de márgenes para no solapar el membrete ────────────────────
-    # Ajustamos topMargin y bottomMargin para dejar espacio a los logotipos y al pie de página.
+    # Margen superior e inferior optimizados para no tocar el membrete
     doc = SimpleDocTemplate(
         buf, pagesize=letter,
-        leftMargin=2 * cm, rightMargin=2 * cm,
-        topMargin=3.8 * cm, bottomMargin=3.2 * cm,
+        leftMargin=2.0 * cm, rightMargin=2.0 * cm,
+        topMargin=3.6 * cm, bottomMargin=2.2 * cm,
     )
     S = _styles()
     sem = formulario.seminario
@@ -101,11 +108,10 @@ def generar_pdf_comite(formulario) -> bytes:
     com = sem.comite
     story = []
 
-    # ── Encabezado del Acta ──────────────────────────────────────────────
+    # ── Encabezado Tipográfico Limpio (Sin Cuadro) ───────────
     story.append(Paragraph('INFORME SEMESTRAL DEL COMITÉ TUTOR', S['titulo']))
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 2))
     story.append(Paragraph(f'Semestre: {sem.numero}', S['subtitulo']))
-    story.append(Spacer(1, 6))
     story.append(_hr())
 
     # ── Datos del alumno ──────────────────────────────────────
@@ -115,12 +121,11 @@ def generar_pdf_comite(formulario) -> bytes:
         [Paragraph(
             f'<b>Nombre:</b> {al.nombre} {al.apellido_paterno} {al.apellido_materno}', S['value'])],
         [Paragraph(
-            f'<b>Matrícula:</b> {al.matricula or "—"} &nbsp;&nbsp; '
-            f'<b>Semestre:</b> {al.semestre} &nbsp;&nbsp; '
+            f'<b>Matrícula:</b> {al.matricula or "—"} &nbsp;&nbsp;&nbsp;&nbsp; '
+            f'<b>Semestre:</b> {al.semestre}° &nbsp;&nbsp;&nbsp;&nbsp; '
             f'<b>Correo:</b> {al.correo}', S['value'])],
     ]
     story.append(_box_table(alumno_data))
-    story.append(Spacer(1, 8))
 
     # ── Comité ────────────────────────────────────────────────
     story.append(Paragraph('COMITÉ TUTOR', S['section']))
@@ -130,36 +135,34 @@ def generar_pdf_comite(formulario) -> bytes:
             return "—"
         return f'{d.nombre} {d.apellido_paterno} {d.apellido_materno}'
 
-    fecha_str = sem.fecha.strftime("%d-%m-%Y") if hasattr(sem, 'fecha') and sem.fecha else "Sin fecha asignada"
+    fecha_str = sem.fecha.strftime("%d/%m/%Y") if hasattr(sem, 'fecha') and sem.fecha else "Sin fecha asignada"
 
     comite_rows = [
         [Paragraph(
-            f'<b>{docente_str(com.tutor)}</b> (Tutor) &nbsp;&nbsp;&nbsp; '
+            f'<b>{docente_str(com.tutor)}</b> <font color="#64748B">(Tutor)</font> &nbsp;&nbsp;&nbsp;&nbsp; '
             f'Fecha de reunión: <b>{fecha_str}</b>',
             S['value'])],
         [Paragraph(
-            f'{docente_str(com.director)} (Director de tesis)', S['value'])],
+            f'{docente_str(com.director)} <font color="#64748B">(Director de tesis)</font>', S['value'])],
         [Paragraph(
-            f'{docente_str(com.coodirector)} (Codirector de tesis)', S['value'])],
+            f'{docente_str(com.coodirector)} <font color="#64748B">(Codirector de tesis)</font>', S['value'])],
         [Paragraph(
-            f'{docente_str(com.asesor)} (Asesor de tesis)', S['value'])],
+            f'{docente_str(com.asesor)} <font color="#64748B">(Asesor de tesis)</font>', S['value'])],
     ]
     story.append(_box_table(comite_rows))
-    story.append(Spacer(1, 8))
 
     # ── Secciones de evaluación ───────────────────────────────
     def seccion(titulo, contenido):
         story.append(Paragraph(titulo, S['section']))
         story.append(_box_table([[Paragraph(contenido or '—', S['body'])]]))
-        story.append(Spacer(1, 6))
 
     seccion(
-        'TRAS UNA CUIDADOSA EVALUACIÓN, ESTE COMITÉ TUTOR ENCUENTRA QUE EL ESTUDIANTE:',
+        'EVALUACIÓN DEL COMITÉ TUTOR SOBRE EL DESEMPENO DEL ESTUDIANTE:',
         formulario.el_comite_encuentra)
-    seccion('OTROS ASPECTOS OBSERVADOS POR ESTE COMITÉ:',
+    seccion('OBSERVACIONES/RECOMENDACIONES DEL COMITÉ:',
             formulario.observaciones)
     seccion('DICTAMEN:', formulario.dictamen)
-    seccion('PROPONEMOS QUE EL ESTUDIANTE SIGA EL SIGUIENTE PLAN DE TRABAJO:',
+    seccion('PLAN DE TRABAJO PROPUESTO:',
             formulario.propuestas)
 
     # ── Calificaciones ────────────────────────────────────────
@@ -188,92 +191,90 @@ def generar_pdf_comite(formulario) -> bytes:
          Paragraph('', S['value']),
          Paragraph(f'<b>{fmt(formulario.calificacion_final)}</b>', S['label'])],
     ]
-    t = Table(calif_rows, colWidths=[9 * cm, 3.5 * cm, 4 * cm])
-    t.setStyle(TableStyle([
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
-        ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER),
-        ('BACKGROUND', (0, 0), (-1, 0), LIGHT),
-        ('BACKGROUND', (0, 5), (-1, 5), LIGHT),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    t_calif = Table(calif_rows, colWidths=[9 * cm, 3.8 * cm, 3.8 * cm])
+    t_calif.setStyle(TableStyle([
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_SOFT),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, BORDER_SOFT),
+        ('BACKGROUND', (0, 0), (-1, 0), BG_SOFT),
+        ('BACKGROUND', (0, 5), (-1, 5), BG_SOFT),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
-    story.append(t)
-    story.append(Spacer(1, 12))
+    story.append(t_calif)
 
     # ── Firmas ────────────────────────────────────────────────
-    story.append(Paragraph('VISTO BUENO', S['section']))
     story.append(Spacer(1, 4))
+    story.append(HRFlowable(width="100%", thickness=0.6, color=GOLD_ACCENT, spaceAfter=2, spaceBefore=2))
+    story.append(Paragraph('VISTO BUENO Y FIRMAS DEL SÍNODO', S['section']))
 
-    def firma_cell(docente, firmado):
+    def firma_cell(docente, firmado, rol_lbl):
         celda_contenido = []
+
         if firmado and docente and getattr(docente, 'firma', None):
             try:
                 ruta_firma = docente.firma.path
                 if os.path.exists(ruta_firma):
-                    img = Image(ruta_firma, width=2.8 * cm, height=1.2 * cm)
+                    img = Image(ruta_firma, width=2.4 * cm, height=0.7 * cm)
                     img.hAlign = 'CENTER'
                     celda_contenido.append(img)
                 else:
                     celda_contenido.append(
-                        Paragraph("<font color='#a89880'>[APROBADO]</font>", S['firma_nombre']))
+                        Paragraph("<font color='#B38E46'>[APROBADO]</font>", S['firma_nombre']))
             except Exception:
                 celda_contenido.append(
-                    Paragraph("<font color='#a89880'>[APROBADO]</font>", S['firma_nombre']))
+                    Paragraph("<font color='#B38E46'>[APROBADO]</font>", S['firma_nombre']))
         else:
-            celda_contenido.append(Spacer(1, 0.8 * cm))
-            celda_contenido.append(Paragraph('___________________', S['firma_nombre']))
+            celda_contenido.append(Spacer(1, 0.7 * cm))
 
-        celda_contenido.append(Spacer(1, 4))
-        nombre_str = f'<b>{docente.nombre} {docente.apellido_paterno}</b>' if docente else "—"
-        celda_contenido.append(Paragraph(nombre_str, S['firma_nombre']))
+        celda_contenido.append(Paragraph('___________________', S['firma_nombre']))
+        
+        nombre_docente = f'<b>{docente.nombre} {docente.apellido_paterno}</b>' if docente else "—"
+        celda_contenido.append(Paragraph(nombre_docente, S['firma_nombre']))
+        celda_contenido.append(Paragraph(rol_lbl, S['firma_rol']))
         return celda_contenido
 
-    col_w = 3.8 * cm
+    col_w = 4.1 * cm
     firmas = Table([[
-        firma_cell(com.tutor, formulario.firma_tutor),
-        firma_cell(com.director, formulario.firma_director),
-        firma_cell(com.coodirector, formulario.firma_coodirector),
-        firma_cell(com.asesor, formulario.firma_asesor),
+        firma_cell(com.tutor,       formulario.firma_tutor,       'Tutor'),
+        firma_cell(com.director,    formulario.firma_director,    'Director'),
+        firma_cell(com.coodirector, formulario.firma_coodirector, 'Codirector'),
+        firma_cell(com.asesor,      formulario.firma_asesor,      'Asesor'),
     ]], colWidths=[col_w, col_w, col_w, col_w])
 
     firmas.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'BOTTOM'),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('ALIGN',         (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN',        (0, 0), (-1, -1), 'BOTTOM'),
+        ('TOPPADDING',    (0, 0), (-1, -1), 1),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
     ]))
     story.append(firmas)
 
-    # Generar el PDF transparente en memoria
+    # Compilar en memoria
     doc.build(story)
     pdf_contenido_bytes = buf.getvalue()
     buf.close()
 
-    # ── Fusión de la plantilla con el contenido ─────────────────────────
-    # Ruta del archivo de plantilla (coloca la plantilla en tus static o templates)
+    # ── Fusión ESTRICTA a 1 sola hoja con la plantilla ─────────────────
     ruta_plantilla = os.path.join(
         settings.BASE_DIR, 'lumat_app', 'static', 'pdf', 'hoja membretada U_ACADEM_doc_digitales.pdf'
     )
 
     if not os.path.exists(ruta_plantilla):
-        # Si no existe la plantilla, se devuelve solo el contenido generado sin fallar
         return pdf_contenido_bytes
 
     reader_plantilla = PdfReader(ruta_plantilla)
-    pagina_plantilla = reader_plantilla.pages[0]
-
     reader_contenido = PdfReader(io.BytesIO(pdf_contenido_bytes))
     writer = PdfWriter()
 
-    # Para cada página generada por ReportLab, clonar la plantilla y superponer el contenido
-    for pagina_contenido in reader_contenido.pages:
-        # Copiamos la plantilla para no alterar la página original
-        pagina_fondo = reader_plantilla.pages[0]
-        # Superponemos la capa de texto sobre la plantilla
-        pagina_fondo.merge_page(pagina_contenido)
-        writer.add_page(pagina_fondo)
+    # Extraemos estricta y únicamente la primera página de ambos PDFs
+    pagina_fondo = reader_plantilla.pages[0]
+    pagina_contenido = reader_contenido.pages[0]
+
+    # Superposición
+    pagina_fondo.merge_page(pagina_contenido)
+    writer.add_page(pagina_fondo)
 
     salida_buf = io.BytesIO()
     writer.write(salida_buf)
