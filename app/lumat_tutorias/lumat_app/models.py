@@ -170,10 +170,6 @@ class CalendarioGenerado(models.Model):
         return f"{self.nombre} ({self.fecha_creacion.strftime('%d/%m/%Y')})"
 
 
-# ─────────────────────────────────────────────
-# Evidencia
-# Archivos que el alumno sube para un Seminario.
-# ─────────────────────────────────────────────
 def evidencia_upload_path(instance, filename):
     """Guarda en: evidencias/<alumno_id>/<seminario_id>/<filename>"""
     return os.path.join(
@@ -201,9 +197,16 @@ class Evidencia(models.Model):
 
     class Meta:
         ordering = ['subido_en']
+        constraints = [
+            # A nivel de BD: nunca puede haber dos evidencias
+            # para el mismo seminario, sin importar qué vista las cree.
+            models.UniqueConstraint(
+                fields=['seminario'],
+                name='evidencia_unica_por_seminario',
+            ),
+        ]
 
     def save(self, *args, **kwargs):
-        # Determina el tipo automáticamente por extensión
         if self.archivo:
             ext = os.path.splitext(self.archivo.name)[1].lower()
             if ext in ('.jpg', '.jpeg', '.png', '.gif', '.webp'):
@@ -213,8 +216,6 @@ class Evidencia(models.Model):
             else:
                 self.tipo = 'otro'
 
-            # Usa el nombre del archivo como nombre legible
-            # si no se proporcionó
             if not self.nombre:
                 self.nombre = os.path.basename(self.archivo.name)
 
@@ -223,7 +224,43 @@ class Evidencia(models.Model):
     def __str__(self):
         return f"Evidencia [{self.tipo}] — Seminario {self.seminario_id}"
 
+# ─────────────────────────────────────────────
+# ProyectoInvestigacion
+# PDF que el alumno sube durante su primer semestre.
+# Un solo documento por alumno (se reemplaza si sube uno nuevo).
+# ─────────────────────────────────────────────
+def proyecto_investigacion_upload_path(instance, filename):
+    """Guarda en: proyectos_investigacion/<alumno_id>/<filename>"""
+    return os.path.join(
+        'proyectos_investigacion',
+        str(instance.alumno_id),
+        filename,
+    )
 
+
+class ProyectoInvestigacion(models.Model):
+    alumno = models.OneToOneField(
+        'Alumno',
+        on_delete=models.CASCADE,
+        related_name='proyecto_investigacion_doc',
+    )
+    archivo = models.FileField(upload_to=proyecto_investigacion_upload_path)
+    nombre_archivo = models.CharField(max_length=200, blank=True)
+    subido_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Proyecto de investigación"
+        verbose_name_plural = "Proyectos de investigación"
+
+    def save(self, *args, **kwargs):
+        if self.archivo and not self.nombre_archivo:
+            self.nombre_archivo = os.path.basename(self.archivo.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Proyecto de investigación — {self.alumno}"
+
+    
 class SolicitudCambioComite(models.Model):
     ROLES = [
         ('tutor',       'Tutor'),

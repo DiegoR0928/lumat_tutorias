@@ -1,255 +1,267 @@
-:root {
-  --lumat-bg:             #F7F4EF;
-  --lumat-surface:        #FFFFFF;
-  --lumat-border:         #E2DDD5;
-  --lumat-border-strong:  #C8C0B4;
-  --lumat-text:           #1C1916;
-  --lumat-muted:          #6B6560;
-  --lumat-accent:         #4a7c7a;
-  --lumat-accent-bg:      #EBF2F9;
-  --lumat-accent-light:   #D0E4F3;
-  --lumat-success:        #2D6A4F;
-  --lumat-success-bg:     #EDFAF3;
-  --lumat-success-border: #A8D8C0;
-  --lumat-radius:         10px;
-  --lumat-radius-sm:      6px;
+body {
+    background: #ede9e0;
 }
 
-body { font-family: 'DM Sans', sans-serif; background: var(--lumat-bg); color: var(--lumat-text); }
-
-.cal-page { 
-  max-width: 1400px; 
-  margin: 0 auto; 
-  padding: 32px 24px 48px; 
-}
-
-/* Layout con dos columnas */
-.cal-layout {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
-  margin-top: 20px;
-}
-
-/* Breadcrumb */
-.cal-breadcrumb { 
-  display: flex; 
-  align-items: center; 
-  gap: 6px; 
-  font-size: 13px; 
-  color: var(--lumat-muted); 
-  margin-bottom: 20px; 
-}
-.cal-breadcrumb a { 
-  color: var(--lumat-accent); 
-  text-decoration: none; 
-}
-.cal-breadcrumb a:hover { 
-  text-decoration: underline; 
+.cal-page {
+    min-height: 90vh;
+    background: #ede9e0;
+    padding: 1.5rem 1rem 2.5rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 /* Header */
-.cal-header { 
-  margin-bottom: 20px; 
-}
-.cal-title { 
-  font-family: 'DM Serif Display', serif; 
-  font-size: 28px; 
-  margin: 0 0 6px; 
-  color: var(--lumat-text);
-}
-.cal-sub { 
-  font-size: 14px; 
-  color: var(--lumat-muted); 
-  margin: 0; 
+.panel-header-integrated {
+    border-bottom: 1px solid #ddd4c3;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
 }
 
-/* Panel lateral - Información del periodo */
+.eyebrow {
+    font-family: 'Georgia', serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #4a7c7a;
+    font-weight: bold;
+    margin: 0 0 4px;
+}
+
+.card-title {
+    font-family: 'Georgia', serif;
+    font-size: 1.4rem;
+    color: #4a3f32;
+    font-weight: normal;
+    margin: 0;
+    letter-spacing: 0.02em;
+}
+
+/* Layout de dos columnas */
+.cal-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Estilo base compartido de panel (igual que el resto del sistema) */
+.panel-card {
+    background: #f7f4ef;
+    border: 1px solid #c8b89a;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(74, 63, 50, 0.08);
+    overflow: hidden;
+}
+
+/* PANEL LATERAL — Información del periodo */
 .cal-sidebar {
-  background: var(--lumat-surface);
-  border: 0.5px solid var(--lumat-border);
-  border-radius: var(--lumat-radius);
-  overflow: hidden;
-  position: sticky;
-  top: 24px;
+    border-top: 3px solid #8a7560;
+    position: sticky;
+    top: 24px;
 }
 
 .cal-sidebar-header {
-  background: var(--lumat-accent);
-  color: white;
-  padding: 16px 20px;
-  border-bottom: none;
+    background: #4a7c7a;
+    color: #fff;
+    padding: 14px 20px;
 }
 
 .cal-sidebar-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cal-sidebar-header h3 i {
-  font-size: 18px;
+    margin: 0;
+    font-family: 'Georgia', serif;
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .cal-sidebar-body {
-  padding: 20px;
+    padding: 20px 22px;
 }
 
 .cal-info-item {
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 0.5px solid var(--lumat-border);
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #eee8de;
 }
 
 .cal-info-item:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .cal-info-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-  color: var(--lumat-muted);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+    font-family: 'Georgia', serif;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: bold;
+    color: #4a7c7a;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .cal-info-value {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--lumat-text);
-  word-break: break-word;
+    font-family: 'Georgia', serif;
+    font-size: 0.88rem;
+    color: #4a3f32;
+    word-break: break-word;
 }
 
 .cal-info-value strong {
-  font-size: 18px;
-  color: var(--lumat-accent);
+    font-size: 1.05rem;
+    color: #4a7c7a;
+    font-weight: bold;
 }
 
-/* Panel principal - Visor PDF */
+.cal-info-value small {
+    color: #a89880;
+}
+
+/* PANEL PRINCIPAL — Visor PDF */
 .cal-main {
-  background: var(--lumat-surface);
-  border: 0.5px solid var(--lumat-border);
-  border-radius: var(--lumat-radius);
-  overflow: hidden;
+    border-top: 3px solid #4a7c7a;
 }
 
-.cal-pdf-toolbar {
-  padding: 12px 20px;
-  border-bottom: 0.5px solid var(--lumat-border);
-  background: var(--lumat-bg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+.pdf-header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 20px;
+    border-bottom: 1px solid #ddd4c3;
+    background: #fdfbf7;
 }
 
-.cal-pdf-toolbar span { 
-  font-size: 13px; 
-  color: var(--lumat-muted); 
-  display: flex; 
-  align-items: center; 
-  gap: 6px; 
-  font-weight: 500;
+.pdf-header-container span {
+    font-family: 'Georgia', serif;
+    font-size: 0.8rem;
+    color: #8a7560;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
 }
 
-.cal-pdf-actions { 
-  display: flex; 
-  gap: 8px; 
+.pdf-toolbar-actions {
+    display: flex;
+    gap: 10px;
 }
 
-.cal-pdf-btn {
-  display: inline-flex; 
-  align-items: center; 
-  gap: 6px;
-  padding: 6px 14px; 
-  font-size: 13px;
-  border: 0.5px solid var(--lumat-border-strong);
-  border-radius: var(--lumat-radius-sm);
-  background: var(--lumat-surface); 
-  color: var(--lumat-muted);
-  text-decoration: none; 
-  transition: all .15s;
-}
-.cal-pdf-btn:hover { 
-  background: var(--lumat-accent-bg); 
-  color: var(--lumat-accent); 
-  border-color: var(--lumat-accent-light); 
-  text-decoration: none; 
+.btn-pdf {
+    font-family: 'Georgia', serif;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid #4a7c7a;
+    background: #d6eae9;
+    color: #2e6462;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .15s;
 }
 
-.cal-pdf-frame { 
-  width: 100%; 
-  height: 700px; 
-  border: none; 
-  display: block; 
-  background: #f0ede8; 
+.btn-pdf:hover {
+    background: #c0dedd;
+    text-decoration: none;
+}
+
+.cal-pdf-frame {
+    width: 100%;
+    height: 700px;
+    border: none;
+    display: block;
+    background: #f0ede8;
+}
+
+/* Botón volver (arriba de la página) */
+.top-actions-container {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.btn-secondary-custom {
+    font-family: 'Georgia', serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid #c8b89a;
+    background: #f7f4ef;
+    color: #6b5b47;
+    text-decoration: none;
+    transition: background .15s;
+    display: inline-block;
+}
+
+.btn-secondary-custom:hover {
+    background: #e8e0d4;
+    color: #4a3f32;
+    text-decoration: none;
 }
 
 /* Estado vacío */
 .cal-empty {
-  background: var(--lumat-surface);
-  border: 0.5px solid var(--lumat-border);
-  border-radius: var(--lumat-radius);
-  padding: 80px 32px;
-  text-align: center;
-  color: var(--lumat-muted);
-}
-.cal-empty i { 
-  font-size: 64px; 
-  color: var(--lumat-border-strong); 
-  display: block; 
-  margin-bottom: 20px; 
-}
-.cal-empty p { 
-  font-size: 15px; 
-  margin: 0; 
+    background: #f7f4ef;
+    border: 1px dashed #c8b89a;
+    border-radius: 10px;
+    padding: 70px 32px;
+    text-align: center;
+    color: #8a7560;
 }
 
-/* Botón volver */
-.cal-back-btn {
-  display: inline-flex; 
-  align-items: center; 
-  gap: 6px;
-  font-size: 13px; 
-  color: var(--lumat-muted);
-  padding: 8px 16px; 
-  border: 0.5px solid var(--lumat-border-strong);
-  border-radius: var(--lumat-radius-sm);
-  background: var(--lumat-surface); 
-  text-decoration: none;
-  transition: all .15s;
+.cal-empty i {
+    font-size: 56px;
+    color: #c8b89a;
+    display: block;
+    margin-bottom: 18px;
 }
-.cal-back-btn:hover { 
-  background: var(--lumat-bg); 
-  color: var(--lumat-text); 
-  text-decoration: none; 
+
+.cal-empty p {
+    font-family: 'Georgia', serif;
+    font-size: 0.92rem;
+    font-style: italic;
+    margin: 0;
+}
+
+.cal-empty p + p {
+    margin-top: 8px;
+    color: #a89880;
 }
 
 /* Responsive */
+@media (max-width: 900px) {
+    .cal-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .cal-sidebar {
+        position: static;
+    }
+}
+
 @media (max-width: 768px) {
-  .cal-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .cal-sidebar {
-    position: static;
-  }
-  
-  .cal-page {
-    padding: 20px 16px;
-  }
-  
-  .cal-pdf-frame {
-    height: 450px;
-  }
+    .cal-page {
+        padding: 1rem 0.75rem 2rem;
+    }
+
+    .cal-pdf-frame {
+        height: 450px;
+    }
 }

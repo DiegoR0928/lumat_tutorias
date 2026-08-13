@@ -2,37 +2,29 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/calendario.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
 <div class="cal-page">
 
-  {# Breadcrumb #}
-  <nav class="cal-breadcrumb" aria-label="Ruta de navegación">
-    <a href="javascript:history.back()">
-      <i class="ti ti-arrow-left" aria-hidden="true"></i>
-      Volver
-    </a>
-    <i class="ti ti-chevron-right" aria-hidden="true"></i>
-    <span>Calendario académico</span>
-  </nav>
+  {# Botón volver #}
+  <div class="top-actions-container">
+    <a href="javascript:history.back()" class="btn-secondary-custom">← Volver</a>
+  </div>
 
   {# Header #}
-  <div class="cal-header">
-    <h1 class="cal-title">Calendario académico</h1>
+  <div class="panel-header-integrated">
+    <p class="eyebrow">Coordinación académica</p>
+    <h1 class="card-title">Calendario académico</h1>
   </div>
 
   {% if calendario %}
-    
-    {# Layout de dos columnas #}
+
     <div class="cal-layout">
-      
-      {# PANEL LATERAL - Información del periodo #}
-      <aside class="cal-sidebar">
+
+      <!-- PANEL LATERAL: INFORMACIÓN DEL PERIODO -->
+      <aside class="panel-card cal-sidebar">
         <div class="cal-sidebar-header">
           <h3>
             <i class="ti ti-info-circle" aria-hidden="true"></i>
@@ -40,6 +32,7 @@
           </h3>
         </div>
         <div class="cal-sidebar-body">
+
           <div class="cal-info-item">
             <div class="cal-info-label">
               <i class="ti ti-calendar-event" aria-hidden="true"></i>
@@ -49,7 +42,7 @@
               <strong>{{ calendario.nombre }}</strong>
             </div>
           </div>
-          
+
           <div class="cal-info-item">
             <div class="cal-info-label">
               <i class="ti ti-calendar" aria-hidden="true"></i>
@@ -58,10 +51,10 @@
             <div class="cal-info-value">
               {{ calendario.fecha_inicio|date:"l d \d\e F \d\e Y" }}
               <br>
-              <small style="color: var(--lumat-muted);">{{ calendario.fecha_inicio|date:"d/m/Y" }}</small>
+              <small>{{ calendario.fecha_inicio|date:"d/m/Y" }}</small>
             </div>
           </div>
-          
+
           <div class="cal-info-item">
             <div class="cal-info-label">
               <i class="ti ti-calendar-due" aria-hidden="true"></i>
@@ -70,10 +63,10 @@
             <div class="cal-info-value">
               {{ calendario.fecha_fin|date:"l d \d\e F \d\e Y" }}
               <br>
-              <small style="color: var(--lumat-muted);">{{ calendario.fecha_fin|date:"d/m/Y" }}</small>
+              <small>{{ calendario.fecha_fin|date:"d/m/Y" }}</small>
             </div>
           </div>
-          
+
           <div class="cal-info-item">
             <div class="cal-info-label">
               <i class="ti ti-clock" aria-hidden="true"></i>
@@ -82,10 +75,10 @@
             <div class="cal-info-value">
               {{ calendario.fecha_creacion|date:"l d \d\e F \d\e Y" }}
               <br>
-              <small style="color: var(--lumat-muted);">{{ calendario.fecha_creacion|date:"H:i" }} hrs</small>
+              <small>{{ calendario.fecha_creacion|date:"H:i" }} hrs</small>
             </div>
           </div>
-          
+
           {% if calendario.dias_habiles %}
           <div class="cal-info-item">
             <div class="cal-info-label">
@@ -97,7 +90,7 @@
             </div>
           </div>
           {% endif %}
-          
+
           {% if calendario.periodo_extraordinario %}
           <div class="cal-info-item">
             <div class="cal-info-label">
@@ -109,7 +102,7 @@
             </div>
           </div>
           {% endif %}
-          
+
           {% if calendario.periodo_tesis %}
           <div class="cal-info-item">
             <div class="cal-info-label">
@@ -121,21 +114,22 @@
             </div>
           </div>
           {% endif %}
+
         </div>
       </aside>
-      
-      {# PANEL PRINCIPAL - Visor PDF #}
-      <main class="cal-main">
-        <div class="cal-pdf-toolbar">
+
+      <!-- PANEL PRINCIPAL: VISOR PDF -->
+      <main class="panel-card cal-main">
+        <div class="pdf-header-container">
           <span>
             <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
-            {{ calendario.nombre }} - Documento oficial
+            {{ calendario.nombre }} — Documento oficial
           </span>
-          <div class="cal-pdf-actions">
-            <a href="{{ calendario.archivo_pdf.url }}" target="_blank" class="cal-pdf-btn">
+          <div class="pdf-toolbar-actions">
+            <a href="{{ calendario.archivo_pdf.url }}" target="_blank" class="btn-pdf">
               <i class="ti ti-external-link" aria-hidden="true"></i> Abrir
             </a>
-            <a href="{{ calendario.archivo_pdf.url }}" download class="cal-pdf-btn">
+            <a href="{{ calendario.archivo_pdf.url }}" download class="btn-pdf">
               <i class="ti ti-download" aria-hidden="true"></i> Descargar
             </a>
           </div>
@@ -147,26 +141,19 @@
           loading="lazy">
         </iframe>
       </main>
-      
+
     </div>
 
   {% else %}
 
     {# Estado vacío #}
-    <div class="cal-empty" id="cal-empty">
+    <div class="cal-empty">
       <i class="ti ti-calendar-off" aria-hidden="true"></i>
       <p>Aún no hay un calendario publicado por la coordinación.</p>
-      <p style="font-size: 13px; margin-top: 12px;">Consulta más tarde o contacta con la coordinación académica.</p>
+      <p>Consulta más tarde o contacta con la coordinación académica.</p>
     </div>
 
   {% endif %}
 
 </div>
-
-<script>
-  // Script opcional para manejar errores de carga del PDF
-  document.getElementById('cal-iframe')?.addEventListener('error', function() {
-    console.warn('El PDF no pudo cargarse correctamente');
-  });
-</script>
 {% endblock %}

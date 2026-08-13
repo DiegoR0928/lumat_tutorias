@@ -38,7 +38,9 @@ urlpatterns = [
           views_docente.descargar_evidencias_zip,
           name='docente_descargar_evidencias_zip'
      ),
-
+     path('docente/seminario/<int:seminario_id>/firmar-acta-alumno/',
+          views_docente.docente_firmar_acta_alumno,
+          name='docente_firmar_acta_alumno'),
      #   path('alumno/seminario/', views.seminario, name='seminario'),
      path('alumno/seminario/<int:num>/',
           views.seminario_detalle, name='seminario_detalle'),
@@ -49,9 +51,8 @@ urlpatterns = [
           views.generar_acta_view, name='generar_acta'),
      path('alumno/seminario/<int:seminario_id>/subir-acta/<str:tipo>/',
           views.subir_acta_manual, name='subir_acta_manual'),
-     path('docente/seminario/<int:seminario_id>/firmar-acta-alumno/',
-          views_docente.docente_firmar_acta_alumno,
-          name='docente_firmar_acta_alumno'),
+     path('seminario/proyecto-investigacion/subir/', views.subir_proyecto_investigacion,
+          name='subir_proyecto_investigacion'),
 
      path('alumno/tutor/cambio/', views.cambio_tutor, name='cambio_tutor'),
 

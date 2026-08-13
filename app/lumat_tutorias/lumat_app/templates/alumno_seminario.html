@@ -608,6 +608,64 @@
       </div>
     </div>
 
+    {# — Proyecto de Investigación (solo primer semestre) — #}
+    {% if num == 1 %}
+    <div class="panel-card">
+      <div class="panel-card-header">
+        <i class="ti ti-file-description" aria-hidden="true"></i>
+        Proyecto de Investigación
+      </div>
+      <div class="panel-card-body">
+
+        {% if proyecto_investigacion %}
+        <div class="ev-item">
+          <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
+          <span class="ev-item-name" title="{{ proyecto_investigacion.nombre_archivo }}">
+            {{ proyecto_investigacion.nombre_archivo }}
+          </span>
+          <span class="ev-item-date">{{ proyecto_investigacion.subido_en|date:"d/m/y" }}</span>
+        </div>
+        <div class="pdf-actions" style="margin-top:10px; margin-bottom:4px;">
+          <a href="{{ proyecto_investigacion.archivo.url }}" target="_blank" class="pdf-btn">
+            <i class="ti ti-external-link" aria-hidden="true"></i> Abrir
+          </a>
+          <a href="{{ proyecto_investigacion.archivo.url }}" download class="pdf-btn">
+            <i class="ti ti-download" aria-hidden="true"></i> Descargar
+          </a>
+        </div>
+        {% else %}
+        <p class="ev-empty">
+          Aún no has subido tu proyecto de investigación. Este documento es obligatorio durante tu primer semestre.
+        </p>
+        {% endif %}
+
+        <hr class="ev-form-divider">
+
+        <label for="proyecto-archivo" class="ev-form-label">
+          {% if proyecto_investigacion %}Reemplazar proyecto{% else %}Subir proyecto de investigación{% endif %}
+        </label>
+
+        <form method="post" action="{% url 'lumat_app:subir_proyecto_investigacion' %}"
+          enctype="multipart/form-data" id="proyecto-form">
+          {% csrf_token %}
+
+          <input type="file" id="proyecto-archivo" name="archivo" class="ev-file-input" accept="application/pdf">
+          <label for="proyecto-archivo" class="ev-file-label" id="proyecto-file-label">
+            <i class="ti ti-upload" aria-hidden="true"></i>
+            <span id="proyecto-file-text">Seleccionar PDF…</span>
+          </label>
+          <p class="ev-error-msg" id="err-proyecto-archivo" style="display: none;">
+            Solo se permiten archivos PDF (máx. 10 MB).
+          </p>
+
+          <button type="submit" class="ev-submit-btn" id="proyecto-submit">
+            {% if proyecto_investigacion %}Reemplazar PDF{% else %}Subir proyecto{% endif %}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
     {# — Evidencias — #}
     <div class="panel-card">
       <div class="panel-card-header">
@@ -632,7 +690,9 @@
         {% if seminario and not seminario.calificacion %}
         <hr class="ev-form-divider">
 
-        <label for="ev-nombre" class="ev-form-label">Cargar actividad</label>
+        <label for="ev-nombre" class="ev-form-label">
+          {% if evidencias %}Reemplazar documento{% else %}Cargar documento{% endif %}
+        </label>
 
         <form method="post" action="{% url 'lumat_app:subir_evidencia' seminario.id %}" enctype="multipart/form-data"
           id="ev-form">
@@ -650,7 +710,9 @@
           <p class="ev-error-msg" id="err-archivo" style="display: none;">Solo se permiten archivos PDF (máx. 10 MB).
           </p>
 
-          <button type="submit" class="ev-submit-btn" id="ev-submit">Cargar actividad</button>
+          <button type="submit" class="ev-submit-btn" id="ev-submit">
+            {% if evidencias %}Reemplazar PDF{% else %}Cargar documento{% endif %}
+          </button>
         </form>
         {% endif %}
       </div>
@@ -685,6 +747,15 @@
       fileInput.addEventListener('change', function (e) {
         const fileName = e.target.files[0] ? e.target.files[0].name : "Seleccionar PDF…";
         const textSpan = document.getElementById('ev-file-text');
+        if (textSpan) textSpan.textContent = fileName;
+      });
+    }
+
+    const proyectoInput = document.getElementById('proyecto-archivo');
+    if (proyectoInput) {
+      proyectoInput.addEventListener('change', function (e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : "Seleccionar PDF…";
+        const textSpan = document.getElementById('proyecto-file-text');
         if (textSpan) textSpan.textContent = fileName;
       });
     }

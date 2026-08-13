@@ -262,9 +262,15 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn-primary-custom" style="margin-top: 10px; margin-bottom: 6px;" {% if ya_firme %}disabled style="opacity:0.5; cursor:not-allowed;"{% endif %}>
-                            {% if ya_firme %}Informe Guardado{% else %}Guardar informe{% endif %}
+                        {% if not ya_firme %}
+                        <button type="submit" class="btn-primary-custom" style="margin-top: 10px; margin-bottom: 6px;">
+                            Guardar informe
                         </button>
+                        {% else %}
+                        <div class="success-box" style="text-align:center; padding:8px; font-size:0.78rem; margin-top:10px;">
+                            Informe guardado con éxito.
+                        </div>
+                        {% endif %}
                     </form>
 
                 {% else %}
@@ -332,112 +338,116 @@
         <div class="panel-card panel-signatures">
             <p class="section-label">Firmas y Notas</p>
 
-            <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:8px;">Acta Comité</p>
-            <div class="firmas-mini-list" style="margin-bottom:14px;">
+            <!-- Sincronizado con las pestañas Formulario / Acta Comité -->
+            <div id="panel-firmas-comite" class="acta-side-panel active">
 
-                {% for docente_obj, rol_label, campo_firma, campo_calif in firmas_comite %}
-                <div class="firma-mini-row">
-                    <div class="firma-mini-meta">
-                        <div class="firma-mini-name">{{ docente_obj.nombre }} {{ docente_obj.apellido_paterno }}</div>
-                        <div class="firma-mini-role">{{ rol_label }}</div>
+                <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:8px;">Acta Comité</p>
+                <div class="firmas-mini-list" style="margin-bottom:14px;">
+
+                    {% for docente_obj, rol_label, campo_firma, campo_calif in firmas_comite %}
+                    <div class="firma-mini-row">
+                        <div class="firma-mini-meta">
+                            <div class="firma-mini-name">{{ docente_obj.nombre }} {{ docente_obj.apellido_paterno }}</div>
+                            <div class="firma-mini-role">{{ rol_label }}</div>
+                        </div>
+                        <div>
+                            {% if campo_firma %}
+                                <span class="sello-aprobado-mini">APROBADO</span>
+                                <div class="calif-val-mini" style="text-align:right;">{{ campo_calif }}</div>
+                            {% else %}
+                                <span class="pendiente-label-mini">Pendiente</span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div>
-                        {% if campo_firma %}
-                            <span class="sello-aprobado-mini">APROBADO</span>
-                            <div class="calif-val-mini" style="text-align:right;">{{ campo_calif }}</div>
-                        {% else %}
-                            <span class="pendiente-label-mini">Pendiente</span>
-                        {% endif %}
-                    </div>
+                    {% endfor %}
+
                 </div>
-                {% endfor %}
 
-            </div>
-
-            {% if formulario.calificacion_final %}
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:14px; background:#fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd4c3;">
-                <span style="font-family:'Georgia',serif; font-size:0.7rem; color:#8a7560; text-transform:uppercase; letter-spacing:0.05em; max-width:60%;">Promedio Final:</span>
-                <span style="font-family:'Georgia',serif; font-size:1.35rem; color:#4a3f32; font-weight:bold;">{{ formulario.calificacion_final }}</span>
-            </div>
-            {% endif %}
-
-            {% if not ya_firme and firma_form %}
-            <div class="firma-box" style="margin-bottom: 10px;">
-                <p class="section-label" style="margin-bottom:8px; color:#8a7560; font-size:0.62rem;">Registrar Firma</p>
-                <form method="post" action="{% url 'lumat_app:docente_firmar_seminario' seminario.id %}">
-                    {% csrf_token %}
-                    <div style="margin-bottom:8px;">
-                        <label style="font-size:0.68rem;">{{ firma_form.calificacion.label }}</label>
-                        {{ firma_form.calificacion }}
-                        {% if firma_form.calificacion.errors %}
-                            <p style="color:#c0392b; font-size:0.72rem; margin-top:2px;">{{ firma_form.calificacion.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="firma-check-row">
-                        {{ firma_form.confirmar_firma }}
-                        <label for="{{ firma_form.confirmar_firma.id_for_label }}">{{ firma_form.confirmar_firma.label }}</label>
-                    </div>
-                    <div style="margin-top:10px;">
-                        <button type="submit" class="btn-primary-custom" style="width:100%; padding: 6px 0;">Firmar</button>
-                    </div>
-                </form>
-            </div>
-            {% elif ya_firme %}
-            <div class="success-box" style="text-align: center; padding: 8px; font-size:0.78rem;">Firma registrada con éxito.</div>
-            {% endif %}
-
-            {% if formulario.estado_general == 'completo' %}
-            <hr class="section-divider" style="margin: 12px 0;">
-            {% endif %}
-
-            {% if acta_alumno %}
-            <hr class="section-divider" style="margin: 14px 0;">
-            <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:8px;">Acta Alumno</p>
-
-            <div class="firmas-mini-list" style="margin-bottom:12px;">
-                {% for docente_obj, rol_label, firmado in firmas_alumno %}
-                <div class="firma-mini-row">
-                    <div class="firma-mini-meta">
-                        <div class="firma-mini-name">{{ docente_obj.nombre }} {{ docente_obj.apellido_paterno }}</div>
-                        <div class="firma-mini-role">{{ rol_label }}</div>
-                    </div>
-                    <div>
-                        {% if firmado %}
-                            <span class="sello-aprobado-mini">AUTORIZADO</span>
-                        {% else %}
-                            <span class="pendiente-label-mini">Pendiente</span>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if rol == 'director' or rol == 'coodirector' %}
-                {% if not ya_firme_alumno %}
-                <form method="post" action="{% url 'lumat_app:docente_firmar_acta_alumno' seminario.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-primary-custom" style="width:100%; padding:6px 0; font-size:0.82rem;">
-                        Autorizar acta del alumno
-                    </button>
-                </form>
-                {% else %}
-                <div class="success-box" style="text-align:center; padding:8px; font-size:0.78rem;">
-                    Acta del alumno autorizada.
+                {% if formulario.calificacion_final %}
+                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:14px; background:#fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd4c3;">
+                    <span style="font-family:'Georgia',serif; font-size:0.7rem; color:#8a7560; text-transform:uppercase; letter-spacing:0.05em; max-width:60%;">Promedio Final:</span>
+                    <span style="font-family:'Georgia',serif; font-size:1.35rem; color:#4a3f32; font-weight:bold;">{{ formulario.calificacion_final }}</span>
                 </div>
                 {% endif %}
-            {% else %}
-                <div class="info-box" style="text-align:center; padding:8px; font-size:0.78rem; color:#a89880; font-style:italic;">
-                    Solo el director y el codirector pueden autorizar esta acta.
-                </div>
-            {% endif %}
 
-            {% else %}
-            <hr class="section-divider" style="margin: 14px 0;">
-            <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:6px;">Acta Alumno</p>
-            <p style="font-size:0.78rem; color:#a89880; font-style:italic; margin:0;">
-                El alumno aún no ha generado su acta.
-            </p>
-            {% endif %}
+                {% if not ya_firme and firma_form %}
+                <div class="firma-box" style="margin-bottom: 10px;">
+                    <p class="section-label" style="margin-bottom:8px; color:#8a7560; font-size:0.62rem;">Registrar Firma</p>
+                    <form method="post" action="{% url 'lumat_app:docente_firmar_seminario' seminario.id %}">
+                        {% csrf_token %}
+                        <div style="margin-bottom:8px;">
+                            <label style="font-size:0.68rem;">{{ firma_form.calificacion.label }}</label>
+                            {{ firma_form.calificacion }}
+                            {% if firma_form.calificacion.errors %}
+                                <p style="color:#c0392b; font-size:0.72rem; margin-top:2px;">{{ firma_form.calificacion.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="firma-check-row">
+                            {{ firma_form.confirmar_firma }}
+                            <label for="{{ firma_form.confirmar_firma.id_for_label }}">{{ firma_form.confirmar_firma.label }}</label>
+                        </div>
+                        <div style="margin-top:10px;">
+                            <button type="submit" class="btn-primary-custom" style="width:100%; padding: 6px 0;">Firmar</button>
+                        </div>
+                    </form>
+                </div>
+                {% elif ya_firme %}
+                <div class="success-box" style="text-align: center; padding: 8px; font-size:0.78rem;">Firma registrada con éxito.</div>
+                {% endif %}
+
+            </div>
+
+            <!-- Sincronizado con la pestaña Acta Alumno -->
+            <div id="panel-firmas-alumno" class="acta-side-panel">
+
+                {% if acta_alumno %}
+                <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:8px;">Acta Alumno</p>
+
+                <div class="firmas-mini-list" style="margin-bottom:12px;">
+                    {% for docente_obj, rol_label, firmado in firmas_alumno %}
+                    <div class="firma-mini-row">
+                        <div class="firma-mini-meta">
+                            <div class="firma-mini-name">{{ docente_obj.nombre }} {{ docente_obj.apellido_paterno }}</div>
+                            <div class="firma-mini-role">{{ rol_label }}</div>
+                        </div>
+                        <div>
+                            {% if firmado %}
+                                <span class="sello-aprobado-mini">AUTORIZADO</span>
+                            {% else %}
+                                <span class="pendiente-label-mini">Pendiente</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if rol == 'director' or rol == 'coodirector' %}
+                    {% if not ya_firme_alumno %}
+                    <form method="post" action="{% url 'lumat_app:docente_firmar_acta_alumno' seminario.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary-custom" style="width:100%; padding:6px 0; font-size:0.82rem;">
+                            Autorizar acta del alumno
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="success-box" style="text-align:center; padding:8px; font-size:0.78rem;">
+                        Acta del alumno autorizada.
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="info-box" style="text-align:center; padding:8px; font-size:0.78rem; color:#a89880; font-style:italic;">
+                        Solo el director y el codirector pueden autorizar esta acta.
+                    </div>
+                {% endif %}
+
+                {% else %}
+                <p class="section-label" style="font-size:0.62rem; color:#8a7560; margin-bottom:6px;">Acta Alumno</p>
+                <p style="font-size:0.78rem; color:#a89880; font-style:italic; margin:0;">
+                    El alumno aún no ha generado su acta.
+                </p>
+                {% endif %}
+
+            </div>
 
         </div>
 
@@ -448,13 +458,27 @@
   function switchTab(tabId) {
     document.querySelectorAll('.acta-tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.acta-tab-content').forEach(content => content.classList.remove('active'));
-    
+
     const targetContent = document.getElementById(tabId);
     if(targetContent) targetContent.classList.add('active');
-    
+
     if (tabId === 'form-tab') document.getElementById('btn-form-tab').classList.add('active');
     if (tabId === 'comite-tab') document.getElementById('btn-comite-tab').classList.add('active');
     if (tabId === 'alumno-tab') document.getElementById('btn-alumno-tab').classList.add('active');
+
+    // Sincronizar el panel derecho de firmas con la pestaña activa
+    const panelFirmasComite = document.getElementById('panel-firmas-comite');
+    const panelFirmasAlumno = document.getElementById('panel-firmas-alumno');
+
+    if (panelFirmasComite && panelFirmasAlumno) {
+      if (tabId === 'alumno-tab') {
+        panelFirmasComite.classList.remove('active');
+        panelFirmasAlumno.classList.add('active');
+      } else {
+        panelFirmasAlumno.classList.remove('active');
+        panelFirmasComite.classList.add('active');
+      }
+    }
   }
 
   document.addEventListener('DOMContentLoaded', function() {

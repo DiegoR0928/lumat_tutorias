@@ -631,6 +631,16 @@ body {
     display: block !important;
 }
 
+/* Panel derecho (Firmas y Notas): se sincroniza con la pestaña
+   activa del panel central mediante la misma clase 'active' */
+.panel-signatures .acta-side-panel {
+    display: none !important;
+}
+
+.panel-signatures .acta-side-panel.active {
+    display: block !important;
+}
+
 /* Visor de PDF */
 .docente-pdf-frame {
     width: 100%;

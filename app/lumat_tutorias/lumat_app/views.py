@@ -15,7 +15,7 @@ import random
 from django.core.files.base import ContentFile
 from django.db.models import Count, Q
 
-from .models import ActaAlumnoData, Alumno, Docente, FormularioComite, SolicitudCambioComite
+from .models import ActaAlumnoData, Alumno, Docente, FormularioComite, ProyectoInvestigacion, SolicitudCambioComite
 from .models import Seminario, CalendarioGenerado, Comite
 from django.utils import timezone
 from django.core.files.base import ContentFile
@@ -207,6 +207,8 @@ def seminario_detalle(request, num):
             (c.asesor,      'Asesor'),
         ]
 
+    proyecto_investigacion = ProyectoInvestigacion.objects.filter(alumno=alumno).first()
+
     context = {
         'alumno':               alumno,
         'num':                  num,
@@ -224,6 +226,7 @@ def seminario_detalle(request, num):
         # Flags para mostrar la opción discreta de subida manual
         'puede_subir_acta_comite': seminario_obj is not None and not acta_comite_url,
         'puede_subir_acta_alumno': seminario_obj is not None and not getattr(seminario_obj, 'actaAlumno', None),
+        'proyecto_investigacion': proyecto_investigacion,
     }
 
     return render(request, 'alumno_seminario.html', context)
@@ -297,11 +300,8 @@ def generar_acta_view(request, num):
     return redirect("lumat_app:seminario_detalle", num=num)
 
 
-# ─────────────────────────────────────────────
-# Vista: subir evidencia
-# ─────────────────────────────────────────────
-
 @login_required
+@user_passes_test(es_alumno)
 def subir_evidencia(request, seminario_id):
     alumno = request.user.alumno
     seminario_obj = get_object_or_404(
@@ -319,36 +319,72 @@ def subir_evidencia(request, seminario_id):
         return redirect('lumat_app:seminario_detalle',
                         num=seminario_obj.numero)
 
-    # Validación de tamaño (máx. 10 MB)
     MAX_SIZE = 10 * 1024 * 1024
     if archivo.size > MAX_SIZE:
         messages.error(request, "El archivo no puede superar 10 MB.")
         return redirect('lumat_app:seminario_detalle',
                         num=seminario_obj.numero)
 
-    # Validación de tipo MIME básica
-    TIPOS_PERMITIDOS = (
-        # 'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-        'application/pdf',
-    )
+    TIPOS_PERMITIDOS = ('application/pdf',)
     if archivo.content_type not in TIPOS_PERMITIDOS:
-        messages.error(
-            request,
-            "Solo se permiten imágenes y PDFs."
-        )
+        messages.error(request, "Solo se permite un archivo PDF.")
         return redirect('lumat_app:seminario_detalle',
                         num=seminario_obj.numero)
 
-    Evidencia.objects.create(
-        seminario=seminario_obj,
-        archivo=archivo,
-        nombre=nombre_actividad,
-    )
+    # Un solo documento por seminario: si ya había uno, se reemplaza
+    evidencia = Evidencia.objects.filter(seminario=seminario_obj).first()
+    if evidencia:
+        evidencia.archivo.delete(save=False)  # elimina el archivo físico anterior
+        evidencia.archivo = archivo
+        evidencia.nombre = nombre_actividad
+        evidencia.save()
+        messages.success(request, "El documento fue reemplazado correctamente.")
+    else:
+        Evidencia.objects.create(
+            seminario=seminario_obj,
+            archivo=archivo,
+            nombre=nombre_actividad,
+        )
+        messages.success(request, "Documento subido correctamente.")
 
-    messages.success(request, "Evidencia subida correctamente.")
     return redirect('lumat_app:seminario_detalle',
                     num=seminario_obj.numero)
 
+
+@login_required
+@user_passes_test(es_alumno)
+def subir_proyecto_investigacion(request):
+    alumno = request.user.alumno
+
+    if request.method != 'POST':
+        return redirect('lumat_app:seminario_detalle', num=1)
+
+    archivo = request.FILES.get('archivo')
+    if not archivo:
+        messages.error(request, "No se seleccionó ningún archivo.")
+        return redirect('lumat_app:seminario_detalle', num=1)
+
+    MAX_SIZE = 10 * 1024 * 1024
+    if archivo.size > MAX_SIZE:
+        messages.error(request, "El archivo no puede superar 10 MB.")
+        return redirect('lumat_app:seminario_detalle', num=1)
+
+    if archivo.content_type != 'application/pdf':
+        messages.error(request, "Solo se permite un archivo PDF.")
+        return redirect('lumat_app:seminario_detalle', num=1)
+
+    proyecto = ProyectoInvestigacion.objects.filter(alumno=alumno).first()
+    if proyecto:
+        proyecto.archivo.delete(save=False)
+        proyecto.archivo = archivo
+        proyecto.nombre_archivo = ''  # se recalcula en save()
+        proyecto.save()
+        messages.success(request, "Tu proyecto de investigación fue reemplazado correctamente.")
+    else:
+        ProyectoInvestigacion.objects.create(alumno=alumno, archivo=archivo)
+        messages.success(request, "Proyecto de investigación subido correctamente.")
+
+    return redirect('lumat_app:seminario_detalle', num=1)
 
 # ─────────────────────────────────────────────
 # Vista: solicitar cambio de tutor
