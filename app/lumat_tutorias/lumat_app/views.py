@@ -39,21 +39,29 @@ from .forms import (
 
 
 class CustomLoginView(LoginView):
-    """Maneja el inicio de sesión y redirige según el rol del usuario."""
     template_name = 'login.html'
 
     def get_success_url(self):
         user = self.request.user
 
-        # Prioridad para superusuarios o staff para ir al admin de Unfold
         if user.is_superuser or user.is_staff:
             return '/admin/'
 
-        # Redirección por grupos
         if user.groups.filter(name='Docente').exists():
             return reverse('lumat_app:docente_seminarios')
+
         elif user.groups.filter(name='Alumno').exists():
-            semestre = int(user.alumno.semestre)
+            alumno = user.alumno
+
+            # Primer inicio de sesión
+            if not alumno.perfil_completado:
+                messages.info(
+                    self.request,
+                    '¡Bienvenido! Al ser tu primer inicio de sesión, es necesario que completes tus datos personales para continuar.'
+                )
+                return reverse('lumat_app:perfil_alumno')
+
+            semestre = int(alumno.semestre)
             return reverse(
                 'lumat_app:seminario_detalle',
                 kwargs={'num': semestre}
@@ -465,7 +473,13 @@ def perfil_alumno(request):
     if request.method == 'POST':
         form = AlumnoPerfilForm(request.POST, request.FILES, instance=alumno)
         if form.is_valid():
-            form.save()
+            alumno_actualizado = form.save(commit=False)
+            
+            # Si era su primera vez, marcamos el perfil como completado
+            if not alumno_actualizado.perfil_completado:
+                alumno_actualizado.perfil_completado = True
+                
+            alumno_actualizado.save()
             messages.success(request, 'Perfil actualizado correctamente.')
             return redirect('lumat_app:perfil_alumno')
         else:

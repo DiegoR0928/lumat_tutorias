@@ -28,6 +28,8 @@ class Alumno(models.Model):
     proyecto_investigacion = models.CharField(max_length=200)
     estado = models.CharField(max_length=50, choices=[('activo', 'Activo'), ('egresado', 'Egresado'), ('dado de baja', 'Dado de baja'), ('baja temporal', 'Baja Temporal')], default='activo')
 
+    perfil_completado = models.BooleanField(default=False)
+    
     def __str__(self):
         return f"{self.nombre} {self.apellido_paterno} ({self.matricula})"
 
