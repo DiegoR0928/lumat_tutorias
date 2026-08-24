@@ -29,6 +29,31 @@ class Alumno(models.Model):
     estado = models.CharField(max_length=50, choices=[('activo', 'Activo'), ('egresado', 'Egresado'), ('dado de baja', 'Dado de baja'), ('baja temporal', 'Baja Temporal')], default='activo')
 
     perfil_completado = models.BooleanField(default=False)
+
+    @property
+    def total_seminarios_visibles(self):
+        """
+        Determina cuántos seminarios mostrar en la barra lateral.
+        - Maestría: 4 base (hasta 8 con prórroga).
+        - Doctorado: 8 base (hasta 14 con prórroga).
+        """
+        semestre_actual = int(self.semestre or 1)
+
+        if self.posgrado == 'maestria':
+            limite_maximo = 8   # 4 base + 4 prórroga
+            limite_base = 4
+        else:  # 'doctorado'
+            limite_maximo = 14  # 8 base + 6 prórroga
+            limite_base = 8
+
+        # Muestra los base, pero si va retrasado/avanzado, se expande hasta su semestre actual (con tope máximo)
+        total = max(limite_base, semestre_actual)
+        return min(total, limite_maximo)
+
+    @property
+    def lista_seminarios(self):
+        """Devuelve una lista iterable tipo [1, 2, 3, 4...]"""
+        return list(range(1, self.total_seminarios_visibles + 1))
     
     def __str__(self):
         return f"{self.nombre} {self.apellido_paterno} ({self.matricula})"

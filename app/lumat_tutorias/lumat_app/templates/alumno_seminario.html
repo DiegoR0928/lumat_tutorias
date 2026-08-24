@@ -259,27 +259,26 @@
         <h6>Mis seminarios</h6>
       </div>
       <nav class="sem-nav-list" aria-label="Navegación de seminarios">
-        {% for i in "12345678" %}
-        {% with n=forloop.counter %}
-        {% if n <= semestre_int %} <a href="{% url 'lumat_app:seminario_detalle' n %}"
-          class="sem-nav-item done {% if n == num %}active{% endif %}">
-          <span class="sem-status-dot" aria-hidden="true"></span>
-          Seminario {{ n }}
-          </a>
+        {% for n in lista_seminarios %}
+          {% if n <= semestre_int %}
+            <a href="{% url 'lumat_app:seminario_detalle' n %}"
+              class="sem-nav-item done {% if n == num %}active{% endif %}">
+              <span class="sem-status-dot" aria-hidden="true"></span>
+              Seminario {{ n }}
+            </a>
           {% elif n == semestre_int %}
-          <a href="{% url 'lumat_app:seminario_detalle' n %}"
-            class="sem-nav-item pending {% if n == num %}active{% endif %}">
-            <span class="sem-status-dot" aria-hidden="true"></span>
-            Seminario {{ n }}
-          </a>
+            <a href="{% url 'lumat_app:seminario_detalle' n %}"
+              class="sem-nav-item pending {% if n == num %}active{% endif %}">
+              <span class="sem-status-dot" aria-hidden="true"></span>
+              Seminario {{ n }}
+            </a>
           {% else %}
-          <button class="sem-nav-item locked" disabled title="Disponible en semestre {{ n }}">
-            <i class="ti ti-lock" style="font-size:12px;" aria-hidden="true"></i>
-            Seminario {{ n }}
-          </button>
+            <button class="sem-nav-item locked" disabled title="Disponible en semestre {{ n }}">
+              <i class="ti ti-lock" style="font-size:12px;" aria-hidden="true"></i>
+              Seminario {{ n }}
+            </button>
           {% endif %}
-          {% endwith %}
-          {% endfor %}
+        {% endfor %}
       </nav>
 
       {# ── Acciones rápidas ── #}

@@ -166,6 +166,13 @@ def seminario_detalle(request, num):
     alumno = request.user.alumno
     semestre = int(alumno.semestre)
 
+    if num > alumno.total_seminarios_visibles:
+        messages.warning(
+            request,
+            f"El seminario {num} no está disponible en este plan."
+        )
+        return redirect('lumat_app:seminario_detalle', num=semestre)
+
     if num > semestre:
         messages.warning(
             request,
@@ -220,6 +227,7 @@ def seminario_detalle(request, num):
     context = {
         'alumno':               alumno,
         'num':                  num,
+        'lista_seminarios': alumno.lista_seminarios,
         'seminario':            seminario_obj,
         'comite':               comite,
         'evidencias':           evidencias,
