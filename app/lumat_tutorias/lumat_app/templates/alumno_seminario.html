@@ -716,6 +716,59 @@
         {% endif %}
       </div>
     </div>
+
+    {# — Documento de Tesis (Solo en el último semestre o posteriores) — #}
+    {% if mostrar_tesis %}
+    <div class="panel-card">
+      <div class="panel-card-header">
+        <i class="ti ti-certificate" aria-hidden="true"></i>
+        Documento de Tesis
+      </div>
+      <div class="panel-card-body">
+
+        {% if alumno.tesis_pdf %}
+        <div class="ev-item">
+          <i class="ti ti-file-type-pdf" aria-hidden="true"></i>
+          <span class="ev-item-name" title="{{ alumno.tesis_pdf.name }}">
+            Tesis_Final.pdf
+          </span>
+        </div>
+        <div class="pdf-actions" style="margin-top:10px; margin-bottom:4px;">
+          <a href="{{ alumno.tesis_pdf.url }}" target="_blank" class="pdf-btn">
+            <i class="ti ti-external-link" aria-hidden="true"></i> Abrir
+          </a>
+          <a href="{{ alumno.tesis_pdf.url }}" download class="pdf-btn">
+            <i class="ti ti-download" aria-hidden="true"></i> Descargar
+          </a>
+        </div>
+        {% else %}
+        <p class="ev-empty">
+          Aún no has subido tu documento final de tesis. Este requisito es obligatorio para concluir tu posgrado.
+        </p>
+        {% endif %}
+
+        <hr class="ev-form-divider">
+
+        <label for="tesis-archivo" class="ev-form-label">
+          {% if alumno.tesis_pdf %}Reemplazar tesis{% else %}Subir documento de tesis{% endif %}
+        </label>
+
+        <form method="post" action="{% url 'lumat_app:subir_tesis' %}" enctype="multipart/form-data" id="tesis-form">
+          {% csrf_token %}
+
+          <input type="file" id="tesis-archivo" name="tesis_pdf" class="ev-file-input" accept="application/pdf" required>
+          <label for="tesis-archivo" class="ev-file-label" id="tesis-file-label">
+            <i class="ti ti-upload" aria-hidden="true"></i>
+            <span id="tesis-file-text">Seleccionar PDF…</span>
+          </label>
+
+          <button type="submit" class="ev-submit-btn" style="margin-top:10px;">
+            {% if alumno.tesis_pdf %}Reemplazar Tesis{% else %}Subir Tesis{% endif %}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
   </aside>
 
 </div>
@@ -755,6 +808,15 @@
       proyectoInput.addEventListener('change', function (e) {
         const fileName = e.target.files[0] ? e.target.files[0].name : "Seleccionar PDF…";
         const textSpan = document.getElementById('proyecto-file-text');
+        if (textSpan) textSpan.textContent = fileName;
+      });
+    }
+
+    const tesisInput = document.getElementById('tesis-archivo');
+    if (tesisInput) {
+      tesisInput.addEventListener('change', function (e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : "Seleccionar PDF…";
+        const textSpan = document.getElementById('tesis-file-text');
         if (textSpan) textSpan.textContent = fileName;
       });
     }

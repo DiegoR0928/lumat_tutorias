@@ -58,6 +58,7 @@ urlpatterns = [
 
      path('alumno/perfil/', views.perfil_alumno, name='perfil_alumno'),
      path('alumno/calendario/', views.calendario, name='calendario'),
+     path('alumno/subir-tesis/', views.subir_tesis, name='subir_tesis'),
 ]
 
 if settings.DEBUG:

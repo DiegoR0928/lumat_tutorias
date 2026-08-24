@@ -30,6 +30,25 @@ class Alumno(models.Model):
 
     perfil_completado = models.BooleanField(default=False)
 
+    tesis_pdf = models.FileField(
+        upload_to='tesis_alumnos/',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
+        verbose_name="Documento de Tesis (PDF)"
+    )
+
+    @property
+    def semestre_final_plan(self):
+        """Retorna el último semestre ordinario: 4 para Maestría, 8 para Doctorado."""
+        return 4 if self.posgrado == 'maestria' else 8
+
+    @property
+    def es_ultimo_semestre(self):
+        """Indica si el alumno está cursando su último semestre regular o posterior (prórroga)."""
+        semestre_actual = int(self.semestre or 1)
+        return semestre_actual >= self.semestre_final_plan
+
     @property
     def total_seminarios_visibles(self):
         """

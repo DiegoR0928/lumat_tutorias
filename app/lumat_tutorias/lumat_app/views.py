@@ -2,13 +2,11 @@ from collections import defaultdict
 
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import Group
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
 from django.template.loader import render_to_string
 from django.urls import reverse
-from lumat_app.acta_generador import generar_acta_alumno
 from weasyprint import HTML
 from datetime import datetime, timedelta, time
 import random
@@ -19,6 +17,7 @@ from .models import ActaAlumnoData, Alumno, Docente, FormularioComite, ProyectoI
 from .models import Seminario, CalendarioGenerado, Comite
 from django.utils import timezone
 from django.core.files.base import ContentFile
+from django.views.decorators.http import require_POST
 
 from .models import (
     Evidencia,
@@ -223,6 +222,7 @@ def seminario_detalle(request, num):
         ]
 
     proyecto_investigacion = ProyectoInvestigacion.objects.filter(alumno=alumno).first()
+    mostrar_tesis = alumno.es_ultimo_semestre and num >= alumno.semestre_final_plan
 
     context = {
         'alumno':               alumno,
@@ -243,6 +243,7 @@ def seminario_detalle(request, num):
         'puede_subir_acta_comite': seminario_obj is not None and not acta_comite_url,
         'puede_subir_acta_alumno': seminario_obj is not None and not getattr(seminario_obj, 'actaAlumno', None),
         'proyecto_investigacion': proyecto_investigacion,
+        'mostrar_tesis': mostrar_tesis,
     }
 
     return render(request, 'alumno_seminario.html', context)
@@ -402,6 +403,28 @@ def subir_proyecto_investigacion(request):
 
     return redirect('lumat_app:seminario_detalle', num=1)
 
+
+@login_required
+@user_passes_test(es_alumno)
+@require_POST
+def subir_tesis(request):
+    alumno = get_object_or_404(Alumno, user=request.user)
+
+    if 'tesis_pdf' in request.FILES:
+        archivo = request.FILES['tesis_pdf']
+        if not archivo.name.lower().endswith('.pdf'):
+            messages.error(request, 'El archivo debe estar en formato PDF.')
+        elif archivo.size > 15 * 1024 * 1024:  # Límite opcional de 15 MB
+            messages.error(request, 'El archivo de la tesis no debe exceder los 15 MB.')
+        else:
+            alumno.tesis_pdf = archivo
+            alumno.save()
+            messages.success(request, 'Tesis cargada exitosamente.')
+    else:
+        messages.error(request, 'No se seleccionó ningún archivo.')
+
+    semestre_actual = int(alumno.semestre or 1)
+    return redirect('lumat_app:seminario_detalle', num=semestre_actual)
 # ─────────────────────────────────────────────
 # Vista: solicitar cambio de tutor
 # ─────────────────────────────────────────────
