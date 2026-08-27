@@ -352,7 +352,11 @@
                         </div>
                         <div>
                             {% if campo_firma %}
-                                <span class="sello-aprobado-mini">APROBADO</span>
+                                {% if campo_calif and campo_calif >= 8 %}
+                                    <span class="sello-aprobado-mini">APROBADO</span>
+                                {% else %}
+                                    <span class="sello-aprobado-mini" style="background:#fee2e2; color:#991b1b; border-color:#fecaca;">REPROBADO</span>
+                                {% endif %}
                                 <div class="calif-val-mini" style="text-align:right;">{{ campo_calif }}</div>
                             {% else %}
                                 <span class="pendiente-label-mini">Pendiente</span>
@@ -370,29 +374,65 @@
                 </div>
                 {% endif %}
 
-                {% if not ya_firme and firma_form %}
-                <div class="firma-box" style="margin-bottom: 10px;">
-                    <p class="section-label" style="margin-bottom:8px; color:#8a7560; font-size:0.62rem;">Registrar Firma</p>
-                    <form method="post" action="{% url 'lumat_app:docente_firmar_seminario' seminario.id %}">
-                        {% csrf_token %}
-                        <div style="margin-bottom:8px;">
-                            <label style="font-size:0.68rem;">{{ firma_form.calificacion.label }}</label>
-                            {{ firma_form.calificacion }}
-                            {% if firma_form.calificacion.errors %}
-                                <p style="color:#c0392b; font-size:0.72rem; margin-top:2px;">{{ firma_form.calificacion.errors.0 }}</p>
+                <!-- En docente_seminario_detalle.html (Dentro de #panel-firmas-comite) -->
+                {% if firma_form and rol %}
+                    {% if ya_firme %}
+                        <!-- ESTADO 1: YA FIRMÓ (Muestra confirmación + botón para editar) -->
+                        <div id="box-firma-completada" class="success-box" style="padding: 10px; margin-bottom: 10px; text-align: center;">
+                            <p style="margin: 0 0 6px 0; font-size: 0.78rem; font-weight: 600;">
+                                ✓ Tu firma y calificación han sido registradas.
+                            </p>
+                            <button type="button" 
+                                    class="btn-secondary-custom" 
+                                    onclick="toggleEdicionFirma()"
+                                    style="font-size: 0.72rem; padding: 4px 10px; cursor: pointer; width: 100%;">
+                                <i class="ti ti-edit" aria-hidden="true"></i> Editar calificación
+                            </button>
+                        </div>
+                    {% endif %}
+
+                    <!-- FORMULARIO DE FIRMA / EDICIÓN -->
+                    <div id="box-form-firma" 
+                        class="firma-box" 
+                        style="margin-bottom: 10px; {% if ya_firme %}display: none;{% endif %}">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <p class="section-label" style="margin: 0; color: #8a7560; font-size: 0.62rem;">
+                                {% if ya_firme %}Modificar Calificación{% else %}Registrar Firma{% endif %}
+                            </p>
+                            {% if ya_firme %}
+                                <button type="button" 
+                                        onclick="toggleEdicionFirma()" 
+                                        style="background: none; border: none; font-size: 0.7rem; color: #8a7560; cursor: pointer; text-decoration: underline;">
+                                    Cancelar
+                                </button>
                             {% endif %}
                         </div>
-                        <div class="firma-check-row">
-                            {{ firma_form.confirmar_firma }}
-                            <label for="{{ firma_form.confirmar_firma.id_for_label }}">{{ firma_form.confirmar_firma.label }}</label>
-                        </div>
-                        <div style="margin-top:10px;">
-                            <button type="submit" class="btn-primary-custom" style="width:100%; padding: 6px 0;">Firmar</button>
-                        </div>
-                    </form>
-                </div>
-                {% elif ya_firme %}
-                <div class="success-box" style="text-align: center; padding: 8px; font-size:0.78rem;">Firma registrada con éxito.</div>
+                        
+                        <form method="post" action="{% url 'lumat_app:docente_firmar_seminario' seminario.id %}">
+                            {% csrf_token %}
+                            <div style="margin-bottom: 8px;">
+                                <label style="font-size: 0.68rem; font-weight: 600;">{{ firma_form.calificacion.label }}</label>
+                                {{ firma_form.calificacion }}
+                                {% if firma_form.calificacion.errors %}
+                                    <p style="color: #c0392b; font-size: 0.72rem; margin-top: 2px;">{{ firma_form.calificacion.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="firma-check-row">
+                                {{ firma_form.confirmar_firma }}
+                                <label for="{{ firma_form.confirmar_firma.id_for_label }}">
+                                    {% if ya_firme %}Confirmar actualización de firma{% else %}{{ firma_form.confirmar_firma.label }}{% endif %}
+                                </label>
+                            </div>
+                            
+                            <div style="margin-top: 10px;">
+                                <button type="submit" class="btn-primary-custom" style="width: 100%; padding: 6px 0;">
+                                    {% if ya_firme %}Guardar cambios y regenerar acta{% else %}Firmar{% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 {% endif %}
 
             </div>
@@ -515,5 +555,19 @@
 
     toggleFormSections();
   });
+    function toggleEdicionFirma() {
+    const boxCompletado = document.getElementById('box-firma-completada');
+    const boxForm = document.getElementById('box-form-firma');
+
+    if (boxForm) {
+        if (boxForm.style.display === 'none' || boxForm.style.display === '') {
+            boxForm.style.display = 'block';
+            if (boxCompletado) boxCompletado.style.display = 'none';
+        } else {
+            boxForm.style.display = 'none';
+            if (boxCompletado) boxCompletado.style.display = 'block';
+        }
+    }
+}
 </script>
 {% endblock %}

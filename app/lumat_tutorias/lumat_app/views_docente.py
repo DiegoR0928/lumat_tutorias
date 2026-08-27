@@ -245,7 +245,18 @@ def docente_seminario_detalle(request, seminario_id):
 
     # ── Firma acta comité ─────────────────────────────────────
     ya_firme = getattr(formulario, f'firma_{rol}') if rol else False
-    firma_form = FirmaCalificacionForm() if not ya_firme else None
+
+    # Obtener la calificación actual que tiene asignada este rol
+    calificacion_actual = getattr(formulario, f'calificacion_{rol}') if rol else None
+
+    # Inicializamos el formulario con la calificación previa si existe
+    if rol:
+        firma_form = FirmaCalificacionForm(initial={
+            'calificacion': calificacion_actual,
+            'confirmar_firma': ya_firme
+        })
+    else:
+        firma_form = None
 
     # ── Acta del alumno ───────────────────────────────────────
     from .models import ActaAlumnoData
@@ -441,34 +452,27 @@ def docente_firmar_seminario(request, seminario_id):
         pk=seminario_id)
 
     rol = _rol_en_seminario(docente, seminario)
-    # if not rol:
-    #     raise Http404
-
     formulario = _get_o_crear_formulario(seminario)
-
-    if getattr(formulario, f'firma_{rol}'):
-        messages.warning(request, 'Ya habías firmado este seminario.')
-        return redirect('lumat_app:docente_seminario_detalle',
-                        seminario_id=seminario_id)
 
     form = FirmaCalificacionForm(request.POST)
     if form.is_valid():
         calif = form.cleaned_data['calificacion']
 
-        # Asignar calificación según rol
+        # Asignar calificación según el rol
         campo_calif = {
             'tutor': 'calificacion_tutor',
             'director': 'calificacion_director',
             'coodirector': 'calificacion_coodirector',
             'asesor': 'calificacion_asesor',
         }[rol]
+        
         setattr(formulario, campo_calif, calif)
         setattr(formulario, f'firma_{rol}', True)
-        formulario.save()   # recalcula calificacion_final y estado_general
-        _verificar_y_generar_pdf_comite(request, seminario, formulario)
-        messages.success(request, 'Firma y calificación registradas.')
+        formulario.save()   # Recalcula promedio, estado y regenera PDF automáticamente
+        
+        messages.success(request, 'Calificación y firma actualizadas correctamente.')
     else:
-        messages.error(request, 'Datos inválidos. Verifica la calificación.')
+        messages.error(request, 'Datos inválidos. Verifica la calificación ingresada.')
 
     return redirect('lumat_app:docente_seminario_detalle',
                     seminario_id=seminario_id)

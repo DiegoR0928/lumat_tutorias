@@ -560,14 +560,19 @@
         <div class="det-row">
           <span class="det-label">Estado</span>
           <span>
-            {% if seminario and seminario.calificacion %}
-            <span class="estado-pill aprobado">Aprobado</span>
+            {% if seminario and seminario.calificacion is not None %}
+              {% if seminario.calificacion >= 8 %}
+                <span class="estado-pill aprobado">Aprobado</span>
+              {% else %}
+                <span class="estado-pill reprobado" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca;">Reprobado</span>
+              {% endif %}
             {% elif seminario %}
-            <span class="estado-pill pendiente">Pendiente</span>
+              <span class="estado-pill pendiente">Pendiente</span>
             {% else %}
-            <span class="estado-pill sin-calificar">Sin programar</span>
+              <span class="estado-pill sin-calificar">Sin programar</span>
             {% endif %}
           </span>
+        </div>
         </div>
       </div>
     </div>
